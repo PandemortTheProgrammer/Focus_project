@@ -1,14 +1,35 @@
-import { useEffect } from 'react';
-import { inicializarBaseDeDatos } from './services/db';
+import { useEffect } from 'react'
+import { Routes, Route } from 'react-router-dom'
+import { inicializarBaseDeDatos } from './services/db'
 
-export default function App(){
-    useEffect(() => {
-        inicializarBaseDeDatos();
-    }, []);
+import Mainpage from './Components/Mainpage'
+import CreateProfile from './Components/Create_profile'
+import EditProfile from './Components/Edit_profile'
+import UploadProfile from './Components/Upload_profile'
+import Dashboard from './Components/Dashboard'
+import ActivitiesMain from './Components/Activities_main'
+import ActivitiesAdd from './Components/Activities_add'
+import ActivitiesEdit from './Components/Activities_edit'
+import WeeklyProgress from './Components/Weekly_progress'
+import WeeklySummary from './Components/Weekly_Summary'
 
-    return (
-        <div>
-            <h1>Hola Mundo</h1>
-        </div>
-    )
+export default function App() {
+  useEffect(() => {
+    inicializarBaseDeDatos()
+  }, [])
+
+  return (
+    <Routes>
+      <Route path="/" element={<Mainpage />} />
+      <Route path="/crear-perfil" element={<CreateProfile />} />
+      <Route path="/editar-perfil" element={<EditProfile />} />
+      <Route path="/subir-perfil" element={<UploadProfile />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/actividades" element={<ActivitiesMain />} />
+      <Route path="/actividades/agregar" element={<ActivitiesAdd />} />
+      <Route path="/actividades/editar/:id" element={<ActivitiesEdit />} />
+      <Route path="/progreso-semanal" element={<WeeklyProgress />} />
+      <Route path="/resumen-semanal" element={<WeeklySummary />} />
+    </Routes>
+  )
 }
