@@ -14,22 +14,22 @@ import WeeklyProgress from './Components/Weekly_progress'
 import WeeklySummary from './Components/Weekly_Summary'
 
 export default function App() {
-  useEffect(() => {
-    inicializarBaseDeDatos()
-  }, [])
+    useEffect(() => {
+        inicializarBaseDeDatos()
+    }, [])
 
-  return (
-    <Routes>
-      <Route path="/" element={<Mainpage />} />
-      <Route path="/crear-perfil" element={<CreateProfile />} />
-      <Route path="/editar-perfil" element={<EditProfile />} />
-      <Route path="/subir-perfil" element={<UploadProfile />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/actividades" element={<ActivitiesMain />} />
-      <Route path="/actividades/agregar" element={<ActivitiesAdd />} />
-      <Route path="/actividades/editar/:id" element={<ActivitiesEdit />} />
-      <Route path="/progreso-semanal" element={<WeeklyProgress />} />
-      <Route path="/resumen-semanal" element={<WeeklySummary />} />
-    </Routes>
-  )
+    return (
+        <Routes>
+            <Route path="/" element={<Mainpage />} />
+            <Route path="/crear-perfil" element={<CreateProfile />} />
+            <Route path="/editar-perfil" element={<EditProfile />} />
+            <Route path="/subir-perfil" element={<UploadProfile />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/actividades" element={<ActivitiesMain />} />
+            <Route path="/actividades/agregar" element={<ActivitiesAdd />} />
+            <Route path="/actividades/editar/:id" element={<ActivitiesEdit />} />
+            <Route path="/progreso-semanal" element={<WeeklyProgress />} />
+            <Route path="/resumen-semanal" element={<WeeklySummary />} />
+        </Routes>
+    )
 }

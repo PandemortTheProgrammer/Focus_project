@@ -1,12 +1,14 @@
-export default class Usuario {
+export default class Perfil {
+    public id_perfil: number;
     public nickname:string;
     public age_rank: string;
-    public focus: string;
+    public id_focus: number;
 
-    constructor(nickname:string, age_rank:string, focus:string){
+    constructor(id_perfil:number, nickname:string, age_rank:string, id_focus:number){
+        this.id_perfil = id_perfil;
         this.nickname = nickname;
         this.age_rank = age_rank;
-        this.focus = focus;
+        this.id_focus = id_focus;
     }
 
     /**
