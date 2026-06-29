@@ -46,7 +46,7 @@ export default function ActivitiesAdd() {
       {/* Título */}
       <h1 className="relative z-10 text-5xl font-bold text-center mb-8"
         style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
-        Add activity
+        Registrar una actividad realizada
       </h1>
 
       {/* Contenido principal */}
@@ -56,18 +56,24 @@ export default function ActivitiesAdd() {
         <div className="flex flex-col gap-4 flex-1">
 
           {/* Select tipo de actividad */}
+          <p className="text-white text-sm px-2 opacity-70">
+              Tipo de actividad
+            </p>
           <select
             value={tag}
             onChange={(e) => setTag(e.target.value)}
             className="w-full px-5 py-3 rounded-full text-white text-lg outline-none"
             style={{ backgroundColor: '#1a1a1a' }}>
-            <option value="" disabled>Select an activity type</option>
+            <option value="" disabled>Selecciona un tipo de actividad</option>
             <option value="Estudio">Estudio</option>
             <option value="Ejercicio">Ejercicio</option>
             <option value="Lectura">Lectura</option>
           </select>
 
           {/* Fecha y hora */}
+          <p className="text-white text-sm px-2 opacity-70">
+              Hora de inicio de la actividad
+          </p>
           <input
             type="time"
             value={hora}
@@ -79,9 +85,15 @@ export default function ActivitiesAdd() {
           {/* Duración */}
           <div className="flex flex-col gap-2">
             <p className="text-white text-sm px-2 opacity-70">
-              Time used (minutes)
+              Tiempo utilizado (minutos)
             </p>
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => ajustarDuracion(-10)}
+                className="px-3 py-2 rounded-full text-white text-sm font-bold transition hover:opacity-80"
+                style={{ backgroundColor: '#d946ef' }}>
+                -10
+              </button>
               <button
                 onClick={() => ajustarDuracion(-5)}
                 className="px-3 py-2 rounded-full text-white text-sm font-bold transition hover:opacity-80"
@@ -89,7 +101,7 @@ export default function ActivitiesAdd() {
                 -5
               </button>
               <span className="text-white font-bold text-lg px-2">
-                {formatearDuracion(duracion)}
+                {formatearDuracion(duracion)} hrs
               </span>
               <button
                 onClick={() => ajustarDuracion(10)}
@@ -115,12 +127,14 @@ export default function ActivitiesAdd() {
 
         {/* Columna derecha */}
         <div className="flex flex-col gap-4 flex-1">
-
+          <p className="text-white text-sm px-2 opacity-70">
+              Descripción de la actividad
+            </p>
           {/* Descripción */}
           <textarea
             value={descripcion}
             onChange={(e) => setDescripcion(e.target.value)}
-            placeholder="Describe the activity you realized..."
+            placeholder="Describe la actividad que realizaste..."
             className="w-full h-40 px-5 py-4 rounded-2xl text-white text-lg outline-none resize-none"
             style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
           />
@@ -131,13 +145,13 @@ export default function ActivitiesAdd() {
               onClick={handleSave}
               className="px-8 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80"
               style={{ backgroundColor: '#1a1a1a' }}>
-              Save activity
+              Registrar actividad
             </button>
             <button
               onClick={() => navigate('/actividades')}
               className="px-8 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80"
               style={{ backgroundColor: '#1a1a1a' }}>
-              Back
+              Regresar
             </button>
           </div>
 
