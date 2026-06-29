@@ -1,7 +1,7 @@
 export default function EditProfile() {
     return (
         <div>
-            <h1>Crear un nuevo perfil</h1>
+            <h1>Editar tu perfil</h1>
             <div>
                 <p>
                     <label htmlFor="">Identificate por un nickname:</label>
@@ -18,6 +18,9 @@ export default function EditProfile() {
                         <option value="">Enfoque2</option>
                         <option value="">Enfoque3</option>
                     </select>
+                </p>
+                <p>
+                    <button>Guardar cambios</button>
                 </p>
             </div>
         </div>
