@@ -30,7 +30,7 @@ export default function UploadProfile() {
       {/* Título */}
       <h1 className="relative z-10 text-5xl font-bold text-center mb-10"
         style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
-        Upload a Profile
+        Subir un perfil
       </h1>
 
       {/* Contenido */}
@@ -40,7 +40,7 @@ export default function UploadProfile() {
         <label
           className="px-10 py-3 rounded-full text-white text-lg font-semibold cursor-pointer transition hover:opacity-80"
           style={{ backgroundColor: '#1a1a1a' }}>
-          Upload
+          Subir
           <input
             type="file"
             accept=".db"
@@ -51,7 +51,7 @@ export default function UploadProfile() {
 
         {/* Descripción */}
         <p className="text-white text-sm text-center px-8">
-          Sube tu archivo *.db que guardaste previamente
+          Sube el archivo *.db que guardaste previamente
         </p>
 
         {/* Botón Back */}
@@ -59,7 +59,7 @@ export default function UploadProfile() {
           onClick={() => navigate('/')}
           className="px-10 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80"
           style={{ backgroundColor: '#1a1a1a' }}>
-          Back
+          Regresar
         </button>
 
       </div>

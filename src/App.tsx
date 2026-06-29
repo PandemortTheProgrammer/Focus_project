@@ -12,7 +12,7 @@ import ActivitiesAdd from './Components/Activities_add'
 import ActivitiesEdit from './Components/Activities_edit'
 import WeeklyProgress from './Components/Weekly_progress'
 import WeeklySummary from './Components/Weekly_Summary'
-
+import Download from './Components/download'
 export default function App() {
     useEffect(() => {
         inicializarBaseDeDatos()
@@ -30,6 +30,7 @@ export default function App() {
             <Route path="/actividades/editar/:id" element={<ActivitiesEdit />} />
             <Route path="/progreso-semanal" element={<WeeklyProgress />} />
             <Route path="/resumen-semanal" element={<WeeklySummary />} />
+            <Route path="/Download" element={<Download />}/>
         </Routes>
     )
 }

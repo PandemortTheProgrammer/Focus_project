@@ -1,12 +1,14 @@
-export default class Usuario {
+export default class Perfil {
+    public id_perfil: number;
     public nickname:string;
     public age_rank: string;
-    public focus: string;
+    public id_focus: number;
 
-    constructor(nickname:string, age_rank:string, focus:string){
+    constructor(id_perfil:number, nickname:string, age_rank:string, id_focus:number){
+        this.id_perfil = id_perfil;
         this.nickname = nickname;
         this.age_rank = age_rank;
-        this.focus = focus;
+        this.id_focus = id_focus;
     }
 
     /**
@@ -18,7 +20,7 @@ export default class Usuario {
                 return "Recomendado: actividades ligeras y sesiones cortas (30–45 min).";
             case "17-19":
                 return "Recomendado: sesiones moderadas con descansos regulares (45–60 min).";
-            case "20-22":
+            case "20-30":
                 return "Recomendado: sesiones más largas y metas concretas (60–90 min).";
             default:
                 return "Rango de edad desconocido: ajusta según preferencias personales.";
