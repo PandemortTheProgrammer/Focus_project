@@ -17,7 +17,7 @@ export default function Mainpage() {
         style={{ backgroundColor: '#f97316', top: '30%', left: '38%', transform: 'translateX(-50%)' }} />
       <div className="absolute w-60 h-60 rounded-full blur-3xl opacity-80"
         style={{ backgroundColor: '#d946ef', bottom: '0rem', left: '1rem' }} />
-      <div className="absolute w-32 h-32 rounded-full blur-2xl opacity-70"
+      <div className="absolute w-32 h-32 rounded-full blur-3xl opacity-70"
         style={{ backgroundColor: '#86efac', bottom: '2rem', right: '8rem' }} />
 
       {/* Logo */}
