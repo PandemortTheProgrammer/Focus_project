@@ -10,3 +10,8 @@ const router = Router();
 const act_manager = new ActividadManager();
 
 //Aqui va el router.get
+router.get('/', (req, res) => {
+    res.json(act_manager.obteneractividades());
+});
+
+export default router;

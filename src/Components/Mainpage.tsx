@@ -41,7 +41,7 @@ export default function Mainpage() {
           onClick={() => navigate('/subir-perfil')}
           className="w-full py-4 rounded-full text-white text-xl font-semibold transition transition-transform duration:200 hover:opacity-80 hover:scale-105 hover:shadow-log"
           style={{ backgroundColor: '#1a1a1a' }}>
-          Cargar un perfil nuevo
+          Cargar un perfil
         </button>
       </div>
     </div>

@@ -1,7 +1,4 @@
-
-
-
-
+import Actividad from "../models/Actividad";
 
 export default class ActividadManager {
     private actividades: Actividad[] = [];
