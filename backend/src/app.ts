@@ -9,7 +9,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use(  // app.use(ruta, controlador);
-    "/servicios",
+    "/Actividades",
     // servicioRoutes
 );
 
