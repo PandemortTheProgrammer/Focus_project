@@ -1,4 +1,7 @@
-import Actividad from "../models/Actividad";
+
+
+
+
 
 export default class ActividadManager {
     private actividades: Actividad[] = [];
@@ -19,3 +22,4 @@ export default class ActividadManager {
         this.actividades = this.actividades.filter(actividad => actividad.id_actividad !== id_actividad);
     }
 }
+

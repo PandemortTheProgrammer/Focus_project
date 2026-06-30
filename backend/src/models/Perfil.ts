@@ -1,3 +1,4 @@
+//superclass 
 export default class Perfil {
     public id_perfil: number;
     public nickname:string;
