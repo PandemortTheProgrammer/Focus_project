@@ -32,7 +32,7 @@ export default function App() {
       }
     };
     recuperarPerfil();
-  }, []);
+    }, []);
     useEffect(() => {
         inicializarBaseDeDatos()
     }, [])

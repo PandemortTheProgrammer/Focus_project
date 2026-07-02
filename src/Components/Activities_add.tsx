@@ -1,12 +1,33 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 export default function ActivitiesAdd() {
   const navigate = useNavigate()
+  
+  // Estado para guardar el catálogo que viene de Express
+  const [tipos, setTipos] = useState<any[]>([])
+  
+  // Estados de tu formulario
   const [tag, setTag] = useState('')
   const [hora, setHora] = useState('')
   const [duracion, setDuracion] = useState(0)
   const [descripcion, setDescripcion] = useState('')
+
+  // 1. Cargar el catálogo dinámico al abrir la pantalla
+  useEffect(() => {
+    const cargarTipos = async () => {
+      try {
+        // NOTA LA URL CORREGIDA AQUÍ
+        const res = await fetch('http://localhost:3000/api/actividades/tipos-actividad')
+        if (res.ok) {
+          setTipos(await res.json())
+        }
+      } catch (error) {
+        console.error('Error al cargar tipos de actividad:', error)
+      }
+    }
+    cargarTipos()
+  }, [])
 
   const ajustarDuracion = (minutos: number) => {
     setDuracion(prev => Math.max(0, prev + minutos))
@@ -18,13 +39,39 @@ export default function ActivitiesAdd() {
     return `${h}:${m.toString().padStart(2, '0')}`
   }
 
-  const handleSave = () => {
-    if (!tag || !hora) {
-      alert('Por favor completa los campos requeridos')
+  // 2. Guardar los datos en el Backend
+  const handleSave = async () => {
+    if (!tag || !hora || duracion === 0) {
+      alert('Por favor completa todos los campos (incluyendo el tiempo)')
       return
     }
-    console.log('Actividad:', { tag, hora, duracion, descripcion })
-    navigate('/actividades')
+
+    // Armamos el objeto con los nombres exactos que espera tu backend
+    const nuevaActividad = {
+      id_tipo: tag,
+      hora_inicio: hora,
+      duracion_minutos: duracion,
+      descripcion_actividad: descripcion
+    }
+
+    try {
+      // POST a la ruta raíz de actividades
+      const res = await fetch('http://localhost:3000/api/actividades', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nuevaActividad)
+      })
+
+      if (res.ok) {
+        // Si todo sale bien, regresamos a la pantalla principal
+        navigate('/actividades')
+      } else {
+        alert('Hubo un problema al guardar en Express.')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('No se pudo conectar con el servidor.')
+    }
   }
 
   return (
@@ -55,7 +102,7 @@ export default function ActivitiesAdd() {
         {/* Columna izquierda */}
         <div className="flex flex-col gap-4 flex-1">
 
-          {/* Select tipo de actividad */}
+          
           <p className="text-white text-sm px-2 opacity-70">
               Tipo de actividad
             </p>
@@ -65,9 +112,13 @@ export default function ActivitiesAdd() {
             className="w-full px-5 py-3 rounded-full text-white text-lg outline-none"
             style={{ backgroundColor: '#1a1a1a' }}>
             <option value="" disabled>Selecciona un tipo de actividad</option>
-            <option value="Estudio">Estudio</option>
-            <option value="Ejercicio">Ejercicio</option>
-            <option value="Lectura">Lectura</option>
+            
+            {tipos.map((tipo) => (
+              <option key={tipo.id_tipo} value={tipo.id_tipo}>
+                {tipo.nombre_tipo}
+              </option>
+            ))}
+
           </select>
 
           {/* Fecha y hora */}

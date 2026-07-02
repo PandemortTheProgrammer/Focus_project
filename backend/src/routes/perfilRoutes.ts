@@ -1,19 +1,22 @@
 import { Router } from 'express';
-// Importas las funciones que vayas a crear en tu PerfilManager
-// import { guardarPerfil, obtenerPerfil } from '../services/PerfilManager'; 
+import Perfil from '../models/Perfil';
 
 const router = Router();
 
-// Aquí va el POST para guardar
+let perfilUsuario: Perfil;
+
+// POST: Guarda el perfil 
 router.post('/', (req, res) => {
-    // Aquí llamarás a guardarPerfil(req.body)
-    res.status(201).json({ mensaje: "Perfil recibido en el backend", datos: req.body });
+    perfilUsuario = req.body;
+    res.status(201).json({ mensaje: "Perfil guardado", perfil: perfilUsuario });
 });
 
-// Aquí va el GET para leer
+// GET: Devuelve el perfil guardado
 router.get('/', (req, res) => {
-    // Aquí llamarás a obtenerPerfil()
-    res.json({ mensaje: "Aquí enviaremos el perfil guardado" });
+    if (!perfilUsuario) {
+        return res.status(404).json({ error: "No hay perfil registrado aún" });
+    }
+    res.json(perfilUsuario);
 });
 
 export default router;
