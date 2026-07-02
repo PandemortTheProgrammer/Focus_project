@@ -14,7 +14,7 @@ export const catalogoTipos: Tipo_actividad[] = [
     new Tipo_actividad(9, "Navegar en redes sociales", 1),
 ];
 
-export const listaActividades: Actividad[] = [];
+export const listaActividades: Actividad[] = [new Actividad(1, 1, '3:00', 60, "Actividad de ejemplo")];
 
 // Función POST (que usarás en routes/focusRoutes.ts)
 export const registrarActividad = (datos: any): Actividad => {

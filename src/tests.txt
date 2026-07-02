@@ -1,0 +1,116 @@
+import { useState, useEffect } from 'react'
+import { Routes, Route, useNavigate } from 'react-router-dom'
+
+// Importación de componentes visuales (los mismos de tu compañero)
+import Mainpage from './Components/Mainpage'
+import CreateProfile from './Components/Create_profile'
+import Dashboard from './Components/Dashboard'
+import ActivitiesMain from './Components/Activities_main'
+import ActivitiesAdd from './Components/Activities_add'
+import WeeklyProgress from './Components/Weekly_progress'
+import type Tipo_actividad from './models/Tipo_actividad'
+
+export default function App() {
+  // ==========================================
+  // 1. EL CEREBRO: ESTADOS GLOBALES PARA EXPRESS
+  // ==========================================
+  const [tiposActividad, setTiposActividad] = useState<Tipo_actividad[]>([])
+  const [perfilGlobal, setPerfilGlobal] = useState<Actividad>(null)
+
+  // Cargar catálogos desde Express al iniciar
+  useEffect(() => {
+    const obtenerTiposDeExpress = async () => {
+      try {
+        const res = await fetch('http://localhost:3000/api/tipos-actividad')
+        if (res.ok) setTiposActividad(await res.json())
+      } catch (error) {
+        console.error("Express no está corriendo aún", error)
+      }
+    }
+    obtenerTiposDeExpress()
+  }, [])
+
+  // Función global para guardar que pasaremos por Props
+  const guardarActividadEnBackend = async (datosActividad: any): Promise<boolean> => {
+    try {
+      const res = await fetch('http://localhost:3000/api/actividades', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datosActividad)
+      })
+      return res.ok
+    } catch (error) {
+      alert("Error al conectar con el servidor")
+      return false
+    }
+  }
+
+  // ==========================================
+  // 2. EL ENRUTADOR PRINCIPAL
+  // ==========================================
+  return (
+    <Routes>
+      {/* Rutas de entrada que sí ocupan pantalla completa */}
+      <Route path="/" element={<Mainpage />} />
+      <Route path="/crear-perfil" element={<CreateProfile setPerfilGlobal={setPerfilGlobal} />} />
+      
+      {/* Ruta Hub: Aquí se agrupa todo lo que el profe pondría en un sidebar.
+        Inyectamos las props a los componentes para mantenerlos limpios.
+      */}
+      <Route 
+        path="/app/*" 
+        element={
+          <DashboardLayout perfilGlobal={perfilGlobal}>
+            <Routes>
+              <Route path="inicio" element={<Dashboard />} />
+              <Route path="actividades" element={<ActivitiesMain />} />
+              <Route 
+                path="actividades/agregar" 
+                element={
+                  <ActivitiesAdd 
+                    tiposActividad={tiposActividad} 
+                    onGuardarActividad={guardarActividadEnBackend} 
+                  />
+                } 
+              />
+              <Route path="progreso" element={<WeeklyProgress />} />
+            </Routes>
+          </DashboardLayout>
+        } 
+      />
+    </Routes>
+  )
+}
+
+// ==========================================
+// 3. EL LAYOUT ENVOLVENTE (Reemplazo del Sidebar)
+// ==========================================
+// Este componente actúa como un marco invisible. 
+// Renderiza el contenido central y un menú de cápsula flotante en la parte inferior.
+function DashboardLayout({ children, perfilGlobal }: { children: React.ReactNode, perfilGlobal: any }) {
+  const navigate = useNavigate();
+
+  return (
+    <div className="w-full min-h-screen flex flex-col justify-between" style={{ backgroundColor: '#4a5e5e' }}>
+      
+      {/* Contenedor central donde cambian las pantallas (children) */}
+      <main className="flex-1 overflow-y-auto">
+        {children}
+      </main>
+
+      {/* Menú Cápsula Flotante (Navegación Discreta) */}
+      <nav className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-zinc-900/90 backdrop-blur-md px-6 py-3 rounded-full flex gap-6 shadow-2xl z-50">
+        <button onClick={() => navigate('/app/inicio')} className="text-zinc-300 font-semibold hover:text-white">
+          🏠 Inicio
+        </button>
+        <button onClick={() => navigate('/app/actividades')} className="text-zinc-300 font-semibold hover:text-white">
+          ⏱️ Actividades
+        </button>
+        <button onClick={() => navigate('/app/progreso')} className="text-zinc-300 font-semibold hover:text-white">
+          📊 Progreso
+        </button>
+      </nav>
+
+    </div>
+  )
+}

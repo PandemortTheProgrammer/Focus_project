@@ -1,17 +1,22 @@
-import Perfil from "../models/Perfil";
+import app from "../app";
 
-export default class PerfilesManager {
-    private perfiles: Perfil[] = [];
+let perfilUsuario: any = null; 
 
-    constructor() {
-        this.perfiles.push(new Perfil(1, "Sparkleshowdown", "14-16", 1));
+// Ruta para GUARDAR el perfil
+app.post('/api/perfil', (req, res) => {
+    const { nickname, age_rank, id_focus } = req.body;
+    
+    // Guardamos los datos en la memoria de Node
+    perfilUsuario = { nickname, age_rank, id_focus };
+    
+    console.log("Perfil guardado en Express:", perfilUsuario);
+    res.status(201).json({ mensaje: "Perfil creado", perfil: perfilUsuario });
+});
+
+// Ruta para OBTENER el perfil (por si recargan la página)
+app.get('/api/perfil', (req, res) => {
+    if (!perfilUsuario) {
+        return res.status(404).json({ error: "No hay perfil registrado" });
     }
-
-    agregarPerfil(perfil: Perfil): void {
-        this.perfiles.push(perfil);
-    }
-
-    eliminarPerfil(id_perfil: number): void {
-        this.perfiles = this.perfiles.filter(perfil => perfil.id_perfil !== id_perfil);
-    }
-}
+    res.json(perfilUsuario);
+});

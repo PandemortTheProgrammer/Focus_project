@@ -3,9 +3,15 @@ import Activities from '../assets/Images/Activities.png'
 import DownloadProfile from '../assets/Images/Download Profile.png'
 import EditProfile from '../assets/Images/Edit Profile.png'
 import WeeklyProgress from '../assets/Images/Weekly Progress.png'
-export default function Dashboard() {
+
+interface DashboardProps {
+  perfilGlobal: any;
+}
+
+
+export default function Dashboard({ perfilGlobal }: DashboardProps) {
   const navigate = useNavigate()
-  const nickname = '[nickname]' // después esto vendrá del perfil guardado
+  const nickname = perfilGlobal?.nickname || 'Desconocido'; // después esto vendrá del perfil guardado
 
   return (
     <div className="relative w-full h-screen overflow-hidden flex flex-col items-center justify-center"

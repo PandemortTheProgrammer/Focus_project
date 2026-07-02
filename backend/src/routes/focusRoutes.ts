@@ -6,17 +6,15 @@ import {Router} from 'express';
 // import Tipo_actividad from '../Models/Tipo_actividad';
 
 import { catalogoTipos, listaActividades } from '../services/ActividadManager';
-import app from '../app';
+const router = Router();
 
-app.get('/api/tipos-actividad', (req, res) => {
+router.get('/api/tipos-actividad', (req, res) => {
     // Devuelve el arreglo de objetos Tipo_actividad que creaste con tu clase
     return res.json(catalogoTipos); 
 });
 
-const router = Router();
-
 //Aqui va el router.get
-router.get('/', (req, res) => {
+router.get('/api/actividades', (req, res) => {
     res.json(listaActividades);
 });
 

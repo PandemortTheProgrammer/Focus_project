@@ -1,20 +1,50 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-export default function CreateProfile() {
-  const navigate = useNavigate()
-  const [nickname, setNickname] = useState('')
-  const [ageRank, setAgeRank] = useState('')
-  const [focus, setFocus] = useState('')
+// Definimos que este componente recibe la función desde App.tsx
+interface CreateProfileProps {
+  setPerfilGlobal: (perfil: any) => void;
+}
 
-  const handleSave = () => {
+export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
+  const navigate = useNavigate();
+  
+  // Estados para tus inputs
+  const [nickname, setNickname] = useState('');
+  const [ageRank, setAgeRank] = useState('');
+  const [focus, setFocus] = useState('');
+
+  const handleSave = async () => {
     if (!nickname || !ageRank || !focus) {
-      alert('Por favor completa todos los campos')
-      return
+      alert("Por favor llena todos los campos");
+      return;
     }
-    console.log('Usuario creado:', { nickname, ageRank, focus })
-    navigate('/dashboard')
-  }
+
+    const nuevoPerfil = {
+      nickname: nickname,
+      age_rank: ageRank,
+      id_focus: parseInt(focus)
+    };
+
+    try {
+      // 1. Enviamos a Express
+      const respuesta = await fetch('http://localhost:3000/api/perfil', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nuevoPerfil)
+      });
+
+      if (respuesta.ok) {
+        // 2. Si Express lo guardó, actualizamos App.tsx
+        setPerfilGlobal(nuevoPerfil);
+        
+        // 3. Nos movemos al Dashboard
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      alert("Error al conectar con el servidor.");
+    }
+  };
 
   return (
     <div className="relative w-full h-screen overflow-hidden flex flex-col items-center justify-center"
