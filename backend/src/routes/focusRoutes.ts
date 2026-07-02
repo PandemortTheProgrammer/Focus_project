@@ -1,30 +1,42 @@
 // backend/src/routes/focusRoutes.ts
 import { Router } from 'express';
-import { catalogoTipos, listaActividades, registrarActividad, eliminarActividad } from '../services/ActividadManager';
+import { obtenerActividades, registrarActividad, eliminarActividad } from '../services/ActividadManager';
+// backend/src/routes/focusRoutes.ts
+import { obtenerTiposActividad } from '../services/ActividadManager';
 
 const router = Router();
 
-// GET: Obtener tipos para el Select de Activities_add
-router.get('/tipos-actividad', (req, res) => {
-    res.json(catalogoTipos);
+// ...
+
+router.get('/tipos-actividad', async (req, res) => {
+    try {
+        const tipos = await obtenerTiposActividad();
+        // Mapeamos los nombres de columnas de la BD a lo que espera React
+        const tiposFormateados = tipos.map(t => ({
+            id_tipo: t.Id_tipo,
+            nombre_tipo: t.Nombre_activ
+        }));
+        res.json(tiposFormateados);
+    } catch (error) {
+        res.status(500).json({ error: "Error al cargar tipos" });
+    }
+});
+// ... la ruta de tipos-actividad queda igual ...
+
+router.get('/', async (req, res) => {
+    const lista = await obtenerActividades();
+    res.json(lista);
 });
 
-// GET: Obtener todas las actividades para Activities_main
-router.get('/', (req, res) => {
-    res.json(listaActividades);
+router.post('/', async (req, res) => {
+    await registrarActividad(req.body);
+    res.status(201).json({ mensaje: "Actividad registrada en la BD" });
 });
 
-// POST: Guardar nueva actividad
-router.post('/', (req, res) => {
-    const nueva = registrarActividad(req.body);
-    res.status(201).json({ mensaje: "Actividad registrada", actividad: nueva });
-});
-
-// DELETE: Borrar actividad por ID
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
     const idBorrar = parseInt(req.params.id);
-    eliminarActividad(idBorrar);
-    res.json({ mensaje: `Actividad ${idBorrar} eliminada con éxito` });
+    await eliminarActividad(idBorrar);
+    res.json({ mensaje: "Actividad eliminada" });
 });
 
 export default router;

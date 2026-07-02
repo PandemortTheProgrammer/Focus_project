@@ -1,22 +1,43 @@
-import app from "../app";
+// backend/src/services/PerfilManager.ts
+import { getDB } from '../config/db';
 
-let perfilUsuario: any = null; 
 
-// Ruta para GUARDAR el perfil
-app.post('/api/perfil', (req, res) => {
-    const { nickname, age_rank, id_focus } = req.body;
+// backend/src/services/PerfilManager.ts
+export const obtenerEnfoques = async (): Promise<any[]> => {
+    const db = getDB();
+    return await db.all("SELECT * FROM Enfoque"); 
+};
+
+// POST: Registrar o actualizar el perfil único
+export const guardarPerfil = async (datos: any): Promise<void> => {
+    const db = getDB();
+
+    // Al ser una arquitectura local-first con un único usuario, 
+    // limpiamos cualquier rastro interino antes de guardar el nuevo.
+    await db.run("DELETE FROM Perfil");
+
+    // RAW SQL: Inserción limpia respetando las columnas de tu diccionario
+    const query = `
+        INSERT INTO Perfil (nickname, rango_edad, Id_enfoque)
+        VALUES (?, ?, ?)
+    `;
+
+    await db.run(query, [
+        datos.nickname,
+        datos.age_rank,
+        parseInt(datos.id_focus)
+    ]);
+
+    console.log("👤 Perfil guardado con éxito en la tabla SQLite");
+};
+
+// GET: Recuperar el perfil activo para el Dashboard
+export const obtenerPerfil = async (): Promise<any> => {
+    const db = getDB();
     
-    // Guardamos los datos en la memoria de Node
-    perfilUsuario = { nickname, age_rank, id_focus };
+    // Obtenemos la única fila existente
+    const query = `SELECT * FROM Perfil LIMIT 1`;
+    const perfil = await db.get(query);
     
-    console.log("Perfil guardado en Express:", perfilUsuario);
-    res.status(201).json({ mensaje: "Perfil creado", perfil: perfilUsuario });
-});
-
-// Ruta para OBTENER el perfil (por si recargan la página)
-app.get('/api/perfil', (req, res) => {
-    if (!perfilUsuario) {
-        return res.status(404).json({ error: "No hay perfil registrado" });
-    }
-    res.json(perfilUsuario);
-});
+    return perfil; 
+};

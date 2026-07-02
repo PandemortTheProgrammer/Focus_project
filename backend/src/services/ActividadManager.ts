@@ -1,41 +1,52 @@
 // backend/src/services/ActividadManager.ts
+import { getDB } from '../config/db';
 import Actividad from '../models/Actividad';
-import Tipo_actividad from '../models/Tipo_actividad';
+// ... tu arreglo de catalogoTipos se mantiene igual por ahora ...
 
-export const catalogoTipos: Tipo_actividad[] = [
-    new Tipo_actividad(1, "Estudiar", 5),
-    new Tipo_actividad(2, "Dormir", 5),
-    new Tipo_actividad(3, "Hacer Ejercicio", 4),
-    new Tipo_actividad(4, "Leer", 4),
-    new Tipo_actividad(5, "Trabajar", 3),
-    new Tipo_actividad(6, "Jugar algún deporte", 2),
-    new Tipo_actividad(7, "Ver series o películas", 2),
-    new Tipo_actividad(8, "Escuchar música", 2),
-    new Tipo_actividad(9, "Navegar en redes sociales", 1),
-];
 
-// Usamos 'let' en lugar de 'const' para poder sobrescribir el arreglo al eliminar
-export let listaActividades: Actividad[] = [];
 
-export const registrarActividad = (datos: any): Actividad => {
-    // Generamos un ID simple sumando 1 a la longitud actual
-    const nuevoId = listaActividades.length > 0 
-        ? Math.max(...listaActividades.map(a => a.id_actividad)) + 1 
-        : 1;
-
-    const nuevaActividad = new Actividad(
-        nuevoId,
+// backend/src/services/ActividadManager.ts
+export const obtenerTiposActividad = async (): Promise<any[]> => {
+    const db = getDB();
+    // Recuerda que en tu db.ts las columnas se llaman Id_tipo y Nombre_activ
+    return await db.all("SELECT * FROM Tipo_actividad"); 
+};
+// 1. POST: Guardar en la Base de Datos Real
+export const registrarActividad = async (datos: any): Promise<void> => {
+    const db = getDB();
+    
+    // RAW SQL: Comando de inserción
+    const query = `
+        INSERT INTO Actividad (id_tipo, hora_inicio, durac_min, desc_activ)
+        VALUES (?, ?, ?, ?)
+    `;
+    
+    // Los signos '?' evitan inyecciones SQL. Pasamos los valores en un arreglo.
+    await db.run(query, [
         parseInt(datos.id_tipo),
         datos.hora_inicio,
         datos.duracion_minutos,
         datos.descripcion_actividad
-    );
+    ]);
     
-    listaActividades.push(nuevaActividad);
-    return nuevaActividad;
+    console.log("Actividad guardada en SQLite");
 };
 
-export const eliminarActividad = (id: number): void => {
-    // Filtramos el arreglo para dejar todas las actividades MENOS la que coincida con el ID
-    listaActividades = listaActividades.filter(act => act.id_actividad !== id);
+// 2. GET: Obtener desde la Base de Datos Real
+export const obtenerActividades = async (): Promise<any[]> => {
+    const db = getDB();
+    
+    // RAW SQL: Comando de lectura
+    const query = `SELECT * FROM Actividad ORDER BY id_actividad DESC`;
+    
+    const filas = await db.all(query);
+    return filas; // Retorna los datos directamente a la ruta
+};
+
+// 3. DELETE: Eliminar de la Base de Datos Real
+export const eliminarActividad = async (id: number): Promise<void> => {
+    const db = getDB();
+    
+    const query = `DELETE FROM Actividad WHERE id_actividad = ?`;
+    await db.run(query, [id]);
 };

@@ -1,22 +1,46 @@
+// backend/src/routes/perfilRoutes.ts
 import { Router } from 'express';
-import Perfil from '../models/Perfil';
+import { guardarPerfil, obtenerPerfil } from '../services/PerfilManager';
+// backend/src/routes/perfilRoutes.ts
+import { obtenerEnfoques } from '../services/PerfilManager';
 
 const router = Router();
 
-let perfilUsuario: Perfil;
 
-// POST: Guarda el perfil 
-router.post('/', (req, res) => {
-    perfilUsuario = req.body;
-    res.status(201).json({ mensaje: "Perfil guardado", perfil: perfilUsuario });
+// ...
+
+router.get('/enfoques', async (req, res) => {
+    try {
+        const enfoques = await obtenerEnfoques();
+        res.json(enfoques);
+    } catch (error) {
+        res.status(500).json({ error: "Error al cargar enfoques" });
+    }
 });
 
-// GET: Devuelve el perfil guardado
-router.get('/', (req, res) => {
-    if (!perfilUsuario) {
-        return res.status(404).json({ error: "No hay perfil registrado aún" });
+// POST: http://localhost:3000/api/perfil
+router.post('/', async (req, res) => {
+    try {
+        await guardarPerfil(req.body);
+        res.status(201).json({ mensaje: "Perfil almacenado físicamente en la BD" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al escribir en la base de datos" });
     }
-    res.json(perfilUsuario);
+});
+
+// GET: http://localhost:3000/api/perfil
+router.get('/', async (req, res) => {
+    try {
+        const perfil = await obtenerPerfil();
+        if (!perfil) {
+            return res.status(404).json({ error: "No se encontró ningún perfil en la BD" });
+        }
+        res.json(perfil);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al leer la base de datos" });
+    }
 });
 
 export default router;

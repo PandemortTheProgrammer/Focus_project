@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+// Mapeo de colores adaptado a los nombres que pusiste en tu backend
 const tagColor: Record<string, string> = {
   "Estudio": '#1a7a6e',
-  "Trabajar": '#1a7a6e',
+  "Trabajar": '#1a7a6e', // Color similar para trabajar
   "Hacer Ejercicio": '#d946ef',
   "Ejercicio": '#d946ef',
   "Leer": '#f97316',
@@ -15,13 +16,16 @@ const tagColor: Record<string, string> = {
 export default function ActivitiesMain() {
   const navigate = useNavigate()
   
+  // 1. Estados para guardar lo que viene de Express
   const [actividades, setActividades] = useState<any[]>([])
   const [tipos, setTipos] = useState<any[]>([])
   const [cargando, setCargando] = useState(true)
 
+  // 2. Traer las actividades y el catálogo de tipos al cargar la pantalla
   useEffect(() => {
     const cargarDatos = async () => {
       try {
+        // Hacemos ambas peticiones al mismo tiempo para mayor velocidad
         const [resActividades, resTipos] = await Promise.all([
           fetch('http://localhost:3000/api/actividades'),
           fetch('http://localhost:3000/api/actividades/tipos-actividad')
@@ -40,17 +44,18 @@ export default function ActivitiesMain() {
     cargarDatos();
   }, []);
 
-  const handleEliminar = async (id_borrar: number) => {
+  // 3. Función para eliminar conectada al backend
+  const handleEliminar = async (id_actividad: number) => {
     if (!window.confirm("¿Seguro que deseas eliminar esta actividad?")) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/api/actividades/${id_borrar}`, {
+      const res = await fetch(`http://localhost:3000/api/actividades/${id_actividad}`, {
         method: 'DELETE'
       });
 
       if (res.ok) {
-        // ACTUALIZADO: Comparamos contra Id_actividad (mayúscula) de SQLite
-        setActividades(actividades.filter(act => act.Id_actividad !== id_borrar));
+        // Borramos visualmente la actividad sin recargar la página
+        setActividades(actividades.filter(act => act.id_actividad !== id_actividad));
       }
     } catch (error) {
       alert("Error al intentar eliminar la actividad.");
@@ -60,13 +65,13 @@ export default function ActivitiesMain() {
   return (
     <div className="relative w-full h-screen overflow-hidden flex flex-col" style={{ backgroundColor: '#4a5e5e' }}>
 
-      {/* Círculos decorativos */}
+      {/* Círculos decorativos (Sin cambios) */}
       <div className="absolute w-64 h-64 rounded-full blur-3xl opacity-70" style={{ backgroundColor: '#b8f0a0', top: '-2rem', left: '2rem' }} />
       <div className="absolute w-56 h-56 rounded-full blur-3xl opacity-70" style={{ backgroundColor: '#5ecfb8', top: '-1rem', right: '3rem' }} />
       <div className="absolute w-60 h-60 rounded-full blur-3xl opacity-80" style={{ backgroundColor: '#d946ef', bottom: '0rem', left: '1rem' }} />
       <div className="absolute w-32 h-32 rounded-full blur-2xl opacity-70" style={{ backgroundColor: '#86efac', bottom: '2rem', right: '8rem' }} />
 
-      {/* Header */}
+      {/* Header (Sin cambios visuales) */}
       <div className="relative z-10 flex items-center justify-between px-8 pt-8 pb-4">
         <button
           onClick={() => navigate('/dashboard')}
@@ -95,14 +100,13 @@ export default function ActivitiesMain() {
           </p>
         ) : (
           actividades.map((actividad) => {
-            // ACTUALIZADO: Buscamos usando Id_tipo (mayúscula) tal como viene de SQLite
-            const tipoEncontrado = tipos.find(t => t.id_tipo === actividad.Id_tipo);
+            // 4. Buscamos el nombre del tipo basándonos en el id_tipo que guardó el backend
+            const tipoEncontrado = tipos.find(t => t.id_tipo === actividad.id_tipo);
             const nombreTipo = tipoEncontrado ? tipoEncontrado.nombre_tipo : 'Actividad';
 
             return (
-              // ACTUALIZADO: Usamos Id_actividad (mayúscula) como Key
               <div
-                key={actividad.Id_actividad}
+                key={actividad.id_actividad}
                 className="flex items-center justify-between px-6 py-4 rounded-2xl"
                 style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
 
@@ -112,8 +116,7 @@ export default function ActivitiesMain() {
                     style={{ backgroundColor: tagColor[nombreTipo] ?? '#888' }} />
                   <div>
                     <p className="text-white font-bold text-lg">{nombreTipo}</p>
-                    {/* ACTUALIZADO: SQLite envía desc_activ */}
-                    <p className="text-white opacity-60 text-sm">{actividad.desc_activ}</p>
+                    <p className="text-white opacity-60 text-sm">{actividad.descripcion_actividad}</p>
                   </div>
                 </div>
 
@@ -125,20 +128,19 @@ export default function ActivitiesMain() {
                   </div>
                   <div className="text-center">
                     <p className="opacity-50">Duración</p>
-                    {/* ACTUALIZADO: SQLite envía durac_min */}
-                    <p className="font-semibold">{actividad.durac_min} min</p>
+                    <p className="font-semibold">{actividad.duracion_minutos} min</p>
                   </div>
 
                   {/* Botones editar/eliminar */}
                   <div className="flex gap-2">
                     <button
-                      onClick={() => navigate(`/actividades/editar/${actividad.Id_actividad}`)}
+                      onClick={() => navigate(`/actividades/editar/${actividad.id_actividad}`)}
                       className="px-4 py-2 rounded-full text-white text-xs font-semibold transition hover:opacity-80"
                       style={{ backgroundColor: '#1a7a6e' }}>
                       Editar
                     </button>
                     <button
-                      onClick={() => handleEliminar(actividad.Id_actividad)}
+                      onClick={() => handleEliminar(actividad.id_actividad)}
                       className="px-4 py-2 rounded-full text-white text-xs font-semibold transition hover:opacity-80"
                       style={{ backgroundColor: '#7a1a1a' }}>
                       Eliminar
