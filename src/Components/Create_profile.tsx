@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import type Perfil from '../models/Perfil';
 
 // Definimos que este componente recibe la función desde App.tsx
 interface CreateProfileProps {
-  setPerfilGlobal: (perfil: any) => void;
+  setPerfilGlobal: (perfil: Perfil) => void;
 }
 
 export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
@@ -13,6 +14,7 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
   const [nickname, setNickname] = useState('');
   const [ageRank, setAgeRank] = useState('');
   const [focus, setFocus] = useState('');
+  const [idperfil] = useState(1);
 
   const handleSave = async () => {
     if (!nickname || !ageRank || !focus) {
@@ -21,6 +23,7 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
     }
 
     const nuevoPerfil = {
+      id_perfil: idperfil,
       nickname: nickname,
       age_rank: ageRank,
       id_focus: parseInt(focus)
@@ -43,6 +46,7 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
       }
     } catch (error) {
       alert("Error al conectar con el servidor.");
+      console.log(error);
     }
   };
 
@@ -111,9 +115,11 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
             className="w-full px-5 py-3 rounded-full text-white text-lg outline-none outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30 focus:border-blue-500"
             style={{ backgroundColor: '#2a2a2a' }}>
             <option value="" disabled>Selecciona tu enfoque</option>
-            <option value="Enfoque1">Enfoque1</option>
-            <option value="Enfoque2">Enfoque2</option>
-            <option value="Enfoque3">Enfoque3</option>
+            <option value="Enfoque1">Mejorar Productividad</option>
+            <option value="Enfoque2">Mejorar habitos de manejo de tiempo</option>
+            <option value="Enfoque3">Mejorar puntualidad</option>
+            <option value="Enfoque3">Crecimiento personal</option>
+            
           </select>
         </div>
 

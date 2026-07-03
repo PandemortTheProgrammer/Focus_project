@@ -1,23 +1,27 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import FocusLogo from '../assets/Images/Focus_logo.png'
+import type Tipo_actividad from '../models/Tipo_actividad'
+import type Perfil from '../models/Perfil'
 
-export default function ActivitiesAdd() {
+interface DashboardProps {
+  perfilGlobal: Perfil;
+}
+
+export default function ActivitiesAdd({ perfilGlobal }: DashboardProps) {
   const navigate = useNavigate()
-  
-  // Estado para guardar el catálogo que viene de Express
-  const [tipos, setTipos] = useState<any[]>([])
-  
-  // Estados de tu formulario
+  const [tipos, setTipos] = useState<Tipo_actividad[]>([])
   const [tag, setTag] = useState('')
   const [hora, setHora] = useState('')
   const [duracion, setDuracion] = useState(0)
   const [descripcion, setDescripcion] = useState('')
+ const nickname = perfilGlobal?.nickname || 'Desconocido'
+  const focus = perfilGlobal?.id_focus || '--'
 
-  // 1. Cargar el catálogo dinámico al abrir la pantalla
+
   useEffect(() => {
     const cargarTipos = async () => {
       try {
-        // NOTA LA URL CORREGIDA AQUÍ
         const res = await fetch('http://localhost:3000/api/actividades/tipos-actividad')
         if (res.ok) {
           setTipos(await res.json())
@@ -39,31 +43,24 @@ export default function ActivitiesAdd() {
     return `${h}:${m.toString().padStart(2, '0')}`
   }
 
-  // 2. Guardar los datos en el Backend
   const handleSave = async () => {
     if (!tag || !hora || duracion === 0) {
       alert('Por favor completa todos los campos (incluyendo el tiempo)')
       return
     }
-
-    // Armamos el objeto con los nombres exactos que espera tu backend
     const nuevaActividad = {
       id_tipo: tag,
       hora_inicio: hora,
       duracion_minutos: duracion,
       descripcion_actividad: descripcion
     }
-
     try {
-      // POST a la ruta raíz de actividades
       const res = await fetch('http://localhost:3000/api/actividades', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(nuevaActividad)
       })
-
       if (res.ok) {
-        // Si todo sale bien, regresamos a la pantalla principal
         navigate('/actividades')
       } else {
         alert('Hubo un problema al guardar en Express.')
@@ -75,7 +72,7 @@ export default function ActivitiesAdd() {
   }
 
   return (
-    <div className="relative w-full h-screen overflow-hidden flex flex-col items-center justify-center"
+    <div className="relative w-full h-screen overflow-hidden flex flex-col"
       style={{ backgroundColor: '#4a5e5e' }}>
 
       {/* Círculos decorativos */}
@@ -90,41 +87,50 @@ export default function ActivitiesAdd() {
       <div className="absolute w-32 h-32 rounded-full blur-2xl opacity-70"
         style={{ backgroundColor: '#86efac', bottom: '2rem', right: '8rem' }} />
 
-      {/* Título */}
-      <h1 className="relative z-10 text-5xl font-bold text-center mb-8"
-        style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
-        Registrar una actividad realizada
-      </h1>
+       {/* Header */}
+      <div className="relative z-10 flex items-center justify-between px-8 py-4"
+        style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}>
+
+        {/* Logo */}
+        <img src={FocusLogo} alt="Focus Logo" className="h-10 object-contain" />
+
+        {/* Info del usuario */}
+        <div className="flex items-center gap-4">
+          {/* Avatar con inicial */}
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg"
+            style={{ backgroundColor: '#1a7a6e' }}>
+            {nickname.charAt(0).toUpperCase()}
+          </div>
+          {/* Datos del perfil */}
+          <div className="text-right">
+            <p className="text-white font-semibold text-sm">{nickname}</p>
+            <p className="text-white opacity-50 text-xs">Enfoque: {focus}</p>
+          </div>
+        </div>
+
+      </div>
 
       {/* Contenido principal */}
-      <div className="relative z-10 flex gap-6 px-8 w-full max-w-4xl">
+      <div className="relative z-10 flex gap-6 px-8 py-8 w-full max-w-4xl mx-auto flex-1 items-center">
 
         {/* Columna izquierda */}
         <div className="flex flex-col gap-4 flex-1">
 
-          
-          <p className="text-white text-sm px-2 opacity-70">
-              Tipo de actividad
-            </p>
+          <p className="text-white text-sm px-2 opacity-70">Tipo de actividad</p>
           <select
             value={tag}
             onChange={(e) => setTag(e.target.value)}
             className="w-full px-5 py-3 rounded-full text-white text-lg outline-none"
             style={{ backgroundColor: '#1a1a1a' }}>
             <option value="" disabled>Selecciona un tipo de actividad</option>
-            
             {tipos.map((tipo) => (
               <option key={tipo.id_tipo} value={tipo.id_tipo}>
                 {tipo.nombre_tipo}
               </option>
             ))}
-
           </select>
 
-          {/* Fecha y hora */}
-          <p className="text-white text-sm px-2 opacity-70">
-              Hora de inicio de la actividad
-          </p>
+          <p className="text-white text-sm px-2 opacity-70">Hora de inicio de la actividad</p>
           <input
             type="time"
             value={hora}
@@ -133,20 +139,15 @@ export default function ActivitiesAdd() {
             style={{ backgroundColor: '#1a1a1a', colorScheme: 'dark' }}
           />
 
-          {/* Duración */}
           <div className="flex flex-col gap-2">
-            <p className="text-white text-sm px-2 opacity-70">
-              Tiempo utilizado (minutos)
-            </p>
+            <p className="text-white text-sm px-2 opacity-70">Tiempo utilizado (minutos)</p>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => ajustarDuracion(-10)}
+              <button onClick={() => ajustarDuracion(-10)}
                 className="px-3 py-2 rounded-full text-white text-sm font-bold transition hover:opacity-80"
                 style={{ backgroundColor: '#d946ef' }}>
                 -10
               </button>
-              <button
-                onClick={() => ajustarDuracion(-5)}
+              <button onClick={() => ajustarDuracion(-5)}
                 className="px-3 py-2 rounded-full text-white text-sm font-bold transition hover:opacity-80"
                 style={{ backgroundColor: '#d946ef' }}>
                 -5
@@ -154,20 +155,17 @@ export default function ActivitiesAdd() {
               <span className="text-white font-bold text-lg px-2">
                 {formatearDuracion(duracion)} hrs
               </span>
-              <button
-                onClick={() => ajustarDuracion(10)}
+              <button onClick={() => ajustarDuracion(10)}
                 className="px-3 py-2 rounded-full text-white text-sm font-bold transition hover:opacity-80"
                 style={{ backgroundColor: '#1a1a1a' }}>
                 +10
               </button>
-              <button
-                onClick={() => ajustarDuracion(15)}
+              <button onClick={() => ajustarDuracion(15)}
                 className="px-3 py-2 rounded-full text-white text-sm font-bold transition hover:opacity-80"
                 style={{ backgroundColor: '#1a1a1a' }}>
                 +15
               </button>
-              <button
-                onClick={() => ajustarDuracion(30)}
+              <button onClick={() => ajustarDuracion(30)}
                 className="px-3 py-2 rounded-full text-white text-sm font-bold transition hover:opacity-80"
                 style={{ backgroundColor: '#1a1a1a' }}>
                 +30
@@ -178,10 +176,8 @@ export default function ActivitiesAdd() {
 
         {/* Columna derecha */}
         <div className="flex flex-col gap-4 flex-1">
-          <p className="text-white text-sm px-2 opacity-70">
-              Descripción de la actividad
-            </p>
-          {/* Descripción */}
+
+          <p className="text-white text-sm px-2 opacity-70">Descripción de la actividad</p>
           <textarea
             value={descripcion}
             onChange={(e) => setDescripcion(e.target.value)}
@@ -190,7 +186,6 @@ export default function ActivitiesAdd() {
             style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
           />
 
-          {/* Botones */}
           <div className="flex gap-4 justify-end">
             <button
               onClick={handleSave}

@@ -17,7 +17,7 @@ export const catalogoTipos: Tipo_actividad[] = [
 // Usamos 'let' en lugar de 'const' para poder sobrescribir el arreglo al eliminar
 export let listaActividades: Actividad[] = [];
 
-export const registrarActividad = (datos: any): Actividad => {
+export const registrarActividad = (datos: Actividad): Actividad => {
     // Generamos un ID simple sumando 1 a la longitud actual
     const nuevoId = listaActividades.length > 0 
         ? Math.max(...listaActividades.map(a => a.id_actividad)) + 1 
@@ -25,7 +25,7 @@ export const registrarActividad = (datos: any): Actividad => {
 
     const nuevaActividad = new Actividad(
         nuevoId,
-        parseInt(datos.id_tipo),
+        datos.id_tipo,
         datos.hora_inicio,
         datos.duracion_minutos,
         datos.descripcion_actividad
