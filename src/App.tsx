@@ -11,12 +11,14 @@ import ActivitiesMain from './Components/Activities_main'
 import ActivitiesAdd from './Components/Activities_add'
 import ActivitiesEdit from './Components/Activities_edit'
 import WeeklyProgress from './Components/Weekly_progress'
-import WeeklySummary from './Components/Weekly_Summary'
+import WeeklySummaries from './Components/Weekly_Summaries'
 import Download from './Components/download'
-import type Perfil from './models/Perfil'
+import Perfil from './models/Perfil'
+import WeeklySummary from './Components/Weekly_summary_details'
 export default function App() {
     // Estado global para el perfil
-  const [perfilGlobal, setPerfilGlobal] = useState<Perfil | null>(null);
+  const perfilInicial: Perfil = new Perfil(1, '', '', 0)
+  const [perfilGlobal, setPerfilGlobal] = useState<Perfil>(perfilInicial);
 
   // Opcional: Si el usuario recarga la página, intentamos recuperar el perfil de Express
   useEffect(() => {
@@ -28,7 +30,7 @@ export default function App() {
           setPerfilGlobal(datos);
         }
       } catch (error) {
-        console.log("No se pudo recuperar el perfil al inicio.");
+        console.log("No se pudo recuperar el perfil al inicio.", error);
       }
     };
     recuperarPerfil();
@@ -50,11 +52,12 @@ export default function App() {
                 path="/dashboard" 
                 element={<Dashboard perfilGlobal={perfilGlobal} />} 
             />
-            <Route path="/actividades" element={<ActivitiesMain />} />
-            <Route path="/actividades/agregar" element={<ActivitiesAdd />} />
-            <Route path="/actividades/editar/:id" element={<ActivitiesEdit />} />
-            <Route path="/progreso-semanal" element={<WeeklyProgress />} />
-            <Route path="/resumen-semanal" element={<WeeklySummary />} />
+            <Route path="/actividades" element={<ActivitiesMain perfilGlobal={perfilGlobal}/>} />
+            <Route path="/actividades/agregar" element={<ActivitiesAdd perfilGlobal={perfilGlobal} />} />
+            <Route path="/actividades/editar/:id" element={<ActivitiesEdit perfilGlobal={perfilGlobal}/>} />
+            <Route path="/progreso-semanal" element={<WeeklyProgress perfilGlobal={perfilGlobal} />} />
+            <Route path="/resumenes-semanales" element={<WeeklySummaries />} />
+            <Route path="/resumen-semanal/:id" element={<WeeklySummary />} />
             <Route path="/Download" element={<Download />}/>
         </Routes>
     )
