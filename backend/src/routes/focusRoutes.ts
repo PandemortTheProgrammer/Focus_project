@@ -1,6 +1,6 @@
 // backend/src/routes/focusRoutes.ts
 import { Router } from 'express';
-import { catalogoTipos, listaActividades, registrarActividad, eliminarActividad } from '../services/ActividadManager';
+import { catalogoTipos, listaActividades, registrarActividad, eliminarActividad, editarActividad, actividadesSemana} from '../services/ActividadManager';
 
 const router = Router();
 
@@ -25,6 +25,22 @@ router.delete('/:id', (req, res) => {
     const idBorrar = parseInt(req.params.id);
     eliminarActividad(idBorrar);
     res.json({ mensaje: `Actividad ${idBorrar} eliminada con éxito` });
+});
+
+// PUT: Editar actividad por ID
+router.put('/:id', (req, res) => {
+    const id = parseInt(req.params.id);
+    const actualizada = editarActividad(id, req.body);
+    if (!actualizada) {
+        res.status(404).json({ mensaje: `Actividad ${id} no encontrada` });
+        return;
+    }
+    res.json({ mensaje: "Actividad actualizada", actividad: actualizada });
+});
+
+// GET: Obtener actividades agrupadas por día de los últimos 7 días
+router.get('/semana', (req, res) => {
+    res.json(actividadesSemana());
 });
 
 export default router;

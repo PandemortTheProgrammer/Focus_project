@@ -11,9 +11,10 @@ import ActivitiesMain from './Components/Activities_main'
 import ActivitiesAdd from './Components/Activities_add'
 import ActivitiesEdit from './Components/Activities_edit'
 import WeeklyProgress from './Components/Weekly_progress'
-import WeeklySummary from './Components/Weekly_Summary'
+import WeeklySummaries from './Components/Weekly_Summaries'
 import Download from './Components/download'
 import Perfil from './models/Perfil'
+import WeeklySummary from './Components/Weekly_summary_details'
 export default function App() {
     // Estado global para el perfil
   const perfilInicial: Perfil = new Perfil(1, '', '', 0)
@@ -53,9 +54,10 @@ export default function App() {
             />
             <Route path="/actividades" element={<ActivitiesMain perfilGlobal={perfilGlobal}/>} />
             <Route path="/actividades/agregar" element={<ActivitiesAdd perfilGlobal={perfilGlobal} />} />
-            <Route path="/actividades/editar/:id" element={<ActivitiesEdit />} />
-            <Route path="/progreso-semanal" element={<WeeklyProgress />} />
-            <Route path="/resumen-semanal" element={<WeeklySummary />} />
+            <Route path="/actividades/editar/:id" element={<ActivitiesEdit perfilGlobal={perfilGlobal}/>} />
+            <Route path="/progreso-semanal" element={<WeeklyProgress perfilGlobal={perfilGlobal} />} />
+            <Route path="/resumenes-semanales" element={<WeeklySummaries />} />
+            <Route path="/resumen-semanal/:id" element={<WeeklySummary />} />
             <Route path="/Download" element={<Download />}/>
         </Routes>
     )

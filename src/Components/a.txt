@@ -1,0 +1,22 @@
+{/* Header */}
+      <div className="relative z-10 flex items-center justify-between px-8 py-4"
+        style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}>
+
+        {/* Logo */}
+        <img src={FocusLogo} alt="Focus Logo" className="h-10 object-contain" />
+
+        {/* Info del usuario */}
+        <div className="flex items-center gap-4">
+          {/* Avatar con inicial */}
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg"
+            style={{ backgroundColor: '#1a7a6e' }}>
+            {nickname.charAt(0).toUpperCase()}
+          </div>
+          {/* Datos del perfil */}
+          <div className="text-right">
+            <p className="text-white font-semibold text-sm">{nickname}</p>
+            <p className="text-white opacity-50 text-xs">Enfoque: {focus}</p>
+          </div>
+        </div>
+
+      </div>

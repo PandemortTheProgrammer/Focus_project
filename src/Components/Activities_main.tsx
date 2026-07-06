@@ -8,13 +8,15 @@ import type Perfil from '../models/Perfil'
 // Mapeo de colores adaptado a los nombres que pusiste en tu backend
 const tagColor: Record<string, string> = {
   "Estudio": '#1a7a6e',
-  "Trabajar": '#1a7a6e', // Color similar para trabajar
+  "Dormir": '#135850', // Color similar para trabajar
   "Hacer Ejercicio": '#d946ef',
   "Ejercicio": '#d946ef',
   "Leer": '#f97316',
-  "Lectura": '#f97316',
-  "Dormir": '#3b82f6',
-  "Ocio": '#eab308'
+  "Trabajar": '#3b82f6',
+  "Jugar algún deporte": '#eab308',
+  "Ver series o películas": '#ff987a',
+  "Escuchar música" : '#8b7fef',
+  "Navegar en redes sociales": '#c894fd'
 }
 interface DashboardProps {
   perfilGlobal: Perfil;

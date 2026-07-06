@@ -39,3 +39,38 @@ export const eliminarActividad = (id: number): void => {
     // Filtramos el arreglo para dejar todas las actividades MENOS la que coincida con el ID
     listaActividades = listaActividades.filter(act => act.id_actividad !== id);
 };
+
+export const editarActividad = (id: number, datos: Partial<Actividad>): Actividad | null => {
+    const index = listaActividades.findIndex(act => act.id_actividad === id);
+    if (index === -1) return null;
+
+    listaActividades[index] = {
+        ...listaActividades[index],
+        ...datos,
+        id_actividad: id // el ID nunca cambia
+    };
+
+    return listaActividades[index];
+};
+
+export const actividadesSemana = (): Record<string, Actividad[]> => {
+    const hoy = new Date();
+    const hace7dias = new Date();
+    hace7dias.setDate(hoy.getDate() - 6); // últimos 7 días incluyendo hoy
+
+    // Filtra solo las actividades de los últimos 7 días
+    const actividadesFiltradas = listaActividades.filter(act => {
+        const fechaAct = new Date(act.fecha);
+        return fechaAct >= hace7dias && fechaAct <= hoy;
+    });
+
+    // Agrupa por fecha (string "YYYY-MM-DD")
+    const agrupadas: Record<string, Actividad[]> = {};
+    actividadesFiltradas.forEach(act => {
+        const clave = new Date(act.fecha).toISOString().split('T')[0];
+        if (!agrupadas[clave]) agrupadas[clave] = [];
+        agrupadas[clave].push(act);
+    });
+
+    return agrupadas;
+};

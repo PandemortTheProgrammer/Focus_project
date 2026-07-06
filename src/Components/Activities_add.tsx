@@ -11,7 +11,7 @@ interface DashboardProps {
 export default function ActivitiesAdd({ perfilGlobal }: DashboardProps) {
   const navigate = useNavigate()
   const [tipos, setTipos] = useState<Tipo_actividad[]>([])
-  const [tag, setTag] = useState('')
+  const [tag, setTag] = useState(0)
   const [hora, setHora] = useState('')
   const [duracion, setDuracion] = useState(0)
   const [descripcion, setDescripcion] = useState('')
@@ -93,7 +93,11 @@ export default function ActivitiesAdd({ perfilGlobal }: DashboardProps) {
 
         {/* Logo */}
         <img src={FocusLogo} alt="Focus Logo" className="h-10 object-contain" />
-
+        <div className="flex items-center gap-4">
+    <h1 className="text-5xl font-bold" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
+      Agregar actividad
+    </h1>
+  </div>
         {/* Info del usuario */}
         <div className="flex items-center gap-4">
           {/* Avatar con inicial */}
@@ -119,7 +123,7 @@ export default function ActivitiesAdd({ perfilGlobal }: DashboardProps) {
           <p className="text-white text-sm px-2 opacity-70">Tipo de actividad</p>
           <select
             value={tag}
-            onChange={(e) => setTag(e.target.value)}
+            onChange={(e) => setTag(Number(e.target.value))}
             className="w-full px-5 py-3 rounded-full text-white text-lg outline-none"
             style={{ backgroundColor: '#1a1a1a' }}>
             <option value="" disabled>Selecciona un tipo de actividad</option>

@@ -81,7 +81,13 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
             <img src={WeeklyProgress} alt="Weekly Progress" className="w-16 h-16 object-contain" />
             <p className="text-white text-sm font-semibold">Ver tu progreso semanal</p>
           </div>
-
+          <div
+            onClick={() => navigate('/resumenes-semanales')}
+            className="flex flex-col items-center gap-2 p-4 rounded-xl cursor-pointer transition duration-200 hover:opacity-80 hover:scale-105"
+            style={{ backgroundColor: '#2a2a2a' }}>
+            <img src={WeeklyProgress} alt="Weekly Progress" className="w-16 h-16 object-contain" />
+            <p className="text-white text-sm font-semibold">Ver tus reportes semanales</p>
+          </div>
           <div
             onClick={() => navigate('/editar-perfil')}
             className="flex flex-col items-center gap-2 p-4 rounded-xl cursor-pointer transition duration-200 hover:opacity-80 hover:scale-105"
