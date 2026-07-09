@@ -11,10 +11,10 @@ import ActivitiesMain from './Components/Activities_main'
 import ActivitiesAdd from './Components/Activities_add'
 import ActivitiesEdit from './Components/Activities_edit'
 import WeeklyProgress from './Components/Weekly_progress'
-import WeeklySummaries from './Components/Weekly_Summaries'
 import Download from './Components/download'
 import Perfil from './models/Perfil'
-import WeeklySummary from './Components/Weekly_summary_details'
+import WeeklySummaries from './Components/Weekly_Summaries'
+import WeeklySummary from './Components/Weekly_Summaries_details'
 export default function App() {
     // Estado global para el perfil
   const perfilInicial: Perfil = new Perfil(1, '', '', 0)
@@ -44,9 +44,9 @@ export default function App() {
             <Route path="/" element={<Mainpage />} />
             <Route 
                 path="/crear-perfil" 
-                element={<CreateProfile setPerfilGlobal={setPerfilGlobal} />} 
+                element={<CreateProfile setPerfilGlobal={(perfil) => setPerfilGlobal(new Perfil(perfil.id_focus, perfil.nickname, perfil.age_rank, 0))} />} 
             />
-            <Route path="/editar-perfil" element={<EditProfile />} />
+            <Route path="/editar-perfil" element={<EditProfile perfilGlobal={perfilGlobal} setPerfilGlobal={setPerfilGlobal} />} />
             <Route path="/subir-perfil" element={<UploadProfile />} />
             <Route 
                 path="/dashboard" 

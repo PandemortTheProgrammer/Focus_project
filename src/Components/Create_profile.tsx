@@ -1,25 +1,17 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-// Definimos que este componente recibe la función desde App.tsx
 interface CreateProfileProps {
-  // REVISIÓN REQUERIDA: Cambiar 'any' por la clase Perfil cuando la importen
-  setPerfilGlobal: (perfil: any) => void;
+  setPerfilGlobal: (perfil: { nickname: string; age_rank: string; id_focus: number }) => void;
 }
 
 export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
   const navigate = useNavigate();
-  
-  // Estados para tus inputs
   const [nickname, setNickname] = useState('');
   const [ageRank, setAgeRank] = useState('');
   const [focus, setFocus] = useState('');
+  const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<{Id_enfoque: number, nombre_enf: string}[]>([]);
 
-  // Nuevo estado para el catálogo dinámico
-  // REVISIÓN REQUERIDA: Cambiar 'any[]' por 'Enfoque[]' importando tu clase Enfoque
-  const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<any[]>([]);
-
-  // 1. Cargar enfoques al abrir la pantalla
   useEffect(() => {
     const cargarEnfoques = async () => {
       try {
@@ -27,8 +19,9 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
         if (res.ok) {
           setEnfoquesCatalogo(await res.json());
         }
-      } catch (error) {
-        console.error('Error al cargar enfoques:', error);
+      } catch (error: unknown) {
+        const mensaje = error instanceof Error ? error.message : "Error desconocido";
+        console.error('Error al cargar enfoques:', mensaje);
       }
     };
     cargarEnfoques();
@@ -47,7 +40,6 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
     };
 
     try {
-      // 2. Enviamos a Express
       const respuesta = await fetch('http://localhost:3000/api/perfil', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -55,16 +47,14 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
       });
 
       if (respuesta.ok) {
-        // 3. Si Express lo guardó, actualizamos App.tsx
         setPerfilGlobal(nuevoPerfil);
-        
-        // 4. Nos movemos al Dashboard
         navigate('/dashboard');
       } else {
         alert("Hubo un problema al guardar el perfil en el servidor.");
       }
-    } catch (error) {
-      alert("Error al conectar con el servidor.");
+    } catch (error: unknown) {
+      const mensaje = error instanceof Error ? error.message : "Error desconocido";
+      alert(`Error al conectar con el servidor: ${mensaje}`);
     }
   };
 
@@ -102,7 +92,7 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
             placeholder="Escribe tu Nickname"
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
-            className="w-full px-5 py-3 rounded-full text-white text-lg outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30 focus:border-blue-500"
+            className="w-full px-5 py-3 rounded-full text-white text-lg outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
             style={{ backgroundColor: '#2a2a2a' }}
           />
         </div>
@@ -114,13 +104,12 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
           <select
             value={ageRank}
             onChange={(e) => setAgeRank(e.target.value)}
-            className="w-full px-5 py-3 rounded-full text-white text-lg outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30 focus:border-blue-500"
+            className="w-full px-5 py-3 rounded-full text-white text-lg outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
             style={{ backgroundColor: '#2a2a2a' }}>
             <option value="" disabled>Selecciona tu rango</option>
             <option value="15-17">15-17</option>
             <option value="18-21">18-21</option>
-            {/* Corrección del value para 22-30 */}
-            <option value="22-30">22-30</option> 
+            <option value="22-30">22-30</option>
           </select>
         </div>
 
@@ -131,17 +120,14 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
           <select
             value={focus}
             onChange={(e) => setFocus(e.target.value)}
-            className="w-full px-5 py-3 rounded-full text-white text-lg outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30 focus:border-blue-500"
+            className="w-full px-5 py-3 rounded-full text-white text-lg outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
             style={{ backgroundColor: '#2a2a2a' }}>
             <option value="" disabled>Selecciona tu enfoque</option>
-            
-            {/* Renderizado dinámico desde SQLite */}
             {enfoquesCatalogo.map((enf) => (
               <option key={enf.Id_enfoque} value={enf.Id_enfoque}>
                 {enf.nombre_enf}
               </option>
             ))}
-
           </select>
         </div>
 
@@ -149,13 +135,13 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
         <div className="flex gap-4 mt-2 justify-center">
           <button
             onClick={() => navigate('/')}
-            className="px-10 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80 hover:scale-105 hover:shadow-lg"
+            className="px-10 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80 hover:scale-105"
             style={{ backgroundColor: '#1a1a1a' }}>
             Volver
           </button>
           <button
             onClick={handleSave}
-            className="px-10 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80 hover:scale-105 hover:shadow-lg"
+            className="px-10 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80 hover:scale-105"
             style={{ backgroundColor: '#1a1a1a' }}>
             Guardar
           </button>

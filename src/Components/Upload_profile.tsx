@@ -43,7 +43,7 @@ export default function UploadProfile() {
           Subir
           <input
             type="file"
-            accept=".db"
+            accept=".sqlite"
             className="hidden"
             onChange={handleUpload}
           />
@@ -51,7 +51,7 @@ export default function UploadProfile() {
 
         {/* Descripción */}
         <p className="text-white text-sm text-center px-8">
-          Sube el archivo *.db que guardaste previamente
+          Sube el archivo *.sqlite que guardaste previamente
         </p>
 
         {/* Botón Back */}

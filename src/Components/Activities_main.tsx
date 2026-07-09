@@ -6,17 +6,16 @@ import type Actividad from '../models/Actividad'
 import type Perfil from '../models/Perfil'
 
 // Mapeo de colores adaptado a los nombres que pusiste en tu backend
-const tagColor: Record<string, string> = {
-  "Estudio": '#1a7a6e',
-  "Dormir": '#135850', // Color similar para trabajar
-  "Hacer Ejercicio": '#d946ef',
-  "Ejercicio": '#d946ef',
-  "Leer": '#f97316',
-  "Trabajar": '#3b82f6',
-  "Jugar algún deporte": '#eab308',
-  "Ver series o películas": '#ff987a',
-  "Escuchar música" : '#8b7fef',
-  "Navegar en redes sociales": '#c894fd'
+const tagColor: Record<number, string> = {
+  1: '#1a7a6e',
+  2: '#135850', // Color similar para trabajar
+  3: '#d946ef',
+  4: '#b227c7',
+  5: '#f97316',
+  6: '#3b82f6',
+  7: '#eab308',
+  8: '#ff987a',
+  9: '#8b7fef',
 }
 interface DashboardProps {
   perfilGlobal: Perfil;
@@ -136,8 +135,9 @@ export default function ActivitiesMain({ perfilGlobal }: DashboardProps) {
         ) : (
           actividades.map((actividad) => {
             // 4. Buscamos el nombre del tipo basándonos en el id_tipo que guardó el backend
-            const tipoEncontrado = tipos.find(t => t.id_tipo === actividad.id_tipo);
-            const nombreTipo = tipoEncontrado ? tipoEncontrado.nombre_tipo : 'Actividad';
+            const tipoEncontrado = tipos.find((t) => Number(t.id_tipo) === Number(actividad.id_tipo));
+            const nombreTipo = tipoEncontrado?.nombre_tipo ?? 'Actividad';
+            const idTipo = tipoEncontrado ? Number(tipoEncontrado.id_tipo) : 0;
 
             return (
               <div
@@ -148,7 +148,7 @@ export default function ActivitiesMain({ perfilGlobal }: DashboardProps) {
                 {/* Tag con color */}
                 <div className="flex items-center gap-4">
                   <div className="w-3 h-12 rounded-full"
-                    style={{ backgroundColor: tagColor[nombreTipo] ?? '#888' }} />
+                    style={{ backgroundColor: tagColor[idTipo] ?? '#888' }} />
                   <div>
                     <p className="text-white font-bold text-lg">{nombreTipo}</p>
                     <p className="text-white opacity-60 text-sm">{actividad.descripcion_actividad}</p>

@@ -1,25 +1,77 @@
-import {useState} from "react";
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import FocusLogo from '../assets/Images/Focus_logo.png'
+import Perfil from '../models/Perfil'
 
-
-export default function EditProfile() {
-const navigate = useNavigate()
-const [nickname, setNickname] = useState('')
-const [focus, setFocus] = useState('')
-
-const handleSave = () => {
-    if (!nickname || !focus) {
-        alert('Por favor, completa todos los campos.');
-        return;
-    }
-    console.log('Perfil editado:', { nickname, focus });
-    navigate('/dashboard');
+interface EditProfileProps {
+  perfilGlobal: Perfil;
+  setPerfilGlobal: (perfil: Perfil) => void;
 }
-    return (
-        <div className="relative w-full h-screen overflow-hidden flex flex-col items-center justify-center"
-           style={{ backgroundColor: '#4a5e5e' }}>
 
-              <div className="absolute w-64 h-64 rounded-full blur-2xl opacity-70"
+export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfileProps) {
+  const navigate = useNavigate()
+  const [nickname, setNickname] = useState(perfilGlobal?.nickname || '')
+const [ageRank, setAgeRank] = useState(perfilGlobal?.age_rank || '')
+const [focus, setFocus] = useState(perfilGlobal?.id_focus ? String(perfilGlobal.id_focus) : '')
+const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<{Id_enfoque: number, nombre_enf: string}[]>([])
+  // Carga los enfoques desde la BD
+  useEffect(() => {
+    const cargarEnfoques = async () => {
+      try {
+        const res = await fetch('http://localhost:3000/api/perfil/enfoques')
+        if (res.ok) {
+          setEnfoquesCatalogo(await res.json())
+        }
+      } catch (error: unknown) {
+        const mensaje = error instanceof Error ? error.message : "Error desconocido"
+        console.error('Error al cargar enfoques:', mensaje)
+      }
+    }
+    cargarEnfoques()
+  }, [])
+
+  const handleSave = async () => {
+    if (!nickname || !ageRank || !focus) {
+      alert('Por favor, completa todos los campos.')
+      return
+    }
+
+    const perfilActualizado = new Perfil(
+      perfilGlobal?.id_perfil ?? 1,
+      nickname,
+      ageRank,
+      parseInt(focus)
+    )
+
+    try {
+      const res = await fetch('http://localhost:3000/api/perfil', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nickname: perfilActualizado.nickname,
+          age_rank: perfilActualizado.age_rank,
+          id_focus: perfilActualizado.id_focus
+        })
+      })
+
+      if (res.ok) {
+        setPerfilGlobal(perfilActualizado)
+        navigate('/dashboard')
+      } else {
+        alert('Hubo un problema al guardar los cambios.')
+      }
+    } catch (error: unknown) {
+      const mensaje = error instanceof Error ? error.message : "Error desconocido"
+      alert(`Error al conectar con el servidor: ${mensaje}`)
+    }
+  }
+
+  return (
+    <div className="relative w-full h-screen overflow-hidden flex flex-col"
+      style={{ backgroundColor: '#4a5e5e' }}>
+
+      {/* Círculos decorativos */}
+      <div className="absolute w-64 h-64 rounded-full blur-2xl opacity-70"
         style={{ backgroundColor: '#b8f0a0', top: '-2rem', left: '2rem' }} />
       <div className="absolute w-56 h-56 rounded-full blur-2xl opacity-70"
         style={{ backgroundColor: '#5ecfb8', top: '-1rem', right: '3rem' }} />
@@ -29,65 +81,91 @@ const handleSave = () => {
         style={{ backgroundColor: '#d946ef', bottom: '0rem', left: '1rem' }} />
       <div className="absolute w-32 h-32 rounded-full blur-2xl opacity-70"
         style={{ backgroundColor: '#86efac', bottom: '2rem', right: '8rem' }} />
-       
-       {/* Título */}
-       <h1 className="relative z-10 text-5xl font-bold text-center mb-10"
-        style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
-        Edita tu perfil
-      </h1>
 
-{/* Formulario */}
-      <div className="relative z-10 flex flex-col gap-4 w-72">
-
-        <div className="flex flex-col gap-1">
-          <label className="text-white text-sm px-2">
-            Cambia tu nickname:
-          </label>
-          <input
-            type="text"
-            placeholder="Nuevo nickname"
-            value={nickname }
-            onChange={(e) => setNickname(e.target.value)}
-            className="w-full px-5 py-3 rounded-full text-white text-lg outline-none outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30 focus:border-blue-500"
-            style={{ backgroundColor: '#2a2a2a' }}
-          />
+      {/* Header */}
+      <div className="relative z-10 flex items-center justify-between px-8 py-4"
+        style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}>
+        <img src={FocusLogo} alt="Focus Logo" className="h-10 object-contain" />
+        <h1 className="text-4xl font-bold"
+          style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
+          Edita tu perfil
+        </h1>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg"
+            style={{ backgroundColor: '#1a7a6e' }}>
+            {nickname.charAt(0).toUpperCase() || '?'}
+          </div>
+          <div className="text-right">
+            <p className="text-white font-semibold text-sm">{nickname || 'Usuario'}</p>
+            <p className="text-white opacity-50 text-xs">Edad: {ageRank || '--'}</p>
+          </div>
         </div>
+      </div>
 
-     <div className="flex flex-col gap-1">
-          <label className="text-white text-sm px-2">
-            Re-enfoncate:
-          </label>
-          <select
-            value={focus}
-            onChange={(e) => setFocus(e.target.value)}
-            className="w-full px-5 py-3 rounded-full text-white text-lg outline-none outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30 focus:border-blue-500"
-            style={{ backgroundColor: '#2a2a2a' }}>
-            <option value="" disabled>Selecciona tu enfoque</option>
-            <option value="Enfoque1">Enfoque1</option>
-            <option value="Enfoque2">Enfoque2</option>
-            <option value="Enfoque3">Enfoque3</option>
-          </select>
+      {/* Formulario */}
+      <div className="relative z-10 flex flex-col items-center justify-center flex-1">
+        <div className="flex flex-col gap-4 w-72">
+
+          <div className="flex flex-col gap-1">
+            <label className="text-white text-sm px-2">Cambia tu nickname:</label>
+            <input
+              type="text"
+              placeholder="Nuevo nickname"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              className="w-full px-5 py-3 rounded-full text-white text-lg outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
+              style={{ backgroundColor: '#2a2a2a' }}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-white text-sm px-2">Rango de edad:</label>
+            <select
+              value={ageRank}
+              onChange={(e) => setAgeRank(e.target.value)}
+              className="w-full px-5 py-3 rounded-full text-white text-lg outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
+              style={{ backgroundColor: '#2a2a2a' }}>
+              <option value="" disabled>Selecciona tu rango</option>
+              <option value="15-17">15-17</option>
+              <option value="18-21">18-21</option>
+              <option value="22-30">22-30</option>
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-white text-sm px-2">Re-enfócate:</label>
+            <select
+              value={focus}
+              onChange={(e) => setFocus(e.target.value)}
+              className="w-full px-5 py-3 rounded-full text-white text-lg outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
+              style={{ backgroundColor: '#2a2a2a' }}>
+              <option value="" disabled>Selecciona tu enfoque</option>
+              {enfoquesCatalogo.map((enf) => (
+                <option key={enf.Id_enfoque} value={enf.Id_enfoque}>
+                  {enf.nombre_enf}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Botones */}
+          <div className="flex gap-4 mt-2 justify-center">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="px-10 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80 hover:scale-105"
+              style={{ backgroundColor: '#1a1a1a' }}>
+              Regresar
+            </button>
+            <button
+              onClick={handleSave}
+              className="px-10 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80 hover:scale-105"
+              style={{ backgroundColor: '#1a7a6e' }}>
+              Guardar cambios
+            </button>
+          </div>
+
         </div>
-
-      {/* Botones */}
-        <div className="flex gap-4 mt-2 justify-center">
-          <button
-            onClick={() => navigate('/Dashboard')}
-            className="px-10 py-3 rounded-full text-white text-lg font-semibold transition transition-transform duration:200 hover:opacity-80 hover:scale-105 hover:shadow-log"
-            style={{ backgroundColor: '#1a1a1a' }}>
-            Regresar 
-          </button>
-          <button
-            onClick={handleSave}
-            className="px-10 py-3 rounded-full text-white text-lg font-semibold transition transition-transform duration:200 hover:opacity-80 hover:scale-105 hover:shadow-log"
-            style={{ backgroundColor: '#1a1a1a' }}>
-            Guardar cambios
-          </button>
-        </div>
-
-
-     </div>
-
- </div>
-    )
+      </div>
+    </div>
+  )
 }

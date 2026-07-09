@@ -3,38 +3,37 @@ import { getDB } from '../config/db';
 import Actividad from '../models/Actividad';
 import Tipo_actividad from '../models/Tipo_actividad';
 
-// catálogo de tipos (se mantiene igual)
-export const catalogoTipos: Tipo_actividad[] = [
-  new Tipo_actividad(1, "Estudiar", 5),
-  new Tipo_actividad(2, "Dormir", 5),
-  new Tipo_actividad(3, "Hacer Ejercicio", 4),
-  new Tipo_actividad(4, "Leer", 4),
-  new Tipo_actividad(5, "Trabajar", 3),
-  new Tipo_actividad(6, "Jugar algún deporte", 2),
-  new Tipo_actividad(7, "Ver series o películas", 2),
-  new Tipo_actividad(8, "Escuchar música", 2),
-  new Tipo_actividad(9, "Navegar en redes sociales", 1),
-];
+
+// El catálogo de tipos se obtiene siempre desde la base de datos.
+// No se mantiene un array hardcodeado porque puede desincronizarse con lo que existe en BD.
 
 // Tipado de fila de la tabla Actividad
 interface ActividadRow {
-  id_actividad: number;
-  id_tipo: number;
-  hora_inicio: string;
-  durac_min: number;
-  desc_activ: string;
+  id_actividad?: number;
+  Id_actividad?: number;
+  id_tipo?: number;
+  Id_tipo?: number;
+  hora_inicio?: string;
+  durac_min?: number;
+  desc_activ?: string;
   fecha?: string | null; // "YYYY-MM-DD"
   hora_creacion?: string | null; // ISO string si la guardas
 }
 
 /** Helper: mapear fila de BD a instancia Actividad */
 function mapRowToActividad(row: ActividadRow): Actividad {
+  const idActividad = Number(row.id_actividad ?? row.Id_actividad ?? 0);
+  const idTipo = Number(row.id_tipo ?? row.Id_tipo ?? 0);
+  const horaInicio = String(row.hora_inicio ?? '');
+  const duracionMinutos = Number(row.durac_min ?? 0);
+  const descripcionActividad = String(row.desc_activ ?? '');
+
   const actividad = new Actividad(
-    Number(row.id_actividad),
-    Number(row.id_tipo),
-    String(row.hora_inicio),
-    Number(row.durac_min),
-    String(row.desc_activ ?? '')
+    idActividad,
+    idTipo,
+    horaInicio,
+    duracionMinutos,
+    descripcionActividad
   );
 
   if (row.fecha) actividad.fecha = new Date(row.fecha);
@@ -43,15 +42,17 @@ function mapRowToActividad(row: ActividadRow): Actividad {
   return actividad;
 }
 
-// Obtener tipos desde la tabla Tipo_actividad (si existe)
+// Obtener tipos desde la tabla Tipo_actividad (fuente de verdad)
 export const obtenerTiposActividad = async (): Promise<Tipo_actividad[]> => {
   const db = getDB();
-  const filas: { Id_tipo?: number; id_tipo?: number; id?: number; Nombre_activ?: string; nombre?: string; name?: string; peso?: number; puntuacion?: number }   [] = await db.all("SELECT * FROM Tipo_actividad");
-  return filas.map(f =>
+  const filas: Array<{ Id_tipo?: number; Nombre_activ?: string; Utilidad_objet?: number }> =
+    await db.all("SELECT * FROM Tipo_actividad ORDER BY Id_tipo ASC");
+
+  return filas.map((f) =>
     new Tipo_actividad(
-      Number(f.Id_tipo ?? f.id_tipo ?? f.id),
-      String(f.Nombre_activ ?? f.nombre ?? f.name),
-      Number(f.peso ?? f.puntuacion ?? 0)
+      Number(f.Id_tipo ?? 0),
+      String(f.Nombre_activ ?? ''),
+      Number(f.Utilidad_objet ?? 0)
     )
   );
 };
@@ -61,20 +62,16 @@ export const registrarActividad = async (datos: Actividad): Promise<void> => {
   const db = getDB();
 
   const query = `
-    INSERT INTO Actividad (id_tipo, hora_inicio, durac_min, desc_activ, fecha, hora_creacion)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO Actividad (Id_tipo, hora_inicio, durac_min, desc_activ)
+    VALUES (?, ?, ?, ?)
   `;
-
-  const fecha = (datos.fecha instanceof Date) ? datos.fecha.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-  const hora_creacion = (datos.hora_creacion instanceof Date) ? datos.hora_creacion.toISOString() : new Date().toISOString();
 
   await db.run(query, [
     datos.id_tipo,
     datos.hora_inicio,
     datos.duracion_minutos,
     datos.descripcion_actividad,
-    fecha,
-    hora_creacion
+    
   ]);
 
   console.log("Actividad guardada en SQLite");
@@ -116,9 +113,9 @@ export const editarActividad = async (id: number, datos: Partial<Actividad>): Pr
   const hora_inicio = (datos.hora_inicio !== undefined) ? datos.hora_inicio : actual.hora_inicio;
   const durac_min = (datos.duracion_minutos !== undefined) ? Number(datos.duracion_minutos) : actual.durac_min;
   const desc_activ = (datos.descripcion_actividad !== undefined) ? datos.descripcion_actividad : actual.desc_activ;
-  const fecha = (datos.fecha !== undefined)
+  const fecha: string | null = (datos.fecha !== undefined)
     ? ((datos.fecha instanceof Date) ? datos.fecha.toISOString().split('T')[0] : String(datos.fecha))
-    : actual.fecha;
+    : (typeof actual.fecha === 'string' && actual.fecha.length > 0 ? actual.fecha : null);
 
   await db.run(
     `UPDATE Actividad
@@ -148,7 +145,11 @@ export const actividadesSemana = async (): Promise<Record<string, Actividad[]>> 
 
   const agrupadas: Record<string, Actividad[]> = {};
   filas.forEach(f => {
-    const clave = f.fecha ?? (new Date(f.hora_inicio).toISOString().split('T')[0]);
+    const clave = (typeof f.fecha === 'string' && f.fecha.length > 0)
+      ? f.fecha
+      : (typeof f.hora_inicio === 'string' && f.hora_inicio.length > 0
+          ? new Date(f.hora_inicio).toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0]);
     if (!agrupadas[clave]) agrupadas[clave] = [];
     agrupadas[clave].push(mapRowToActividad(f));
   });

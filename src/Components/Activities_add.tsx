@@ -126,7 +126,7 @@ export default function ActivitiesAdd({ perfilGlobal }: DashboardProps) {
             onChange={(e) => setTag(Number(e.target.value))}
             className="w-full px-5 py-3 rounded-full text-white text-lg outline-none"
             style={{ backgroundColor: '#1a1a1a' }}>
-            <option value="" disabled>Selecciona un tipo de actividad</option>
+            <option value="">Selecciona un tipo de actividad</option>
             {tipos.map((tipo) => (
               <option key={tipo.id_tipo} value={tipo.id_tipo}>
                 {tipo.nombre_tipo}
