@@ -13,8 +13,9 @@ router.get('/enfoques', async (req, res) => {
     try {
         const enfoques = await obtenerEnfoques();
         res.json(enfoques);
-    } catch (error) {
-        res.status(500).json({ error: "Error al cargar enfoques" });
+    } catch (error: unknown) {
+        const mensaje = error instanceof Error ? error.message : "Error desconocido";
+        res.status(500).json({ error: mensaje });
     }
 });
 

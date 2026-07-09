@@ -3,13 +3,13 @@ import { getDB } from '../config/db';
 
 
 // backend/src/services/PerfilManager.ts
-export const obtenerEnfoques = async (): Promise<any[]> => {
+export const obtenerEnfoques = async (): Promise< { id: number; nombre: string }[]> => {
     const db = getDB();
     return await db.all("SELECT * FROM Enfoque"); 
 };
 
 // POST: Registrar o actualizar el perfil único
-export const guardarPerfil = async (datos: any): Promise<void> => {
+export const guardarPerfil = async (datos: { nickname: string; age_rank: string; id_focus: string }): Promise<void> => {
     const db = getDB();
 
     // Al ser una arquitectura local-first con un único usuario, 
@@ -32,7 +32,7 @@ export const guardarPerfil = async (datos: any): Promise<void> => {
 };
 
 // GET: Recuperar el perfil activo para el Dashboard
-export const obtenerPerfil = async (): Promise<any> => {
+export const obtenerPerfil = async (): Promise<{ id: number; nickname: string; rango_edad: string; Id_enfoque: number } | null> => {
     const db = getDB();
     
     // Obtenemos la única fila existente

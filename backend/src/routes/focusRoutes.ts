@@ -8,6 +8,7 @@ import {
   actividadesSemana,
   obtenerTiposActividad
 } from '../services/ActividadManager';
+import Tipo_actividad from '../models/Tipo_actividad';
 
 const router = Router();
 
@@ -15,13 +16,14 @@ const router = Router();
 router.get('/tipos-actividad', async (req, res) => {
     try {
         const tipos = await obtenerTiposActividad();
-        const tiposFormateados = tipos.map((t: any) => ({
-            id_tipo: t.Id_tipo,
-            nombre_tipo: t.Nombre_activ
+        const tiposFormateados = tipos.map((t: Tipo_actividad) => ({
+            id_tipo: t.id_tipo,
+            nombre_tipo: t.nombre_tipo
         }));
         res.json(tiposFormateados);
-    } catch (error) {
-        res.status(500).json({ error: "Error al cargar tipos" });
+    } catch (error: unknown) {
+        const mensaje = error instanceof Error ? error.message : "Error desconocido";
+        res.status(500).json({ error: mensaje });
     }
 });
 
@@ -30,8 +32,9 @@ router.get('/', async (req, res) => {
     try {
         const lista = await obtenerActividades();
         res.json(lista);
-    } catch (error) {
-        res.status(500).json({ error: "Error al obtener actividades" });
+    } catch (error: unknown) {
+        const mensaje = error instanceof Error ? error.message : "Error desconocido";
+        res.status(500).json({ error: mensaje });
     }
 });
 
@@ -40,8 +43,9 @@ router.post('/', async (req, res) => {
     try {
         await registrarActividad(req.body);
         res.status(201).json({ mensaje: "Actividad registrada en la BD" });
-    } catch (error) {
-        res.status(500).json({ error: "Error al registrar actividad" });
+    } catch (error: unknown) {
+        const mensaje = error instanceof Error ? error.message : "Error desconocido";
+        res.status(500).json({ error: mensaje });
     }
 });
 
@@ -51,8 +55,9 @@ router.delete('/:id', async (req, res) => {
         const idBorrar = parseInt(req.params.id);
         await eliminarActividad(idBorrar);
         res.json({ mensaje: `Actividad ${idBorrar} eliminada con éxito` });
-    } catch (error) {
-        res.status(500).json({ error: "Error al eliminar actividad" });
+    } catch (error: unknown) {
+        const mensaje = error instanceof Error ? error.message : "Error desconocido";
+        res.status(500).json({ error: mensaje });
     }
 });
 
@@ -66,8 +71,9 @@ router.put('/:id', async (req, res) => {
             return;
         }
         res.json({ mensaje: "Actividad actualizada", actividad: actualizada });
-    } catch (error) {
-        res.status(500).json({ error: "Error al editar actividad" });
+    } catch (error: unknown) {
+        const mensaje = error instanceof Error ? error.message : "Error desconocido";
+        res.status(500).json({ error: mensaje });
     }
 });
 
@@ -76,8 +82,9 @@ router.get('/semana', async (req, res) => {
     try {
         const datos = await actividadesSemana();
         res.json(datos);
-    } catch (error) {
-        res.status(500).json({ error: "Error al obtener progreso semanal" });
+    } catch (error: unknown) {
+        const mensaje = error instanceof Error ? error.message : "Error desconocido";
+        res.status(500).json({ error: mensaje });
     }
 });
 
