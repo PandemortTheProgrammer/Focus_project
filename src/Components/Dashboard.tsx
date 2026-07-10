@@ -14,7 +14,11 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
   const navigate = useNavigate()
   const nickname = perfilGlobal?.nickname || 'Desconocido'
   const focus = perfilGlobal?.id_focus || '--'
-
+  const obtenerSaludo = (generoSeleccionado?: string) => {
+  if (generoSeleccionado === 'M') return 'Bienvenido';
+  if (generoSeleccionado === 'F') return 'Bienvenida';
+  return 'Saludos'; // O tu saludo neutro por defecto
+  };
   return (
     <div className="relative w-full h-screen overflow-hidden flex flex-col"
       style={{ backgroundColor: '#4a5e5e' }}>
@@ -58,9 +62,8 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
       <div className="relative z-10 flex flex-col items-center justify-center flex-1">
 
         {/* Título */}
-        <h1 className="text-5xl font-bold text-center mb-10"
-          style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
-          Bienvenid@, {nickname}
+        <h1 className="text-5xl font-bold text-center mb-10" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
+          {obtenerSaludo(perfilGlobal?.genero)}, {perfilGlobal?.nickname || "Invitado"}
         </h1>
 
         {/* Tarjetas */}

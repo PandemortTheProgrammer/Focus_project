@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 interface CreateProfileProps {
-  setPerfilGlobal: (perfil: { nickname: string; age_rank: string; id_focus: number }) => void;
+  setPerfilGlobal: (perfil: { nickname: string; age_rank: string; genero: string; id_focus: number }) => void;
 }
 
 export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
@@ -10,6 +10,8 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
   const [nickname, setNickname] = useState('');
   const [ageRank, setAgeRank] = useState('');
   const [focus, setFocus] = useState('');
+  const [genero, setGenero] = useState('');
+  
   const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<{Id_enfoque: number, nombre_enf: string}[]>([]);
 
   useEffect(() => {
@@ -28,35 +30,37 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
   }, []);
 
   const handleSave = async () => {
-    if (!nickname || !ageRank || !focus) {
-      alert("Por favor llena todos los campos");
-      return;
+    if (!nickname || !ageRank || !focus || !genero) {
+        alert("Por favor llena todos los campos");
+        return;
     }
 
+    // Estructura limpia que coincide al 100% con las propiedades leídas por Dashboard.tsx
     const nuevoPerfil = {
-      nickname: nickname,
-      age_rank: ageRank,
-      id_focus: parseInt(focus)
+        nickname: nickname,
+        age_rank: ageRank,
+        genero: genero, 
+        id_focus: parseInt(focus)
     };
 
     try {
-      const respuesta = await fetch('http://localhost:3000/api/perfil', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(nuevoPerfil)
-      });
+        const respuesta = await fetch('http://localhost:3000/api/perfil', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(nuevoPerfil)
+        });
 
-      if (respuesta.ok) {
-        setPerfilGlobal(nuevoPerfil);
-        navigate('/dashboard');
-      } else {
-        alert("Hubo un problema al guardar el perfil en el servidor.");
-      }
-    } catch (error: unknown) {
-      const mensaje = error instanceof Error ? error.message : "Error desconocido";
-      alert(`Error al conectar con el servidor: ${mensaje}`);
+        if (respuesta.ok) {
+            // Al pasarle el objeto completo, React redibuja el Dashboard al instante con el saludo correcto
+            setPerfilGlobal(nuevoPerfil);
+            navigate('/dashboard');
+        } else {
+            alert("Hubo un problema al guardar el perfil.");
+        }
+    } catch (error) {
+        alert("Error al conectar con el servidor.");
     }
-  };
+};
 
   return (
     <div className="relative w-full h-screen overflow-hidden flex flex-col items-center justify-center"
@@ -95,6 +99,23 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
             className="w-full px-5 py-3 rounded-full text-white text-lg outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
             style={{ backgroundColor: '#2a2a2a' }}
           />
+        </div>
+
+        {/* NUEVO CAMPO: Género / Pronombres */}
+        <div className="flex flex-col gap-1">
+          <label className="text-white text-sm px-2">
+            ¿Cómo prefieres que te llamemos?
+          </label>
+          <select
+            value={genero}
+            onChange={(e) => setGenero(e.target.value)}
+            className="w-full px-5 py-3 rounded-full text-white text-lg outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
+            style={{ backgroundColor: '#2a2a2a' }}>
+            <option value="" disabled>Selecciona una opción</option>
+            <option value="M">Él (Bienvenido)</option>
+            <option value="F">Ella (Bienvenida)</option>
+            <option value="O">Neutro (Hola)</option>
+          </select>
         </div>
 
         <div className="flex flex-col gap-1">

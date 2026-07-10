@@ -40,10 +40,11 @@ export const inicializarBD = async () => {
 
         await dbInstance.exec(`
             CREATE TABLE IF NOT EXISTS Perfil (
-                Id_perfil INTEGER PRIMARY KEY AUTOINCREMENT,
+                Id_perfil INTEGER PRIMARY KEY,
                 nickname VARCHAR(20) NOT NULL,
                 rango_edad VARCHAR(15) NOT NULL,
                 Id_enfoque INTEGER,
+                genero VARCHAR(1) NOT NULL,
                 FOREIGN KEY (Id_enfoque) REFERENCES Enfoque(Id_enfoque) ON DELETE SET NULL
             );
 

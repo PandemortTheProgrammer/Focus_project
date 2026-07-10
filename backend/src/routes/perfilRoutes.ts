@@ -37,7 +37,14 @@ router.get('/', async (req, res) => {
         if (!perfil) {
             return res.status(404).json({ error: "No se encontró ningún perfil en la BD" });
         }
-        res.json(perfil);
+        const perfilNormalizado = {
+            nickname: perfil.nickname,
+            age_rank: perfil.rango_edad, // De rango_edad a age_rank
+            genero: perfil.genero,
+            id_focus: perfil.Id_enfoque   // De Id_enfoque a id_focus
+        };
+        
+        res.json(perfilNormalizado);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Error al leer la base de datos" });
