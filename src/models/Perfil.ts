@@ -6,7 +6,7 @@ export default class Perfil {
     public id_focus: number;
     public genero: string;
 
-    constructor(id_perfil:number, nickname:string, age_rank:string, id_focus:number, genero:string) {
+    constructor(id_perfil:number, nickname:string, age_rank:string, id_focus:number, genero:string = '') {
         this.id_perfil = id_perfil;
         this.nickname = nickname;
         this.age_rank = age_rank;
