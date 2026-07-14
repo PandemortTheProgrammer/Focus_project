@@ -13,6 +13,7 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
   const [genero, setGenero] = useState('');
   
   const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<{Id_enfoque: number, nombre_enf: string}[]>([]);
+  const [cargandoEnfoques, setCargandoEnfoques] = useState(true);
 
   useEffect(() => {
     const cargarEnfoques = async () => {
@@ -24,6 +25,8 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
       } catch (error: unknown) {
         const mensaje = error instanceof Error ? error.message : "Error desconocido";
         console.error('Error al cargar enfoques:', mensaje);
+      } finally {
+        setCargandoEnfoques(false);
       }
     };
     cargarEnfoques();
@@ -143,12 +146,18 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
             onChange={(e) => setFocus(e.target.value)}
             className="w-full px-5 py-3 rounded-full text-white text-lg outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
             style={{ backgroundColor: '#2a2a2a' }}>
-            <option value="" disabled>Selecciona tu enfoque</option>
-            {enfoquesCatalogo.map((enf) => (
-              <option key={enf.Id_enfoque} value={enf.Id_enfoque}>
-                {enf.nombre_enf}
-              </option>
-            ))}
+            <option value="" disabled>
+              {cargandoEnfoques ? 'Cargando enfoques...' : 'Selecciona tu enfoque'}
+            </option>
+            {enfoquesCatalogo.length === 0 && !cargandoEnfoques ? (
+              <option value="" disabled>No hay enfoques disponibles</option>
+            ) : (
+              enfoquesCatalogo.map((enf) => (
+                <option key={enf.Id_enfoque} value={enf.Id_enfoque}>
+                  {enf.nombre_enf}
+                </option>
+              ))
+            )}
           </select>
         </div>
 
