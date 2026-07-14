@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import FocusLogo from '../assets/Images/Focus_logo.png'
 import type Tipo_actividad from '../models/Tipo_actividad'
 import type Actividad from '../models/Actividad'
-import type Perfil from '../models/Perfil'
 
 // Mapeo de colores adaptado a los nombres que pusiste en tu backend
 const tagColor: Record<number, string> = {
@@ -18,9 +16,6 @@ const tagColor: Record<number, string> = {
   9: '#8b7fef',
 }
 
-interface DashboardProps {
-  perfilGlobal: Perfil;
-}
 
 // Función auxiliar para calcular si pasaron 24 horas desde la creación
 const esActividadBloqueada = (fechaCreacion?: string | Date | null) => {
@@ -37,10 +32,8 @@ const esActividadBloqueada = (fechaCreacion?: string | Date | null) => {
   return horasTranscurridas >= 24;
 };
 
-export default function ActivitiesMain({ perfilGlobal }: DashboardProps) {
+export default function ActivitiesMain() {
   const navigate = useNavigate()
-  const nickname = perfilGlobal?.nickname || 'Desconocido'
-  const focus = perfilGlobal?.id_focus || '--'
   
   // 1. Estados para guardar lo que viene de Express
   const [actividades, setActividades] = useState<Actividad[]>([])
@@ -51,7 +44,6 @@ export default function ActivitiesMain({ perfilGlobal }: DashboardProps) {
   useEffect(() => {
     const cargarDatos = async () => {
       try {
-        // Hacemos ambas peticiones al mismo tiempo para mayor velocidad
         const [resActividades, resTipos] = await Promise.all([
           fetch('http://localhost:3000/api/actividades'),
           fetch('http://localhost:3000/api/actividades/tipos-actividad')
@@ -90,64 +82,20 @@ export default function ActivitiesMain({ perfilGlobal }: DashboardProps) {
   };
 
   return (
-    <div className="relative w-full h-screen overflow-hidden flex flex-col" style={{ backgroundColor: '#4a5e5e' }}>
-
-      {/* Círculos decorativos (Sin cambios) */}
-      <div className="absolute w-64 h-64 rounded-full blur-2xl opacity-70"
-        style={{ backgroundColor: '#b8f0a0', top: '-2rem', left: '2rem' }} />
-      <div className="absolute w-56 h-56 rounded-full blur-2xl opacity-70"
-        style={{ backgroundColor: '#5ecfb8', top: '-1rem', right: '3rem' }} />
-      <div className="absolute w-52 h-52 rounded-full blur-2xl opacity-80"
-        style={{ backgroundColor: '#f97316', top: '30%', left: '38%', transform: 'translateX(-50%)' }} />
-      <div className="absolute w-60 h-60 rounded-full blur-2xl opacity-80"
-        style={{ backgroundColor: '#d946ef', bottom: '0rem', left: '1rem' }} />
-      <div className="absolute w-32 h-32 rounded-full blur-2xl opacity-70"
-        style={{ backgroundColor: '#86efac', bottom: '2rem', right: '8rem' }} />
-
-      {/* Header */}
-      <div className="relative z-10 flex items-center justify-between px-8 py-4"
-        style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}>
-
-        {/* Logo */}
-        <img src={FocusLogo} alt="Focus Logo" className="h-10 object-contain" />
-
-        {/* Navegación central */}
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="px-6 py-2 rounded-full text-white font-semibold transition hover:opacity-80"
-            style={{ backgroundColor: '#1a1a1a' }}>
-            ← Volver
-          </button>
-          <h1 className="text-5xl font-bold" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
-            Actividades
-          </h1>
-          <button
-            onClick={() => navigate('/actividades/agregar')}
-            className="px-6 py-2 rounded-full text-white font-semibold transition hover:opacity-80"
-            style={{ backgroundColor: '#1a1a1a' }}>
-            + Agregar actividad
-          </button>
-        </div>
-
-        {/* Info del usuario */}
-        <div className="flex items-center gap-4">
-          {/* Avatar con inicial */}
-          <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg"
-            style={{ backgroundColor: '#1a7a6e' }}>
-            {nickname.charAt(0).toUpperCase()}
-          </div>
-          {/* Datos del perfil */}
-          <div className="text-right">
-            <p className="text-white font-semibold text-sm">{nickname}</p>
-            <p className="text-white opacity-50 text-xs">Enfoque: {focus}</p>
-          </div>
-        </div>
-
+    <div className="relative w-full h-screen overflow-hidden flex flex-col">
+      <div className="flex items-center justify-between px-8 py-4 mb-4">
+        <button onClick={() => navigate('/dashboard')} className="px-6 py-2 rounded-full bg-zinc-900 text-white">
+          ← Volver
+        </button>
+        <h1 className="text-4xl font-bold" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
+          Actividades
+        </h1>
+        <button onClick={() => navigate('/actividades/agregar')} className="px-6 py-2 rounded-full bg-zinc-900 text-white">
+          + Agregar actividad
+        </button>
       </div>
-
       {/* Lista de actividades Dinámica */}
-      <div className="relative z-10 flex flex-col gap-4 px-8 py-4 overflow-y-auto">
+      
         {cargando ? (
            <p className="text-white text-center opacity-60 mt-10">Cargando actividades...</p>
         ) : actividades.length === 0 ? (
@@ -237,6 +185,5 @@ export default function ActivitiesMain({ perfilGlobal }: DashboardProps) {
           })
         )}
       </div>
-    </div>
   )
 }

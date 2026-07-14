@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { inicializarBaseDeDatos } from './services/db'
 
+// NUEVO: Importamos el Layout
+import Layout from './Components/Layout'
+
 import Mainpage from './Components/Mainpage'
 import CreateProfile from './Components/Create_profile'
 import EditProfile from './Components/Edit_profile'
@@ -14,12 +17,13 @@ import WeeklyProgress from './Components/Weekly_progress'
 import Download from './Components/download'
 import Perfil from './models/Perfil'
 import WeeklySummary from './Components/Weekly_Summaries_details'
+
 export default function App() {
-    // Estado global para el perfil
+  // Estado global para el perfil
   const perfilInicial: Perfil = new Perfil(1, '', '', 0)
   const [perfilGlobal, setPerfilGlobal] = useState<Perfil>(perfilInicial);
 
-  // Opcional: Si el usuario recarga la página, intentamos recuperar el perfil de Express
+  // Si el usuario recarga la página, intentamos recuperar el perfil de Express
   useEffect(() => {
     const recuperarPerfil = async () => {
       try {
@@ -33,31 +37,35 @@ export default function App() {
       }
     };
     recuperarPerfil();
-    }, []);
-    useEffect(() => {
-        inicializarBaseDeDatos()
-    }, [])
+  }, []);
 
-    return (
-        <Routes>
-            <Route path="/" element={<Mainpage />} />
-            <Route 
-                path="/crear-perfil" 
-                element={<CreateProfile setPerfilGlobal={(perfil) => setPerfilGlobal(new Perfil(perfil.id_focus, perfil.nickname, perfil.age_rank, 0))} />} 
-            />
-            <Route path="/editar-perfil" element={<EditProfile perfilGlobal={perfilGlobal} setPerfilGlobal={setPerfilGlobal} />} />
-            <Route path="/subir-perfil" element={<UploadProfile />} />
-            <Route 
-                path="/dashboard" 
-                element={<Dashboard perfilGlobal={perfilGlobal} />} 
-            />
-            <Route path="/actividades" element={<ActivitiesMain perfilGlobal={perfilGlobal}/>} />
-            <Route path="/actividades/agregar" element={<ActivitiesAdd perfilGlobal={perfilGlobal} />} />
-            <Route path="/actividades/editar/:id" element={<ActivitiesEdit perfilGlobal={perfilGlobal}/>} />
-            <Route path="/progreso-semanal" element={<WeeklyProgress perfilGlobal={perfilGlobal} />} />
-            <Route path="/resumenes-semanales" element={<WeeklySummary />} />
-            <Route path="/resumen-semanal/:id" element={<WeeklySummary />} />
-            <Route path="/Download" element={<Download />}/>
-        </Routes>
-    )
+  useEffect(() => {
+    inicializarBaseDeDatos()
+  }, [])
+
+  return (
+    // NUEVO: Envolvemos todas las rutas con el Layout y le pasamos el perfilGlobal
+    <Layout perfilGlobal={perfilGlobal}>
+      <Routes>
+        <Route path="/" element={<Mainpage />} />
+        <Route 
+          path="/crear-perfil" 
+          element={<CreateProfile setPerfilGlobal={(perfil) => setPerfilGlobal(new Perfil(1, perfil.nickname, perfil.age_rank, perfil.id_focus, perfil.genero))} />} 
+        />
+        <Route path="/editar-perfil" element={<EditProfile perfilGlobal={perfilGlobal} setPerfilGlobal={setPerfilGlobal} />} />
+        <Route path="/subir-perfil" element={<UploadProfile />} />
+        <Route 
+          path="/dashboard" 
+          element={<Dashboard perfilGlobal={perfilGlobal} />} 
+        />
+        <Route path="/actividades" element={<ActivitiesMain />} />
+        <Route path="/actividades/agregar" element={<ActivitiesAdd />} />
+        <Route path="/actividades/editar/:id" element={<ActivitiesEdit />} />
+        <Route path="/progreso-semanal" element={<WeeklyProgress />} />
+        <Route path="/resumenes-semanales" element={<WeeklySummary />} />
+        <Route path="/resumen-semanal/:id" element={<WeeklySummary />} />
+        <Route path="/Download" element={<Download />}/>
+      </Routes>
+    </Layout>
+  )
 }
