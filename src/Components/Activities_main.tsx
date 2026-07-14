@@ -95,7 +95,7 @@ export default function ActivitiesMain() {
         </button>
       </div>
       {/* Lista de actividades Dinámica */}
-      
+      <div className="relative z-10 flex flex-col gap-4 px-8 py-4 overflow-y-auto flex-1">
         {cargando ? (
            <p className="text-white text-center opacity-60 mt-10">Cargando actividades...</p>
         ) : actividades.length === 0 ? (
@@ -184,6 +184,7 @@ export default function ActivitiesMain() {
             )
           })
         )}
+        </div>
       </div>
   )
 }
