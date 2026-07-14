@@ -47,8 +47,8 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
       <div className="relative z-10 flex flex-col items-center justify-center flex-1">
 
         {/* Título */}
-        <h1 className="text-5xl font-bold text-center mb-10" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
-          {obtenerSaludo(perfilGlobal?.genero)}, {perfilGlobal?.nickname || "Invitado"}
+        <h1 className="text-4xl font-bold text-center mb-10" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
+          {obtenerSaludo(perfilGlobal?.genero)}, {perfilGlobal?.nickname || "Invitado"}; ¿Qué deseas hacer ahora?
         </h1>
 
         {/* Tarjetas */}

@@ -91,7 +91,7 @@ const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<{Id_enfoque: number, no
               onChange={(e) => setAgeRank(e.target.value)}
               className="w-full px-5 py-3 rounded-full text-white text-lg outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
               style={{ backgroundColor: '#2a2a2a' }}>
-              <option value="" disabled>Selecciona tu rango</option>
+              <option value="">Selecciona tu rango</option>
               <option value="15-17">15-17</option>
               <option value="18-21">18-21</option>
               <option value="22-30">22-30</option>
@@ -105,7 +105,7 @@ const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<{Id_enfoque: number, no
               onChange={(e) => setFocus(e.target.value)}
               className="w-full px-5 py-3 rounded-full text-white text-lg outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
               style={{ backgroundColor: '#2a2a2a' }}>
-              <option value="" disabled>Selecciona tu enfoque</option>
+              <option value="">Selecciona tu enfoque</option>
               {enfoquesCatalogo.map((enf) => (
                 <option key={enf.Id_enfoque} value={enf.Id_enfoque}>
                   {enf.nombre_enf}
