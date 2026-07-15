@@ -1,214 +1,144 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import type Perfil from '../models/Perfil'
 
 type TipoResumen = {
-  nombre: string
+  id_tipo: number
+  nombre_tipo: string
   horas: number
   color: string
   resumen: string
   mensaje: string
 }
 
-type SemanaResumen = {
-  id: number
-  titulo: string
+type ActividadDetalle = {
+  id_actividad: number
+  id_tipo: number
+  nombre_tipo: string
+  peso: number
   fecha: string
-  horas: number
-  actividades: number
-  descripcion: string
+  hora_inicio: string
+  durac_min: number
+  desc_activ: string
+}
+
+type SemanaResumen = {
+  numero_semana: number
+  fecha_inicio: string
+  fecha_fin: string
+  total_horas: number
+  total_actividades: number
+  descripcion_general: string
+  actividades: ActividadDetalle[]
   tipos: TipoResumen[]
 }
 
-const evaluacionesSemana: SemanaResumen[] = [
-  {
-    id: 1,
-    titulo: 'Semana 1',
-    fecha: '09/07/2026',
-    horas: 22.4,
-    actividades: 16,
-    descripcion: 'Inicio del hábito con sesiones organizadas y un balance saludable entre estudio y descanso.',
-    tipos: [
-      {
-        nombre: 'Estudio',
-        horas: 5.5,
-        color: '#1a7a6e',
-        resumen: 'Se mantuvo una rutina constante con sesiones cortas y muy enfocadas.',
-        mensaje: 'Tu disciplina en estudio está creciendo. Cada sesión suma y te acerca a tus metas.'
-      },
-      {
-        nombre: 'Ejercicio',
-        horas: 2.3,
-        color: '#d946ef',
-        resumen: 'Se cuidó el cuerpo con movimientos breves pero consistentes.',
-        mensaje: 'El progreso también se construye desde el autocuidado. Seguir así te dará más energía.'
-      },
-      {
-        nombre: 'Trabajo',
-        horas: 6.2,
-        color: '#eab308',
-        resumen: 'La semana laboral fue intensa y bien distribuida.',
-        mensaje: 'Tu constancia en el trabajo demuestra orden y compromiso.'
-      }
-    ]
-  },
-  {
-    id: 2,
-    titulo: 'Semana 2',
-    fecha: '16/07/2026',
-    horas: 24.8,
-    actividades: 19,
-    descripcion: 'Mayor estabilidad en la rutina, con mejor organización y más tiempo para actividades de crecimiento.',
-    tipos: [
-      {
-        nombre: 'Lectura',
-        horas: 2.1,
-        color: '#f97316',
-        resumen: 'Hubo un tiempo dedicado a aprender y reflexionar.',
-        mensaje: 'La lectura sigue siendo una poderosa forma de crecer de manera tranquila y profunda.'
-      },
-      {
-        nombre: 'Dormir',
-        horas: 8.1,
-        color: '#3b82f6',
-        resumen: 'Se priorizó el descanso como base del rendimiento.',
-        mensaje: 'Dormir bien no es descanso perdido, es energía para seguir adelante.'
-      },
-      {
-        nombre: 'Trabajo',
-        horas: 7.4,
-        color: '#eab308',
-        resumen: 'La carga laboral fue más organizada y enfocada.',
-        mensaje: 'Tu forma de trabajar está más alineada y eso marca la diferencia.'
-      }
-    ]
-  },
-  {
-    id: 3,
-    titulo: 'Semana 3',
-    fecha: '23/07/2026',
-    horas: 26.1,
-    actividades: 21,
-    descripcion: 'Cierre de la semana con más intención, mejor energía y un avance más claro en las metas personales.',
-    tipos: [
-      {
-        nombre: 'Estudio',
-        horas: 6.4,
-        color: '#1a7a6e',
-        resumen: 'Se cerró la semana con sesiones más profundas y completas.',
-        mensaje: 'Tu esfuerzo en estudio se refleja en resultados cada vez más claros.'
-      },
-      {
-        nombre: 'Ejercicio',
-        horas: 3.0,
-        color: '#d946ef',
-        resumen: 'Se dio más espacio al movimiento y al cuidado personal.',
-        mensaje: 'Mantener este ritmo te ayuda a sentirte mejor y con más confianza.'
-      },
-      {
-        nombre: 'Música',
-        horas: 1.5,
-        color: '#8b5cf6',
-        resumen: 'Se incluyó un tiempo de pausa y bienestar emocional.',
-        mensaje: 'Pequeños espacios de calma también forman parte de un buen progreso.'
-      }
-    ]
-  }
-]
+interface WeeklySummaryDetailProps {
+  perfilGlobal: Perfil
+}
 
-export default function WeeklySummary() {
+const formatearFecha = (fecha: string): string => {
+  const [year, month, day] = fecha.split('-')
+  return `${day}/${month}/${year}`
+}
+
+export default function WeeklySummaryDetail({ perfilGlobal }: WeeklySummaryDetailProps) {
   const navigate = useNavigate()
   const { id } = useParams<{ id?: string }>()
+  const [semanas, setSemanas] = useState<SemanaResumen[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const cargarResumenes = async () => {
+      try {
+        const res = await fetch('http://localhost:3000/api/actividades/semanas')
+        if (!res.ok) {
+          throw new Error('No se pudo cargar el resumen semanal')
+        }
+        const data = await res.json()
+        setSemanas(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Error desconocido')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    cargarResumenes()
+  }, [])
 
   const semanaSeleccionada = useMemo(() => {
-    return evaluacionesSemana.find((semana) => String(semana.id) === id) ?? null
-  }, [id])
+    const numero = Number(id)
+    return semanas.find((semana) => semana.numero_semana === numero) ?? null
+  }, [id, semanas])
 
   return (
-    <div className="relative min-h-screen overflow-hidden flex flex-col">
-      <div className="relative z-10 flex-1 px-8 py-6 overflow-y-auto">
+    <div className="relative min-h-screen overflow-hidden flex flex-col px-6 py-6">
+      <div className="relative z-10 max-w-6xl mx-auto">
         <div className="mb-4">
           <button
-            onClick={() => navigate(semanaSeleccionada ? '/resumenes-semanales' : '/dashboard')}
+            onClick={() => navigate('/resumenes-semanales')}
             className="px-6 py-2 rounded-full text-white font-semibold transition hover:opacity-80"
             style={{ backgroundColor: '#1a1a1a' }}>
-            {semanaSeleccionada ? '← Volver al historial' : '← Volver'}
+            ← Volver al historial
           </button>
         </div>
 
-        {!semanaSeleccionada ? (
-          <>
-            <div className="rounded-3xl p-6" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
-              <p className="text-xs uppercase tracking-[0.3em] text-white opacity-60">Evaluaciones guardadas</p>
-              <h2 className="text-3xl font-bold text-white mt-2">Selecciona una semana para ver su detalle</h2>
-              <p className="text-sm text-white opacity-75 mt-3 leading-relaxed">
-                El historial muestra cada semana como un botón resumido, y al entrar se despliega la evaluación más específica con horas, actividades y mensajes motivacionales.
-              </p>
-            </div>
-
-            <div className="grid gap-4 mt-6">
-              {evaluacionesSemana.map((semana) => (
-                <button
-                  key={semana.id}
-                  onClick={() => navigate(`/resumen-semanal/${semana.id}`)}
-                  className="text-left rounded-3xl p-6 transition hover:scale-[1.01] hover:opacity-95"
-                  style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.3em] text-white opacity-60">{semana.fecha}</p>
-                      <h3 className="text-2xl font-semibold text-white">{semana.titulo}</h3>
-                      <p className="text-sm text-white opacity-70 mt-2">{semana.descripcion}</p>
-                    </div>
-                    <div className="flex gap-3">
-                      <div className="rounded-2xl px-4 py-2" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
-                        <p className="text-white opacity-60 text-xs">Horas</p>
-                        <p className="text-white font-semibold">{semana.horas.toFixed(1)}h</p>
-                      </div>
-                      <div className="rounded-2xl px-4 py-2" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
-                        <p className="text-white opacity-60 text-xs">Actividades</p>
-                        <p className="text-white font-semibold">{semana.actividades}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-4 flex items-center justify-end text-sm font-semibold text-[#f5e6c8]">
-                    Ver detalles →
-                  </div>
-                </button>
-              ))}
-            </div>
-          </>
+        {loading ? (
+          <div className="rounded-3xl p-8 text-white" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
+            Cargando detalles de la semana...
+          </div>
+        ) : error ? (
+          <div className="rounded-3xl p-8 text-white" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
+            {error}
+          </div>
+        ) : !semanaSeleccionada ? (
+          <div className="rounded-3xl p-8 text-white" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
+            No se encontró la semana seleccionada. Vuelve al historial para elegir otra.
+          </div>
         ) : (
           <div className="space-y-5">
             <div className="rounded-3xl p-6" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
-              <p className="text-xs uppercase tracking-[0.3em] text-white opacity-60">{semanaSeleccionada.fecha}</p>
-              <h2 className="text-3xl font-bold text-white mt-2">{semanaSeleccionada.titulo}</h2>
-              <p className="text-sm text-white opacity-75 mt-3 leading-relaxed">{semanaSeleccionada.descripcion}</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-white opacity-60">
+                Semana de {formatearFecha(semanaSeleccionada.fecha_inicio)} a {formatearFecha(semanaSeleccionada.fecha_fin)}
+              </p>
+              <h2 className="text-4xl font-bold text-white mt-2" style={{ fontFamily: 'cursive' }}>
+                Semana {semanaSeleccionada.numero_semana}
+              </h2>
+              <p className="text-sm text-white opacity-75 mt-3 leading-relaxed">
+                {semanaSeleccionada.descripcion_general}
+              </p>
 
               <div className="flex flex-wrap gap-3 mt-5">
-                <div className="rounded-2xl px-4 py-2" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                <div className="rounded-2xl px-4 py-3" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
                   <p className="text-white opacity-60 text-xs">Horas totales</p>
-                  <p className="text-white font-semibold">{semanaSeleccionada.horas.toFixed(1)}h</p>
+                  <p className="text-white font-semibold text-xl">{semanaSeleccionada.total_horas.toFixed(1)}h</p>
                 </div>
-                <div className="rounded-2xl px-4 py-2" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
-                  <p className="text-white opacity-60 text-xs">Actividades</p>
-                  <p className="text-white font-semibold">{semanaSeleccionada.actividades}</p>
+                <div className="rounded-2xl px-4 py-3" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                  <p className="text-white opacity-60 text-xs">Actividades totales</p>
+                  <p className="text-white font-semibold text-xl">{semanaSeleccionada.total_actividades}</p>
                 </div>
               </div>
             </div>
 
             <div className="rounded-3xl p-6" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
               <h3 className="text-xl font-semibold text-white">Detalle por tipo de actividad</h3>
-              <div className="mt-5 grid gap-3">
+              <p className="text-sm text-white opacity-70 mt-2">
+                Se muestran únicamente los tipos de actividad que realizaste en esta semana.
+              </p>
+              <div className="mt-5 grid gap-4">
                 {semanaSeleccionada.tipos.map((tipo) => (
-                  <div key={tipo.nombre} className="rounded-2xl p-4" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
+                  <div key={tipo.id_tipo} className="rounded-2xl p-5" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
                         <span className="w-3 h-3 rounded-full" style={{ backgroundColor: tipo.color }} />
-                        <span className="text-white font-semibold">{tipo.nombre}</span>
+                        <span className="text-white font-semibold text-lg">{tipo.nombre_tipo}</span>
                       </div>
                       <span className="text-white opacity-70 text-sm">{tipo.horas.toFixed(1)}h</span>
                     </div>
-                    <p className="text-white opacity-70 text-sm mt-2">{tipo.resumen}</p>
-                    <div className="mt-3 rounded-xl p-3" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+                    <p className="text-white opacity-70 text-sm mt-4">{tipo.resumen}</p>
+                    <div className="mt-4 rounded-2xl p-4" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
                       <p className="text-sm font-medium text-[#f5e6c8]">{tipo.mensaje}</p>
                     </div>
                   </div>

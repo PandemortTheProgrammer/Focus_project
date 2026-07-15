@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type Tipo_actividad from '../models/Tipo_actividad'
 import type Actividad from '../models/Actividad'
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip,
+  BarChart, Bar, XAxis, YAxis,
   ResponsiveContainer, Cell, PieChart, Pie
 } from 'recharts'
 
@@ -106,12 +106,14 @@ export default function WeeklyProgress() {
 
   return (
     <div className="relative w-full h-screen overflow-hidden flex flex-col">
-        <h1 className="text-5xl font-bold" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
+      <div className="w-full px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
           Progreso semanal
         </h1>
+      </div>
 
       {/* Contenido */}
-      <div className="relative z-10 flex flex-col gap-4 px-8 py-4 overflow-y-auto flex-1">
+      <div className="relative z-10 flex flex-col gap-4 px-4 sm:px-6 lg:px-8 py-4 overflow-y-auto flex-1">
 
         {/* Botón volver */}
         <div>
@@ -151,10 +153,6 @@ export default function WeeklyProgress() {
             <BarChart data={datosBarras}>
               <XAxis dataKey="dia" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} axisLine={false} tickLine={false} />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#1a1a1a', border: 'none', borderRadius: '8px', color: 'white' }}
-                cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-              />
               {catalogoTipos.map(tipo => (
                 <Bar key={tipo.id_tipo} dataKey={tipo.nombre_tipo}
                   stackId="a"
@@ -193,9 +191,6 @@ export default function WeeklyProgress() {
                       <Cell key={index} fill={coloresTipo[entry.name] ?? '#888'} />
                     ))}
                   </Pie>
-                  <Tooltip
-                       contentStyle={{ backgroundColor: '#1a1a1a', border: 'none', borderRadius: '8px', color: 'white' }}
-                    />
                 </PieChart>
               </ResponsiveContainer>
             ) : (

@@ -44,10 +44,10 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
     <div className="relative w-full h-screen overflow-hidden flex flex-col">
 
       {/* Contenido principal */}
-      <div className="relative z-10 flex flex-col items-center justify-center flex-1">
+      <div className="relative z-10 flex flex-col items-center justify-start flex-1 pt-16 px-4 pb-8">
 
         {/* Título */}
-        <h1 className="text-4xl font-bold text-center mb-10" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
+        <h1 className="text-4xl font-bold text-center mb-10 mt-2" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
           {obtenerSaludo(perfilGlobal?.genero)}, {perfilGlobal?.nickname || "Invitado"}; ¿Qué deseas hacer ahora?
         </h1>
 

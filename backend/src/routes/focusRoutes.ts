@@ -6,7 +6,8 @@ import {
   eliminarActividad,
   editarActividad,
   actividadesSemana,
-  obtenerTiposActividad
+  obtenerTiposActividad,
+  obtenerResumenesSemanales
 } from '../services/ActividadManager';
 import Tipo_actividad from '../models/Tipo_actividad';
 
@@ -82,6 +83,17 @@ router.get('/semana', async (req, res) => {
     try {
         const datos = await actividadesSemana();
         res.json(datos);
+    } catch (error: unknown) {
+        const mensaje = error instanceof Error ? error.message : "Error desconocido";
+        res.status(500).json({ error: mensaje });
+    }
+});
+
+// GET: Resúmenes semanales por semana completa (lunes a domingo)
+router.get('/semanas', async (req, res) => {
+    try {
+        const resumenes = await obtenerResumenesSemanales();
+        res.json(resumenes);
     } catch (error: unknown) {
         const mensaje = error instanceof Error ? error.message : "Error desconocido";
         res.status(500).json({ error: mensaje });

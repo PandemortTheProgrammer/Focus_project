@@ -62,22 +62,52 @@ export default function Layout({ children, perfilGlobal }: LayoutProps) {
     cargarEnfoques();
   }, []);
 
+  const blobsDecorativos = [
+    {
+      id: 'blob-1',
+      color: '#b8f0a0',
+      className: 'decorative-orb decorative-orb--slow',
+      style: { top: '-2rem', left: '2rem', width: '16rem', height: '16rem' }
+    },
+    {
+      id: 'blob-2',
+      color: '#5ecfb8',
+      className: 'decorative-orb decorative-orb--fast decorative-orb--delay-1',
+      style: { top: '-1rem', right: '3rem', width: '14rem', height: '14rem' }
+    },
+    {
+      id: 'blob-3',
+      color: '#f97316',
+      className: 'decorative-orb decorative-orb--slow decorative-orb--delay-2',
+      style: { top: '30%', left: '38%', width: '13rem', height: '13rem', transform: 'translateX(-50%)' }
+    },
+    {
+      id: 'blob-4',
+      color: '#d946ef',
+      className: 'decorative-orb decorative-orb--fast',
+      style: { bottom: '0rem', left: '1rem', width: '15rem', height: '15rem' }
+    },
+    {
+      id: 'blob-5',
+      color: '#86efac',
+      className: 'decorative-orb decorative-orb--slow decorative-orb--delay-1',
+      style: { bottom: '2rem', right: '8rem', width: '8rem', height: '8rem' }
+    }
+  ];
+
   return (
     <div className="relative w-full min-h-screen overflow-x-hidden flex flex-col" style={{ backgroundColor: '#4a5e5e' }}>
 
-      {/* 2. CÍRCULOS DECORATIVOS GLOBALES 
-          Nota: Agregamos 'fixed' y 'pointer-events-none' para que no se muevan al hacer scroll 
-          ni bloqueen los clics de los botones que están debajo */}
-      <div className="absolute w-64 h-64 rounded-full blur-2xl opacity-70"
-        style={{ backgroundColor: '#b8f0a0', top: '-2rem', left: '2rem' }} />
-      <div className="absolute w-56 h-56 rounded-full blur-2xl opacity-70"
-        style={{ backgroundColor: '#5ecfb8', top: '-1rem', right: '3rem' }} />
-      <div className="absolute w-52 h-52 rounded-full blur-2xl opacity-80"
-        style={{ backgroundColor: '#f97316', top: '30%', left: '38%', transform: 'translateX(-50%)' }} />
-      <div className="absolute w-60 h-60 rounded-full blur-2xl opacity-80"
-        style={{ backgroundColor: '#d946ef', bottom: '0rem', left: '1rem' }} />
-      <div className="absolute w-32 h-32 rounded-full blur-2xl opacity-70"
-        style={{ backgroundColor: '#86efac', bottom: '2rem', right: '8rem' }} />
+      {/* 2. CÍRCULOS DECORATIVOS GLOBALES */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {blobsDecorativos.map((blob) => (
+          <div
+            key={blob.id}
+            className={blob.className}
+            style={{ backgroundColor: blob.color, ...blob.style }}
+          />
+        ))}
+      </div>
 
       {/* 3. EL HEADER CONDICIONAL */}
       {mostrarHeader && (

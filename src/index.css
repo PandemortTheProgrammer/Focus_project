@@ -22,22 +22,48 @@ button {
 }
 
 @keyframes float {
-  0% {
-    transform: translate(0px, 0px) scale(1);
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
   }
-  33% {
-    transform: translate(30px, -50px) scale(1.1);
+  25% {
+    transform: translate3d(2rem, -3rem, 0) scale(1.05);
   }
-  66% {
-    transform: translate(-20px, 20px) scale(0.9);
+  50% {
+    transform: translate3d(-2rem, 1.5rem, 0) scale(0.95);
   }
-  100% {
-    transform: translate(0px, 0px) scale(1);
+  75% {
+    transform: translate3d(1.5rem, 2rem, 0) scale(1.08);
   }
 }
 
 .animate-float {
   animation: float 10s infinite ease-in-out;
+}
+
+.decorative-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(40px);
+  opacity: 0.75;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation: float 16s ease-in-out infinite;
+}
+
+.decorative-orb--slow {
+  animation-duration: 18s;
+}
+
+.decorative-orb--fast {
+  animation-duration: 12s;
+}
+
+.decorative-orb--delay-1 {
+  animation-delay: -2s;
+}
+
+.decorative-orb--delay-2 {
+  animation-delay: -4s;
 }
 
 /* Retrasos para que no se muevan todos al mismo tiempo */
