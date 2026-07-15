@@ -18,6 +18,7 @@ interface ActividadRow {
   desc_activ?: string;
   fecha?: string | null; // "YYYY-MM-DD"
   hora_creacion?: string | null; // ISO string si la guardas
+  hora_creac?: string | null; // nombre real de columna en SQLite
 }
 
 /** Helper: mapear fila de BD a instancia Actividad */
@@ -27,6 +28,7 @@ function mapRowToActividad(row: ActividadRow): Actividad {
   const horaInicio = String(row.hora_inicio ?? '');
   const duracionMinutos = Number(row.durac_min ?? 0);
   const descripcionActividad = String(row.desc_activ ?? '');
+  const horaCreacionRaw = row.hora_creacion ?? row.hora_creac ?? null;
 
   const actividad = new Actividad(
     idActividad,
@@ -37,7 +39,7 @@ function mapRowToActividad(row: ActividadRow): Actividad {
   );
 
   if (row.fecha) actividad.fecha = new Date(row.fecha);
-  if (row.hora_creacion) actividad.hora_creacion = new Date(row.hora_creacion);
+  if (horaCreacionRaw) actividad.hora_creacion = new Date(horaCreacionRaw);
 
   return actividad;
 }

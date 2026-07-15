@@ -20,16 +20,35 @@ const tagColor: Record<number, string> = {
 // Función auxiliar para calcular si pasaron 24 horas desde la creación
 const esActividadBloqueada = (fechaCreacion?: string | Date | null) => {
   if (!fechaCreacion) return false;
-  
+
   const fechaUtc = typeof fechaCreacion === 'string'
-    ? new Date(fechaCreacion.replace(' ', 'T') + 'Z')
+    ? new Date(fechaCreacion)
     : new Date(fechaCreacion);
   const ahora = new Date();
-  
-  // Calculamos la diferencia exacta en horas
+
   const horasTranscurridas = (ahora.getTime() - fechaUtc.getTime()) / (1000 * 60 * 60);
-  
+
   return horasTranscurridas >= 24;
+};
+
+const formatearFechaCreacion = (fechaCreacion?: string | Date | null) => {
+  if (!fechaCreacion) return { dia: '—', mes: '' };
+
+  const fecha = typeof fechaCreacion === 'string'
+    ? new Date(fechaCreacion)
+    : new Date(fechaCreacion);
+
+  if (Number.isNaN(fecha.getTime())) return { dia: '—', mes: '' };
+
+  const dia = fecha.getDate();
+  const mes = new Intl.DateTimeFormat('es-ES', {
+    month: 'short'
+  }).format(fecha).replace('.', '');
+
+  return {
+    dia,
+    mes: mes.toLowerCase()
+  };
 };
 
 export default function ActivitiesMain() {
@@ -110,7 +129,9 @@ export default function ActivitiesMain() {
             const idTipo = tipoEncontrado ? Number(tipoEncontrado.id_tipo) : 0;
 
             // Evaluamos si el registro ya cumplió las 24 horas de antigüedad
-            const bloqueada = esActividadBloqueada(actividad.hora_creacion ?? '');
+            const fechaCreacion = actividad.hora_creacion ?? actividad.fecha ?? '';
+            const bloqueada = esActividadBloqueada(fechaCreacion);
+            const fechaCreacionTexto = formatearFechaCreacion(fechaCreacion);
 
             return (
               <div
@@ -120,8 +141,18 @@ export default function ActivitiesMain() {
 
                 {/* Tag con color e ícono de candado */}
                 <div className="flex items-center gap-4">
-                  <div className="w-3 h-12 rounded-full"
-                    style={{ backgroundColor: tagColor[idTipo] ?? '#888' }} />
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-center leading-[0.9] text-center gap-[2px]">
+                      <span className="text-[10px] lowercase text-zinc-300">
+                        {fechaCreacionTexto.mes}
+                      </span>
+                      <span className="text-[18px] font-bold text-white">
+                        {fechaCreacionTexto.dia}
+                      </span>
+                    </div>
+                    <div className="w-3 h-12 rounded-full"
+                      style={{ backgroundColor: tagColor[idTipo] ?? '#888' }} />
+                  </div>
                   
                   {/* Candado visual: Solo se dibuja si la actividad está bloqueada */}
                   {bloqueada && (
