@@ -18,9 +18,7 @@ export default function Layout({ children, perfilGlobal }: LayoutProps) {
   // 1. EL RADAR: Definimos en qué rutas exactas NO queremos que aparezca el Header
   const rutasSinHeader = [
     '/',                 // MainPage
-    '/crear-perfil',     // Creación
-    '/subir-perfil',     // Carga
-    '/editar-perfil'     // Edición
+    '/crear-perfil'      // Creación
   ];
 
   // Si la ruta actual NO está en el arreglo, mostramos el header

@@ -65,7 +65,7 @@ export default function ActivitiesAdd() {
 
   return (
     <div className="relative w-full h-screen overflow-hidden flex flex-col">
-      <h1 className="text-5xl font-bold" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
+      <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
           Agregar actividad
       </h1>
       {/* Contenido principal */}

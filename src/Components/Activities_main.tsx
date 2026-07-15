@@ -101,7 +101,7 @@ export default function ActivitiesMain() {
   };
 
   return (
-    <div className="relative w-full h-screen overflow-hidden flex flex-col">
+    <div className="relative w-full flex flex-col">
       <div className="flex items-center justify-between px-8 py-4 mb-4">
         <button onClick={() => navigate('/dashboard')} className="px-6 py-2 rounded-full bg-zinc-900 text-white">
           ← Volver
@@ -114,7 +114,7 @@ export default function ActivitiesMain() {
         </button>
       </div>
       {/* Lista de actividades Dinámica */}
-      <div className="relative z-10 flex flex-col gap-4 px-8 py-4 overflow-y-auto flex-1">
+      <div className="relative z-10 flex flex-col gap-4 px-8 py-4">
         {cargando ? (
            <p className="text-white text-center opacity-60 mt-10">Cargando actividades...</p>
         ) : actividades.length === 0 ? (

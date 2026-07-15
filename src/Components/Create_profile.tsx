@@ -15,6 +15,21 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
   const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<{Id_enfoque: number, nombre_enf: string}[]>([]);
   const [cargandoEnfoques, setCargandoEnfoques] = useState(true);
 
+  // ── Agrega aquí el texto de contexto de cada enfoque ──────────────────────
+  // La clave de cada entrada debe coincidir con el Id_enfoque de tu base de datos.
+  const enfoquesConTexto: Record<number, string> = {
+    1: 'Descripción del enfoque 1. Reemplaza este texto con tu propio contenido.',
+    2: 'Descripción del enfoque 2. Reemplaza este texto con tu propio contenido.',
+    3: 'Descripción del enfoque 3. Reemplaza este texto con tu propio contenido.',
+    4: 'Descripción del enfoque 4. Reemplaza este texto con tu propio contenido.',
+    5: 'Descripción del enfoque 5. Reemplaza este texto con tu propio contenido.',
+  };
+  // ──────────────────────────────────────────────────────────────────────────
+
+  const descripcionSeleccionada = focus
+    ? (enfoquesConTexto[parseInt(focus)] ?? '')
+    : '';
+
   useEffect(() => {
     const cargarEnfoques = async () => {
       try {
@@ -146,6 +161,29 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
               ))
             )}
           </select>
+        </div>
+
+        {/* Descripción del enfoque seleccionado */}
+        <div
+          style={{
+            overflow: 'hidden',
+            maxHeight: descripcionSeleccionada ? '120px' : '0px',
+            opacity: descripcionSeleccionada ? 1 : 0,
+            transition: 'max-height 450ms ease, opacity 400ms ease',
+            marginTop: descripcionSeleccionada ? '0' : '0',
+          }}
+        >
+          <p
+            style={{
+              fontSize: '0.78rem',
+              color: 'rgba(255,255,255,0.55)',
+              lineHeight: '1.6',
+              paddingLeft: '0.75rem',
+              paddingRight: '0.25rem',
+            }}
+          >
+            {descripcionSeleccionada}
+          </p>
         </div>
 
         {/* Botones */}

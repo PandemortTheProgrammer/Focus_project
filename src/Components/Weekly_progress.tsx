@@ -4,20 +4,20 @@ import type Tipo_actividad from '../models/Tipo_actividad'
 import type Actividad from '../models/Actividad'
 import {
   BarChart, Bar, XAxis, YAxis,
-  ResponsiveContainer, Cell, PieChart, Pie
+  ResponsiveContainer, Cell, PieChart, Pie, Tooltip
 } from 'recharts'
 
 // Colores por tipo de actividad
 const coloresTipo: Record<string, string> = {
   "Estudio":                  '#1a7a6e',
-  "Dormir":                   '#3b82f6',
+  "Dormir":                   '#135850',
   "Ejercicio":                '#d946ef',
-  "Lectura":                  '#f97316',
-  "Trabajo":                  '#eab308',
-  "Deporte":                  '#22c55e',
-  "Series o Películas":       '#e11d48',
-  "Música":                   '#8b5cf6',
-  "Redes sociales":           '#64748b',
+  "Lectura":                  '#b227c7',
+  "Trabajo":                  '#f97316',
+  "Deporte":                  '#3b82f6',
+  "Series o Películas":       '#eab308',
+  "Música":                   '#ff987a',
+  "Redes sociales":           '#8b7fef',
 }
 
 // Genera los últimos 7 días como strings "YYYY-MM-DD"
@@ -35,6 +35,37 @@ const obtenerUltimosSieteDias = (): string[] => {
 const obtenerNombreDia = (fecha: string): string => {
   const nombres = ['Dom', 'Lun', 'Mar', 'Miér', 'Jue', 'Vie', 'Sáb']
   return nombres[new Date(fecha + 'T12:00:00').getDay()]
+}
+
+// Tooltip personalizado para la gráfica de barras: muestra el detalle de minutos/horas por actividad del día
+interface BarraTooltipPayloadItem {
+  dataKey: string
+  value: number
+  color?: string
+}
+interface BarraTooltipProps {
+  active?: boolean
+  payload?: BarraTooltipPayloadItem[]
+  label?: string
+}
+const TooltipBarras = ({ active, payload, label }: BarraTooltipProps) => {
+  if (!active || !payload || payload.length === 0) return null
+  const items = payload.filter(item => item.value > 0)
+  if (items.length === 0) return null
+  return (
+    <div className="rounded-xl px-3 py-2 shadow-lg" style={{ backgroundColor: 'rgba(20,20,20,0.95)', border: '1px solid rgba(255,255,255,0.1)' }}>
+      <p className="text-white text-xs font-semibold mb-1">{label}</p>
+      <div className="flex flex-col gap-0.5">
+        {items.map(item => (
+          <div key={item.dataKey} className="flex items-center gap-2 text-xs" style={{ color: 'rgba(255,255,255,0.75)' }}>
+            <span className="w-2 h-2 rounded-sm inline-block" style={{ backgroundColor: coloresTipo[item.dataKey] ?? '#888' }} />
+            <span>{item.dataKey}:</span>
+            <span className="font-semibold">{item.value} min ({(item.value / 60).toFixed(1)}h)</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export default function WeeklyProgress() {
@@ -105,7 +136,7 @@ export default function WeeklyProgress() {
   }
 
   return (
-    <div className="relative w-full h-screen overflow-hidden flex flex-col">
+    <div className="relative w-full flex flex-col">
       <div className="w-full px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
           Progreso semanal
@@ -113,7 +144,7 @@ export default function WeeklyProgress() {
       </div>
 
       {/* Contenido */}
-      <div className="relative z-10 flex flex-col gap-4 px-4 sm:px-6 lg:px-8 py-4 overflow-y-auto flex-1">
+      <div className="relative z-10 flex flex-col gap-4 px-4 sm:px-6 lg:px-8 py-4">
 
         {/* Botón volver */}
         <div>
@@ -153,6 +184,7 @@ export default function WeeklyProgress() {
             <BarChart data={datosBarras}>
               <XAxis dataKey="dia" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} axisLine={false} tickLine={false} />
+              <Tooltip content={<TooltipBarras />} cursor={{ fill: 'rgba(255,255,255,0.06)' }} />
               {catalogoTipos.map(tipo => (
                 <Bar key={tipo.id_tipo} dataKey={tipo.nombre_tipo}
                   stackId="a"
@@ -183,16 +215,18 @@ export default function WeeklyProgress() {
           <div className="p-4 rounded-2xl" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
             <p className="text-white opacity-60 text-sm mb-2">Distribución por tipo</p>
             {datosDona.length > 0 ? (
-              <ResponsiveContainer width="100%" height={150}>
-                <PieChart>
-                  <Pie data={datosDona} dataKey="value" cx="50%" cy="50%"
-                    innerRadius={40} outerRadius={65}>
-                    {datosDona.map((entry, index) => (
-                      <Cell key={index} fill={coloresTipo[entry.name] ?? '#888'} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
+              <div className="w-full aspect-square max-h-[320px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={datosDona} dataKey="value" cx="50%" cy="50%"
+                      innerRadius="55%" outerRadius="85%">
+                      {datosDona.map((entry, index) => (
+                        <Cell key={index} fill={coloresTipo[entry.name] ?? '#888'} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             ) : (
               <p className="text-white opacity-40 text-sm text-center mt-8">Sin datos esta semana</p>
             )}
