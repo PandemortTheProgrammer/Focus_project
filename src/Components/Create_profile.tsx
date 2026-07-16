@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import IconPicker from './IconPicker'
 
 interface CreateProfileProps {
-  setPerfilGlobal: (perfil: { nickname: string; age_rank: string; genero: string; id_focus: number; icono?: string }) => void;
+  setPerfilGlobal: (perfil: { nickname: string; age_rank: string; genero: string; id_focus: number; id_icono?: string }) => void;
 }
 
 export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
@@ -12,7 +12,7 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
   const [ageRank, setAgeRank] = useState('');
   const [focus, setFocus] = useState('');
   const [genero, setGenero] = useState('');
-  const [icono, setIcono] = useState('');
+  const [idIcono, setIdIcono] = useState('');
   
   const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<{Id_enfoque: number, nombre_enf: string}[]>([]);
   const [cargandoEnfoques, setCargandoEnfoques] = useState(true);
@@ -65,7 +65,7 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
         age_rank: ageRank,
         genero: genero, 
         id_focus: parseInt(focus),
-        icono: icono
+        id_icono: idIcono
     };
 
     try {
@@ -82,7 +82,7 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
         } else {
             alert("Hubo un problema al guardar el perfil.");
         }
-    } catch (error) {
+    } catch {
         alert("Error al conectar con el servidor.");
     }
 };
@@ -113,7 +113,7 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
           />
         </div>
 
-        <IconPicker nickname={nickname} iconoSeleccionado={icono} onSeleccionar={setIcono} />
+        <IconPicker nickname={nickname} iconoSeleccionado={idIcono} onSeleccionar={setIdIcono} />
 
         {/* NUEVO CAMPO: Género / Pronombres */}
         <div className="flex flex-col gap-1">

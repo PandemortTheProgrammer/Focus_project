@@ -2,12 +2,12 @@
 // Carga automáticamente todas las imágenes disponibles en src/assets/Images/Icons
 // para ofrecerlas como íconos seleccionables de perfil (ver IconPicker.tsx).
 //
-// Convención de nombres: cada archivo debe llamarse "icon_{id}.ext" (ej. icon_1.png,
-// icon_gato.svg, etc). Únicamente el "{id}" se guarda en la base de datos; a partir de
-// ese id se reconstruye el enlace a la imagen real usando este mismo módulo.
+// Convención de nombres: cada archivo debe llamarse "icon_{id}.ext" o "icono_{id}.ext"
+// (ej. icon_1.png, icono_42.svg, etc). Únicamente el "{id}" se guarda en la base de datos;
+// a partir de ese id se reconstruye el enlace a la imagen real usando este mismo módulo.
 // Basta con agregar un nuevo archivo con ese formato para que aparezca disponible.
 
-const PREFIJO = 'icon_';
+const PREFIJOS = ['icon_', 'icono_'];
 
 const modulos = import.meta.glob('../assets/Images/Icons/*.{png,jpg,jpeg,svg,webp}', {
   eager: true,
@@ -24,18 +24,20 @@ export const iconosDisponibles: IconoPerfil[] = Object.entries(modulos)
     const nombreArchivo = ruta.split('/').pop() ?? ruta;
     const nombreSinExtension = nombreArchivo.replace(/\.[^/.]+$/, '');
 
-    if (!nombreSinExtension.startsWith(PREFIJO)) {
-      console.warn(`Ícono ignorado: "${nombreArchivo}" no sigue el formato "icon_{id}.ext"`);
+    const prefijoAplicable = PREFIJOS.find((prefijo) => nombreSinExtension.startsWith(prefijo));
+    if (!prefijoAplicable) {
+      console.warn(`Ícono ignorado: "${nombreArchivo}" no sigue el formato "icon_{id}.ext" o "icono_{id}.ext"`);
       return null;
     }
 
-    const id = nombreSinExtension.slice(PREFIJO.length);
+    const id = nombreSinExtension.slice(prefijoAplicable.length);
     return { id, url };
   })
   .filter((icono): icono is IconoPerfil => icono !== null)
   .sort((a, b) => a.id.localeCompare(b.id));
 
-export const obtenerUrlIcono = (id?: string | null): string | undefined => {
-  if (!id) return undefined;
-  return iconosDisponibles.find((icono) => icono.id === id)?.url;
+export const obtenerUrlIcono = (id?: string | number | null): string | undefined => {
+  if (id === null || id === undefined || id === '' || id === 0) return undefined;
+  const idTexto = String(id);
+  return iconosDisponibles.find((icono) => icono.id === idTexto)?.url;
 };

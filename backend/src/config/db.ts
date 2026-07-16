@@ -46,7 +46,7 @@ export const inicializarBD = async () => {
                 rango_edad VARCHAR(15) NOT NULL,
                 Id_enfoque INTEGER,
                 genero VARCHAR(1) NOT NULL,
-                icono VARCHAR(60),
+                Id_icono INTEGER NOT NULL DEFAULT 0,
                 FOREIGN KEY (Id_enfoque) REFERENCES Enfoque(Id_enfoque) ON DELETE SET NULL
             );
 
@@ -72,11 +72,21 @@ export const inicializarBD = async () => {
             );
         `);
 
-        // Migración compatible con bases de datos ya existentes que no tengan la columna "icono"
+        // Migración compatible con bases de datos ya existentes que no tengan la columna Id_icono
         try {
-            await dbInstance.exec(`ALTER TABLE Perfil ADD COLUMN icono VARCHAR(60);`);
-        } catch (error) {
+            await dbInstance.exec(`ALTER TABLE Perfil ADD COLUMN Id_icono INTEGER DEFAULT 0;`);
+        } catch {
             // La columna ya existe, no hay nada que hacer
+        }
+
+        try {
+            const perfilActual = await dbInstance.get("SELECT Id_icono, icono FROM Perfil LIMIT 1");
+            if (perfilActual && (perfilActual.Id_icono === null || perfilActual.Id_icono === 0) && perfilActual.icono) {
+                const idExtraido = parseInt(String(perfilActual.icono).match(/\d+/)?.[0] ?? '0', 10);
+                await dbInstance.run("UPDATE Perfil SET Id_icono = ? WHERE Id_perfil = 1", [Number.isNaN(idExtraido) ? 0 : idExtraido]);
+            }
+        } catch {
+            // Ignoramos si la columna vieja no existe
         }
 
         // ==========================================
