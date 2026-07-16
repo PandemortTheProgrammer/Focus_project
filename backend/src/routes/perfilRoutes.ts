@@ -39,10 +39,10 @@ router.get('/', async (req, res) => {
         }
         const perfilNormalizado = {
             nickname: perfil.nickname,
-            age_rank: perfil.rango_edad, // De rango_edad a age_rank
+            age_rank: perfil.rango_edad,
             genero: perfil.genero,
-            id_focus: perfil.Id_enfoque,   // De Id_enfoque a id_focus
-            icono: perfil.icono ?? ''
+            id_focus: perfil.Id_enfoque,
+            id_icono: perfil.Id_icono ?? 0
         };
         
         res.json(perfilNormalizado);

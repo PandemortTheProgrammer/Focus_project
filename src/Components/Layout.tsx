@@ -27,7 +27,7 @@ export default function Layout({ children, perfilGlobal }: LayoutProps) {
 
   const [enfoques, setEnfoques] = useState<Enfoque[]>([]);
   const nickname = perfilGlobal?.nickname || 'Desconocido';
-  const urlIcono = obtenerUrlIcono(perfilGlobal?.icono);
+  const urlIcono = obtenerUrlIcono(perfilGlobal?.id_icono);
 
   const focusName = perfilGlobal?.id_focus
     ? enfoques.find((enfoque) =>

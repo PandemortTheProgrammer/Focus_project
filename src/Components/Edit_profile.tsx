@@ -14,7 +14,7 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
   const [ageRank, setAgeRank] = useState(perfilGlobal?.age_rank || '')
   const [focus, setFocus] = useState(perfilGlobal?.id_focus ? String(perfilGlobal.id_focus) : '')
   const [genero, setGenero] = useState(perfilGlobal?.genero || '')
-  const [icono, setIcono] = useState(perfilGlobal?.icono || '')
+  const [idIcono, setIdIcono] = useState(perfilGlobal?.id_icono || '')
   const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<{ Id_enfoque: number, nombre_enf: string }[]>([])
 
   // Carga los enfoques desde la BD
@@ -45,7 +45,7 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
       ageRank,
       parseInt(focus),
       genero,
-      icono
+      idIcono
     )
 
     try {
@@ -57,7 +57,7 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
           age_rank: perfilActualizado.age_rank,
           genero: perfilActualizado.genero,
           id_focus: perfilActualizado.id_focus,
-          icono: perfilActualizado.icono
+          id_icono: perfilActualizado.id_icono
         })
       })
 
@@ -92,7 +92,7 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
             />
           </div>
 
-          <IconPicker nickname={nickname} iconoSeleccionado={icono} onSeleccionar={setIcono} />
+          <IconPicker nickname={nickname} iconoSeleccionado={idIcono} onSeleccionar={setIdIcono} />
 
           <div className="flex flex-col gap-1">
             <label className="text-white text-sm px-2">¿Cómo prefieres que te llamemos ahora?</label>
