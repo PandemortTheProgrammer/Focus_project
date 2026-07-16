@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type Perfil from '../models/Perfil'
 
 type SemanaResumen = {
   numero_semana: number
@@ -11,16 +10,13 @@ type SemanaResumen = {
   descripcion_general: string
 }
 
-interface WeeklySummariesProps {
-  perfilGlobal: Perfil
-}
 
 const formatearFecha = (fecha: string): string => {
   const [year, month, day] = fecha.split('-')
   return `${day}/${month}/${year}`
 }
 
-export default function WeeklySummaries({ perfilGlobal }: WeeklySummariesProps) {
+export default function WeeklySummaries() {
   const [semanas, setSemanas] = useState<SemanaResumen[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

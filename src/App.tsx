@@ -31,7 +31,15 @@ export default function App() {
         const res = await fetch('http://localhost:3000/api/perfil');
         if (res.ok) {
           const datos = await res.json();
-          setPerfilGlobal(datos);
+          setPerfilGlobal(
+            new Perfil(
+              1,
+              datos.nickname ?? '',
+              datos.age_rank ?? '',
+              Number(datos.id_focus ?? 0),
+              datos.genero ?? ''
+            )
+          );
         }
       } catch (error) {
         console.log("No se pudo recuperar el perfil al inicio.", error);
@@ -53,7 +61,25 @@ export default function App() {
           path="/crear-perfil" 
           element={<CreateProfile setPerfilGlobal={(perfil) => setPerfilGlobal(new Perfil(1, perfil.nickname, perfil.age_rank, perfil.id_focus, perfil.genero))} />} 
         />
-        <Route path="/editar-perfil" element={<EditProfile perfilGlobal={perfilGlobal} setPerfilGlobal={setPerfilGlobal} />} />
+        <Route
+          path="/editar-perfil"
+          element={
+            <EditProfile
+              perfilGlobal={perfilGlobal}
+              setPerfilGlobal={(perfil) =>
+                setPerfilGlobal(
+                  new Perfil(
+                    perfil.id_perfil ?? 1,
+                    perfil.nickname,
+                    perfil.age_rank,
+                    perfil.id_focus,
+                    perfil.genero
+                  )
+                )
+              }
+            />
+          }
+        />
         <Route path="/subir-perfil" element={<UploadProfile />} />
         <Route 
           path="/dashboard" 
@@ -63,8 +89,8 @@ export default function App() {
         <Route path="/actividades/agregar" element={<ActivitiesAdd />} />
         <Route path="/actividades/editar/:id" element={<ActivitiesEdit />} />
         <Route path="/progreso-semanal" element={<WeeklyProgress />} />
-        <Route path="/resumenes-semanales" element={<WeeklySummaries perfilGlobal={perfilGlobal} />} />
-        <Route path="/resumen-semanal/:id" element={<WeeklySummaryDetail perfilGlobal={perfilGlobal} />} />
+        <Route path="/resumenes-semanales" element={<WeeklySummaries />} />
+        <Route path="/resumen-semanal/:id" element={<WeeklySummaryDetail/>} />
         <Route path="/Download" element={<Download />}/>
       </Routes>
     </Layout>

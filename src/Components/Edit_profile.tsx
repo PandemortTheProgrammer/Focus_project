@@ -10,9 +10,18 @@ interface EditProfileProps {
 export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfileProps) {
   const navigate = useNavigate()
   const [nickname, setNickname] = useState(perfilGlobal?.nickname || '')
-const [ageRank, setAgeRank] = useState(perfilGlobal?.age_rank || '')
-const [focus, setFocus] = useState(perfilGlobal?.id_focus ? String(perfilGlobal.id_focus) : '')
-const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<{Id_enfoque: number, nombre_enf: string}[]>([])
+  const [ageRank, setAgeRank] = useState(perfilGlobal?.age_rank || '')
+  const [focus, setFocus] = useState(perfilGlobal?.id_focus ? String(perfilGlobal.id_focus) : '')
+  const [genero, setGenero] = useState(perfilGlobal?.genero || '')
+  const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<{ Id_enfoque: number, nombre_enf: string }[]>([])
+
+  useEffect(() => {
+    setNickname(perfilGlobal?.nickname || '')
+    setAgeRank(perfilGlobal?.age_rank || '')
+    setFocus(perfilGlobal?.id_focus ? String(perfilGlobal.id_focus) : '')
+    setGenero(perfilGlobal?.genero || '')
+  }, [perfilGlobal])
+
   // Carga los enfoques desde la BD
   useEffect(() => {
     const cargarEnfoques = async () => {
@@ -30,7 +39,7 @@ const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<{Id_enfoque: number, no
   }, [])
 
   const handleSave = async () => {
-    if (!nickname || !ageRank || !focus) {
+    if (!nickname || !ageRank || !focus || !genero) {
       alert('Por favor, completa todos los campos.')
       return
     }
@@ -39,7 +48,8 @@ const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<{Id_enfoque: number, no
       perfilGlobal?.id_perfil ?? 1,
       nickname,
       ageRank,
-      parseInt(focus)
+      parseInt(focus),
+      genero
     )
 
     try {
@@ -49,6 +59,7 @@ const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<{Id_enfoque: number, no
         body: JSON.stringify({
           nickname: perfilActualizado.nickname,
           age_rank: perfilActualizado.age_rank,
+          genero: perfilActualizado.genero,
           id_focus: perfilActualizado.id_focus
         })
       })
@@ -85,13 +96,27 @@ const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<{Id_enfoque: number, no
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-white text-sm px-2">Rango de edad:</label>
+            <label className="text-white text-sm px-2">¿Cómo prefieres que te llamemos ahora?</label>
+            <select
+              value={genero}
+              onChange={(e) => setGenero(e.target.value)}
+              className="w-full px-5 py-3 rounded-full text-white text-lg outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
+              style={{ backgroundColor: '#2a2a2a' }}>
+              <option value="">Selecciona una opción</option>
+              <option value="M">Él (Bienvenido)</option>
+              <option value="F">Ella (Bienvenida)</option>
+              <option value="O">Neutro (Hola)</option>
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-white text-sm px-2">Nuevo rango de edad:</label>
             <select
               value={ageRank}
               onChange={(e) => setAgeRank(e.target.value)}
               className="w-full px-5 py-3 rounded-full text-white text-lg outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
               style={{ backgroundColor: '#2a2a2a' }}>
-              <option value="">Selecciona tu rango</option>
+              <option value="">Cambia tu rango de edad</option>
               <option value="15-17">15-17</option>
               <option value="18-21">18-21</option>
               <option value="22-30">22-30</option>
@@ -105,7 +130,7 @@ const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<{Id_enfoque: number, no
               onChange={(e) => setFocus(e.target.value)}
               className="w-full px-5 py-3 rounded-full text-white text-lg outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
               style={{ backgroundColor: '#2a2a2a' }}>
-              <option value="">Selecciona tu enfoque</option>
+              <option value="">Selecciona tu nuevo enfoque</option>
               {enfoquesCatalogo.map((enf) => (
                 <option key={enf.Id_enfoque} value={enf.Id_enfoque}>
                   {enf.nombre_enf}
