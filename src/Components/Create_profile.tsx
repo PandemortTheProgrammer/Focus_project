@@ -25,6 +25,10 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
     3: 'Descripción del enfoque 3. Reemplaza este texto con tu propio contenido.',
     4: 'Descripción del enfoque 4. Reemplaza este texto con tu propio contenido.',
     5: 'Descripción del enfoque 5. Reemplaza este texto con tu propio contenido.',
+    6: 'Descripción del enfoque 6. Reemplaza este texto con tu propio contenido.',
+    7: 'Descripción del enfoque 7. Reemplaza este texto con tu propio contenido.',
+    
+
   };
   // ──────────────────────────────────────────────────────────────────────────
 

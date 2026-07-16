@@ -1,4 +1,4 @@
-# Íconos de perfil
+n # Íconos de perfil
 
 Coloca aquí las imágenes (`.png`, `.jpg`, `.jpeg`, `.svg` o `.webp`) que quieras ofrecer como
 íconos seleccionables en "Crear perfil" y "Editar perfil".

@@ -73,3 +73,13 @@ button {
 .animation-delay-4000 {
   animation-delay: 4s;
 }
+
+/* Oculta la barra de scroll manteniendo el desplazamiento funcional (ej. carrusel de íconos) */
+.scrollbar-none {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE / Edge legado */
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge basado en Chromium */
+}

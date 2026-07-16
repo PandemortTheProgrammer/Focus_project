@@ -63,6 +63,7 @@ export default function WeeklyProgress() {
   const [datosSemana, setDatosSemana] = useState<Record<string, Actividad[]>>({})
   const [catalogoTipos, setCatalogoTipos] = useState<Tipo_actividad[]>([])
   const [cargando, setCargando] = useState(true)
+  const [mostrarTodaLaLeyenda, setMostrarTodaLaLeyenda] = useState(false)
   useEffect(() => {
     const cargarDatos = async () => {
       try {
@@ -116,6 +117,12 @@ export default function WeeklyProgress() {
     const maxMins = (datosSemana[max] || []).reduce((s: number, a: Actividad) => s + a.duracion_minutos, 0)
     return mins > maxMins ? fecha : max
   }, obtenerUltimosSieteDias()[0])
+
+  // La leyenda de la gráfica de barras puede tener muchos tipos de actividad definidos;
+  // por defecto solo mostramos los primeros para no saturar la vista, y el usuario decide ver el resto.
+  const LIMITE_LEYENDA_VISIBLE = 6
+  const hayLeyendaOculta = catalogoTipos.length > LIMITE_LEYENDA_VISIBLE
+  const tiposLeyendaVisibles = mostrarTodaLaLeyenda ? catalogoTipos : catalogoTipos.slice(0, LIMITE_LEYENDA_VISIBLE)
 
   if (cargando) {
     return (
@@ -187,7 +194,7 @@ export default function WeeklyProgress() {
 
           {/* Leyenda */}
           <div className="flex flex-wrap gap-3 mt-2">
-            {catalogoTipos.map(tipo => (
+            {tiposLeyendaVisibles.map(tipo => (
               <span key={tipo.id_tipo} className="flex items-center gap-1 text-xs"
                 style={{ color: 'rgba(255,255,255,0.6)' }}>
                 <span className="w-3 h-3 rounded-sm inline-block"
@@ -195,6 +202,16 @@ export default function WeeklyProgress() {
                 {tipo.nombre_tipo}
               </span>
             ))}
+            {hayLeyendaOculta && (
+              <button
+                type="button"
+                onClick={() => setMostrarTodaLaLeyenda(prev => !prev)}
+                className="text-xs font-semibold underline-offset-2 hover:underline transition"
+                style={{ color: '#5ecfb8' }}
+              >
+                {mostrarTodaLaLeyenda ? 'Ver menos' : `Ver todas (${catalogoTipos.length})`}
+              </button>
+            )}
           </div>
         </div>
 

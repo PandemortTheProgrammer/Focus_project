@@ -1,3 +1,5 @@
+import { useRef } from 'react'
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import { iconosDisponibles } from '../utils/icons'
 
 interface IconPickerProps {
@@ -6,8 +8,27 @@ interface IconPickerProps {
   onSeleccionar: (idIcono: string) => void;
 }
 
+const VELOCIDAD_DESPLAZAMIENTO = 4; // px por tick mientras el cursor permanece sobre una flecha
+
 export default function IconPicker({ nickname, iconoSeleccionado, onSeleccionar }: IconPickerProps) {
   const inicial = (nickname || '?').charAt(0).toUpperCase();
+  const carruselRef = useRef<HTMLDivElement>(null);
+  const intervaloRef = useRef<number | null>(null);
+
+  const detenerDesplazamiento = () => {
+    if (intervaloRef.current !== null) {
+      window.clearInterval(intervaloRef.current);
+      intervaloRef.current = null;
+    }
+  };
+
+  const iniciarDesplazamiento = (direccion: 'izquierda' | 'derecha') => {
+    detenerDesplazamiento();
+    intervaloRef.current = window.setInterval(() => {
+      if (!carruselRef.current) return;
+      carruselRef.current.scrollLeft += direccion === 'izquierda' ? -VELOCIDAD_DESPLAZAMIENTO : VELOCIDAD_DESPLAZAMIENTO;
+    }, 16);
+  };
 
   return (
     <div className="flex flex-col gap-2">
@@ -21,39 +42,64 @@ export default function IconPicker({ nickname, iconoSeleccionado, onSeleccionar 
         </p>
       ) : (
         <div
-          className="flex flex-wrap gap-3 p-3 rounded-2xl"
+          className="relative flex items-center gap-2 p-3 rounded-2xl"
           style={{ backgroundColor: '#2a2a2a' }}
         >
-          {/* Opción "sin ícono": mantiene el avatar con la inicial del nickname */}
-          <button
-            type="button"
-            onClick={() => onSeleccionar('')}
-            title="Sin ícono (usar inicial)"
-            className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm transition hover:scale-110"
-            style={{
-              backgroundColor: '#1a7a6e',
-              outline: iconoSeleccionado === '' ? '3px solid #5ecfb8' : 'none',
-              outlineOffset: '2px',
-            }}
+          {/* Flecha izquierda: mantener el cursor aquí revela los íconos anteriores */}
+          <div
+            onMouseEnter={() => iniciarDesplazamiento('izquierda')}
+            onMouseLeave={detenerDesplazamiento}
+            className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center cursor-pointer transition hover:bg-white/10"
           >
-            {inicial}
-          </button>
+            <ChevronLeftIcon className="w-5 h-5 text-white opacity-70" />
+          </div>
 
-          {iconosDisponibles.map((icono) => (
+          {/* Viewport de tamaño fijo: los íconos se desplazan dentro sin agrandar el formulario */}
+          <div
+            ref={carruselRef}
+            className="flex items-center gap-3 overflow-x-hidden scroll-smooth scrollbar-none"
+            style={{ width: '13.5rem' }}
+          >
+            {/* Opción "sin ícono": mantiene el avatar con la inicial del nickname */}
             <button
-              key={icono.id}
               type="button"
-              onClick={() => onSeleccionar(icono.id)}
-              title={icono.id}
-              className="w-12 h-12 rounded-full overflow-hidden shadow-sm transition hover:scale-110"
+              onClick={() => onSeleccionar('')}
+              title="Sin ícono (usar inicial)"
+              className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm transition hover:scale-110"
               style={{
-                outline: iconoSeleccionado === icono.id ? '3px solid #5ecfb8' : 'none',
+                backgroundColor: '#1a7a6e',
+                outline: iconoSeleccionado === '' ? '3px solid #5ecfb8' : 'none',
                 outlineOffset: '2px',
               }}
             >
-              <img src={icono.url} alt={icono.id} className="w-full h-full object-cover" />
+              {inicial}
             </button>
-          ))}
+
+            {iconosDisponibles.map((icono) => (
+              <button
+                key={icono.id}
+                type="button"
+                onClick={() => onSeleccionar(icono.id)}
+                title={icono.id}
+                className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden shadow-sm transition hover:scale-110"
+                style={{
+                  outline: iconoSeleccionado === icono.id ? '3px solid #5ecfb8' : 'none',
+                  outlineOffset: '2px',
+                }}
+              >
+                <img src={icono.url} alt={icono.id} className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+
+          {/* Flecha derecha: mantener el cursor aquí revela los íconos siguientes */}
+          <div
+            onMouseEnter={() => iniciarDesplazamiento('derecha')}
+            onMouseLeave={detenerDesplazamiento}
+            className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center cursor-pointer transition hover:bg-white/10"
+          >
+            <ChevronRightIcon className="w-5 h-5 text-white opacity-70" />
+          </div>
         </div>
       )}
     </div>
