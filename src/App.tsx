@@ -37,7 +37,8 @@ export default function App() {
               datos.nickname ?? '',
               datos.age_rank ?? '',
               Number(datos.id_focus ?? 0),
-              datos.genero ?? ''
+              datos.genero ?? '',
+              datos.icono ?? ''
             )
           );
         }
@@ -59,7 +60,7 @@ export default function App() {
         <Route path="/" element={<Mainpage />} />
         <Route 
           path="/crear-perfil" 
-          element={<CreateProfile setPerfilGlobal={(perfil) => setPerfilGlobal(new Perfil(1, perfil.nickname, perfil.age_rank, perfil.id_focus, perfil.genero))} />} 
+          element={<CreateProfile setPerfilGlobal={(perfil) => setPerfilGlobal(new Perfil(1, perfil.nickname, perfil.age_rank, perfil.id_focus, perfil.genero, perfil.icono))} />} 
         />
         <Route
           path="/editar-perfil"
@@ -73,7 +74,8 @@ export default function App() {
                     perfil.nickname,
                     perfil.age_rank,
                     perfil.id_focus,
-                    perfil.genero
+                    perfil.genero,
+                    perfil.icono
                   )
                 )
               }

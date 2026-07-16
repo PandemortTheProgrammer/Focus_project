@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Perfil from '../models/Perfil'
+import IconPicker from './IconPicker'
 
 interface EditProfileProps {
   perfilGlobal: Perfil;
@@ -13,14 +14,8 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
   const [ageRank, setAgeRank] = useState(perfilGlobal?.age_rank || '')
   const [focus, setFocus] = useState(perfilGlobal?.id_focus ? String(perfilGlobal.id_focus) : '')
   const [genero, setGenero] = useState(perfilGlobal?.genero || '')
+  const [icono, setIcono] = useState(perfilGlobal?.icono || '')
   const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<{ Id_enfoque: number, nombre_enf: string }[]>([])
-
-  useEffect(() => {
-    setNickname(perfilGlobal?.nickname || '')
-    setAgeRank(perfilGlobal?.age_rank || '')
-    setFocus(perfilGlobal?.id_focus ? String(perfilGlobal.id_focus) : '')
-    setGenero(perfilGlobal?.genero || '')
-  }, [perfilGlobal])
 
   // Carga los enfoques desde la BD
   useEffect(() => {
@@ -49,7 +44,8 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
       nickname,
       ageRank,
       parseInt(focus),
-      genero
+      genero,
+      icono
     )
 
     try {
@@ -60,7 +56,8 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
           nickname: perfilActualizado.nickname,
           age_rank: perfilActualizado.age_rank,
           genero: perfilActualizado.genero,
-          id_focus: perfilActualizado.id_focus
+          id_focus: perfilActualizado.id_focus,
+          icono: perfilActualizado.icono
         })
       })
 
@@ -94,6 +91,8 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
               style={{ backgroundColor: '#2a2a2a' }}
             />
           </div>
+
+          <IconPicker nickname={nickname} iconoSeleccionado={icono} onSeleccionar={setIcono} />
 
           <div className="flex flex-col gap-1">
             <label className="text-white text-sm px-2">¿Cómo prefieres que te llamemos ahora?</label>

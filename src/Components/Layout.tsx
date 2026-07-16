@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import FocusLogo from '../assets/Images/Focus_logo.png';
 import type Perfil from '../models/Perfil';
 import type Enfoque from '../models/Enfoque';
+import { obtenerUrlIcono } from '../utils/icons';
 
 interface LayoutProps {
   children: React.ReactNode; // Aquí se inyectará la pantalla actual (Dashboard, Actividades, etc.)
@@ -26,6 +27,7 @@ export default function Layout({ children, perfilGlobal }: LayoutProps) {
 
   const [enfoques, setEnfoques] = useState<Enfoque[]>([]);
   const nickname = perfilGlobal?.nickname || 'Desconocido';
+  const urlIcono = obtenerUrlIcono(perfilGlobal?.icono);
 
   const focusName = perfilGlobal?.id_focus
     ? enfoques.find((enfoque) =>
@@ -119,8 +121,12 @@ export default function Layout({ children, perfilGlobal }: LayoutProps) {
 
           {/* Info del usuario centralizada */}
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm" style={{ backgroundColor: '#1a7a6e' }}>
-              {nickname.charAt(0).toUpperCase()}
+            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm overflow-hidden" style={{ backgroundColor: '#1a7a6e' }}>
+              {urlIcono ? (
+                <img src={urlIcono} alt={nickname} className="w-full h-full object-cover" />
+              ) : (
+                nickname.charAt(0).toUpperCase()
+              )}
             </div>
             <div className="text-right">
               <p className="text-white font-semibold text-sm text-left">{nickname}</p>

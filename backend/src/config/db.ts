@@ -46,6 +46,7 @@ export const inicializarBD = async () => {
                 rango_edad VARCHAR(15) NOT NULL,
                 Id_enfoque INTEGER,
                 genero VARCHAR(1) NOT NULL,
+                icono VARCHAR(60),
                 FOREIGN KEY (Id_enfoque) REFERENCES Enfoque(Id_enfoque) ON DELETE SET NULL
             );
 
@@ -70,6 +71,13 @@ export const inicializarBD = async () => {
                 FOREIGN KEY (Id_enfoque) REFERENCES Enfoque(Id_enfoque) ON DELETE CASCADE
             );
         `);
+
+        // Migración compatible con bases de datos ya existentes que no tengan la columna "icono"
+        try {
+            await dbInstance.exec(`ALTER TABLE Perfil ADD COLUMN icono VARCHAR(60);`);
+        } catch (error) {
+            // La columna ya existe, no hay nada que hacer
+        }
 
         // ==========================================
         // 3. POBLAR CATÁLOGOS (SEEDING)

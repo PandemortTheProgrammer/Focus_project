@@ -5,13 +5,15 @@ export default class Perfil {
     public age_rank: string;
     public id_focus: number;
     public genero: string;
+    public icono?: string;
 
-    constructor(id_perfil:number, nickname:string, age_rank:string, id_focus:number, genero:string = '') {
+    constructor(id_perfil:number, nickname:string, age_rank:string, id_focus:number, genero:string = '', icono: string = '') {
         this.id_perfil = id_perfil;
         this.nickname = nickname;
         this.age_rank = age_rank;
         this.id_focus = id_focus;
         this.genero = genero;
+        this.icono = icono;
 
     }
 

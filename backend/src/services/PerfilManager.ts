@@ -9,7 +9,7 @@ export const obtenerEnfoques = async (): Promise< { id: number; nombre: string }
 };
 
 // POST: Registrar o actualizar el perfil único
-export const guardarPerfil = async (datos: { nickname: string; age_rank: string; genero: string; id_focus: string }): Promise<void> => {
+export const guardarPerfil = async (datos: { nickname: string; age_rank: string; genero: string; id_focus: string; icono?: string | null }): Promise<void> => {
     const db = getDB();
 
     // Al ser una arquitectura local-first con un único usuario, 
@@ -18,8 +18,8 @@ export const guardarPerfil = async (datos: { nickname: string; age_rank: string;
 
     // RAW SQL: Inserción limpia respetando las columnas de tu diccionario
     const query = `
-        INSERT INTO Perfil (Id_perfil, nickname, rango_edad, Id_enfoque, genero)
-        VALUES (1, ?, ?, ?, ?)
+        INSERT INTO Perfil (Id_perfil, nickname, rango_edad, Id_enfoque, genero, icono)
+        VALUES (1, ?, ?, ?, ?, ?)
     `;
 
     await db.run(query, [
@@ -27,13 +27,14 @@ export const guardarPerfil = async (datos: { nickname: string; age_rank: string;
         datos.age_rank,
         parseInt(datos.id_focus),
         datos.genero,
+        datos.icono || null,
     ]);
 
     console.log("👤 Perfil guardado con éxito en la tabla SQLite");
 };
 
 // GET: Recuperar el perfil activo para el Dashboard
-export const obtenerPerfil = async (): Promise<{ id: number; nickname: string; rango_edad: string; Id_enfoque: number, genero: string } | null> => {
+export const obtenerPerfil = async (): Promise<{ id: number; nickname: string; rango_edad: string; Id_enfoque: number, genero: string, icono: string | null } | null> => {
     const db = getDB();
     
     // Obtenemos la única fila existente

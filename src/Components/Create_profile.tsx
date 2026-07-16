@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import IconPicker from './IconPicker'
 
 interface CreateProfileProps {
-  setPerfilGlobal: (perfil: { nickname: string; age_rank: string; genero: string; id_focus: number }) => void;
+  setPerfilGlobal: (perfil: { nickname: string; age_rank: string; genero: string; id_focus: number; icono?: string }) => void;
 }
 
 export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
@@ -11,6 +12,7 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
   const [ageRank, setAgeRank] = useState('');
   const [focus, setFocus] = useState('');
   const [genero, setGenero] = useState('');
+  const [icono, setIcono] = useState('');
   
   const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<{Id_enfoque: number, nombre_enf: string}[]>([]);
   const [cargandoEnfoques, setCargandoEnfoques] = useState(true);
@@ -58,7 +60,8 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
         nickname: nickname,
         age_rank: ageRank,
         genero: genero, 
-        id_focus: parseInt(focus)
+        id_focus: parseInt(focus),
+        icono: icono
     };
 
     try {
@@ -105,6 +108,8 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
             style={{ backgroundColor: '#2a2a2a' }}
           />
         </div>
+
+        <IconPicker nickname={nickname} iconoSeleccionado={icono} onSeleccionar={setIcono} />
 
         {/* NUEVO CAMPO: Género / Pronombres */}
         <div className="flex flex-col gap-1">
