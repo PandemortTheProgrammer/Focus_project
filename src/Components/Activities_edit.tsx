@@ -89,14 +89,14 @@ export default function ActivitiesEdit() {
 
   if (cargando) {
     return (
-      <div className="w-full h-screen flex items-center justify-center">
+      <div className="w-full min-h-screen flex items-center justify-center">
         <p className="text-white text-xl">Cargando...</p>
       </div>
     )
   }
 
   return (
-    <div className="relative w-full h-screen overflow-hidden flex flex-col">
+    <div className="relative w-full min-h-screen overflow-auto flex flex-col">
 
       {/* Contenido */}
       <div className="relative z-10 flex gap-6 px-8 py-8 w-full max-w-4xl mx-auto flex-1 items-center">

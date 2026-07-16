@@ -15,7 +15,7 @@ const modulos = import.meta.glob('../assets/Images/Icons/*.{png,jpg,jpeg,svg,web
 }) as Record<string, string>;
 
 export interface IconoPerfil {
-  id: string;   // identificador único que se guarda en el perfil (la parte "{id}" de icon_{id}.ext)
+  id: number;   // identificador único que se guarda en el perfil (la parte "{id}" de icon_{id}.ext)
   url: string;  // URL resuelta por Vite para mostrar la imagen
 }
 
@@ -30,14 +30,21 @@ export const iconosDisponibles: IconoPerfil[] = Object.entries(modulos)
       return null;
     }
 
-    const id = nombreSinExtension.slice(prefijoAplicable.length);
+    const idTexto = nombreSinExtension.slice(prefijoAplicable.length);
+    const id = Number.parseInt(idTexto, 10);
+
+    if (Number.isNaN(id)) {
+      console.warn(`Ícono ignorado: "${nombreArchivo}" no tiene un id numérico válido`);
+      return null;
+    }
+
     return { id, url };
   })
   .filter((icono): icono is IconoPerfil => icono !== null)
-  .sort((a, b) => a.id.localeCompare(b.id));
+  .sort((a, b) => a.id - b.id);
 
 export const obtenerUrlIcono = (id?: string | number | null): string | undefined => {
   if (id === null || id === undefined || id === '' || id === 0) return undefined;
-  const idTexto = String(id);
-  return iconosDisponibles.find((icono) => icono.id === idTexto)?.url;
+  const idNumerico = Number(id);
+  return iconosDisponibles.find((icono) => icono.id === idNumerico)?.url;
 };

@@ -14,7 +14,7 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
   const [ageRank, setAgeRank] = useState(perfilGlobal?.age_rank || '')
   const [focus, setFocus] = useState(perfilGlobal?.id_focus ? String(perfilGlobal.id_focus) : '')
   const [genero, setGenero] = useState(perfilGlobal?.genero || '')
-  const [idIcono, setIdIcono] = useState(perfilGlobal?.id_icono || '')
+  const [idIcono, setIdIcono] = useState<number>(Number(perfilGlobal?.id_icono ?? 0))
   const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<{ Id_enfoque: number, nombre_enf: string }[]>([])
 
   // Carga los enfoques desde la BD
@@ -74,7 +74,7 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
   }
 
   return (
-    <div className="relative w-full h-screen overflow-hidden flex flex-col">
+    <div className="relative w-full min-h-screen overflow-auto flex flex-col">
 
       {/* Formulario */}
       <div className="relative z-10 flex flex-col items-center justify-center flex-1">

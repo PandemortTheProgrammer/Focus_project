@@ -5,7 +5,7 @@ export default function Mainpage() {
   const navigate = useNavigate()
 
   return (
-    <div className="relative w-full h-screen overflow-hidden flex flex-col items-center justify-center">
+    <div className="relative w-full min-h-screen overflow-auto flex flex-col items-center justify-start py-8">
 
       {/* Logo */}
       <div className="relative z-10 flex flex-col items-center mb-10">

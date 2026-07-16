@@ -4,8 +4,8 @@ import { iconosDisponibles } from '../utils/icons'
 
 interface IconPickerProps {
   nickname: string;
-  iconoSeleccionado: string;
-  onSeleccionar: (idIcono: string) => void;
+  iconoSeleccionado: number;
+  onSeleccionar: (idIcono: number) => void;
 }
 
 const VELOCIDAD_DESPLAZAMIENTO = 4; // px por tick mientras el cursor permanece sobre una flecha
@@ -63,12 +63,12 @@ export default function IconPicker({ nickname, iconoSeleccionado, onSeleccionar 
             {/* Opción "sin ícono": mantiene el avatar con la inicial del nickname */}
             <button
               type="button"
-              onClick={() => onSeleccionar('')}
+              onClick={() => onSeleccionar(0)}
               title="Sin ícono (usar inicial)"
               className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm transition hover:scale-110"
               style={{
                 backgroundColor: '#1a7a6e',
-                outline: iconoSeleccionado === '' ? '3px solid #5ecfb8' : 'none',
+                outline: iconoSeleccionado === 0 ? '3px solid #5ecfb8' : 'none',
                 outlineOffset: '2px',
               }}
             >
@@ -80,14 +80,14 @@ export default function IconPicker({ nickname, iconoSeleccionado, onSeleccionar 
                 key={icono.id}
                 type="button"
                 onClick={() => onSeleccionar(icono.id)}
-                title={icono.id}
+                title={String(icono.id)}
                 className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden shadow-sm transition hover:scale-110"
                 style={{
                   outline: iconoSeleccionado === icono.id ? '3px solid #5ecfb8' : 'none',
                   outlineOffset: '2px',
                 }}
               >
-                <img src={icono.url} alt={icono.id} className="w-full h-full object-cover" />
+                <img src={icono.url} alt={String(icono.id)} className="w-full h-full object-cover" />
               </button>
             ))}
           </div>

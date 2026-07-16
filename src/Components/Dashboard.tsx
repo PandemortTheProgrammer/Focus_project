@@ -41,7 +41,7 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
   };
 
   return (
-    <div className="relative w-full h-screen overflow-hidden flex flex-col">
+    <div className="relative w-full min-h-screen overflow-auto flex flex-col">
 
       {/* Contenido principal */}
       <div className="relative z-10 flex flex-col items-center justify-start flex-1 pt-16 px-4 pb-8">

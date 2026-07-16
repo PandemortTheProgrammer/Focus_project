@@ -42,7 +42,7 @@ export default function WeeklySummaries() {
   }, [])
 
   return (
-    <div className="relative min-h-screen overflow-hidden flex flex-col px-6 py-6">
+    <div className="relative min-h-screen overflow-auto flex flex-col px-6 py-6">
       <div className="relative z-10 max-w-6xl mx-auto">
         <div className="flex items-center justify-between gap-4 mb-6">
           <button

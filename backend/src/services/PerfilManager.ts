@@ -7,16 +7,14 @@ export const obtenerEnfoques = async (): Promise<{ id: number; nombre: string }[
 };
 
 // POST: Registrar o actualizar el perfil único
-export const guardarPerfil = async (datos: { nickname: string; age_rank: string; genero: string; id_focus: string; id_icono?: string | number | null }): Promise<void> => {
+export const guardarPerfil = async (datos: { nickname: string; age_rank: string; genero: string; id_focus: string | number; id_icono?: number | null }): Promise<void> => {
     const db = getDB();
 
     // Al ser una arquitectura local-first con un único usuario,
     // limpiamos cualquier rastro interino antes de guardar el nuevo.
     await db.run("DELETE FROM Perfil");
 
-    const idIcono = datos.id_icono === '' || datos.id_icono === null || datos.id_icono === undefined
-        ? 0
-        : Number(datos.id_icono);
+    const idIcono = datos.id_icono ?? 0;
 
     const query = `
         INSERT INTO Perfil (Id_perfil, nickname, rango_edad, Id_enfoque, genero, Id_icono)
@@ -26,7 +24,7 @@ export const guardarPerfil = async (datos: { nickname: string; age_rank: string;
     await db.run(query, [
         datos.nickname,
         datos.age_rank,
-        Number.parseInt(datos.id_focus, 10) || 0,
+        datos.id_focus,
         datos.genero,
         idIcono,
     ]);

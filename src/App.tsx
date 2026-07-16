@@ -22,7 +22,7 @@ import WeeklySummaryDetail from './Components/Weekly_Summaries_details'
 
 export default function App() {
   // Estado global para el perfil
-  const perfilInicial: Perfil = new Perfil(1, '', '', 0)
+  const perfilInicial: Perfil = new Perfil(1, '', '', 0, '', 0)
   const [perfilGlobal, setPerfilGlobal] = useState<Perfil>(perfilInicial);
 
   // Si el usuario recarga la página, intentamos recuperar el perfil de Express
@@ -39,7 +39,7 @@ export default function App() {
               datos.age_rank ?? '',
               Number(datos.id_focus ?? 0),
               datos.genero ?? '',
-              datos.id_icono ?? ''
+              Number(datos.id_icono ?? 0)
             )
           );
         }
@@ -61,7 +61,7 @@ export default function App() {
         <Route path="/" element={<Mainpage />} />
         <Route 
           path="/crear-perfil" 
-          element={<CreateProfile setPerfilGlobal={(perfil) => setPerfilGlobal(new Perfil(1, perfil.nickname, perfil.age_rank, perfil.id_focus, perfil.genero, perfil.id_icono))} />} 
+          element={<CreateProfile setPerfilGlobal={(perfil) => setPerfilGlobal(new Perfil(1, perfil.nickname, perfil.age_rank, perfil.id_focus, perfil.genero, perfil.id_icono ?? 0))} />} 
         />
         <Route
           path="/editar-perfil"

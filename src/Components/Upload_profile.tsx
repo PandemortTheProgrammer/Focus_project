@@ -16,7 +16,7 @@ export default function UploadProfile() {
   }
 
   return (
-    <div className="relative w-full h-screen overflow-hidden flex flex-col items-center justify-center">
+    <div className="relative w-full min-h-screen overflow-auto flex flex-col items-center justify-start py-8">
 
 
       {/* Título */}

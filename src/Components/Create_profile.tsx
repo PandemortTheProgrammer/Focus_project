@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import IconPicker from './IconPicker'
 
 interface CreateProfileProps {
-  setPerfilGlobal: (perfil: { nickname: string; age_rank: string; genero: string; id_focus: number; id_icono?: string }) => void;
+  setPerfilGlobal: (perfil: { nickname: string; age_rank: string; genero: string; id_focus: number; id_icono?: number }) => void;
 }
 
 export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
@@ -12,7 +12,7 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
   const [ageRank, setAgeRank] = useState('');
   const [focus, setFocus] = useState('');
   const [genero, setGenero] = useState('');
-  const [idIcono, setIdIcono] = useState('');
+  const [idIcono, setIdIcono] = useState<number>(0);
   
   const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<{Id_enfoque: number, nombre_enf: string}[]>([]);
   const [cargandoEnfoques, setCargandoEnfoques] = useState(true);
@@ -88,7 +88,7 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
 };
 
   return (
-    <div className="relative w-full h-screen overflow-hidden flex flex-col items-center justify-center">
+    <div className="relative w-full min-h-screen overflow-auto flex flex-col items-center justify-start py-8">
 
       {/* Título */}
       <h1 className="relative z-10 text-5xl font-bold text-center mb-10"
