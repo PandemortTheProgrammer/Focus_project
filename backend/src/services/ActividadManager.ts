@@ -164,6 +164,22 @@ export const actividadesSemana = async (): Promise<Record<string, Actividad[]>> 
   return agrupadas;
 };
 
+// 6. obtenerHistorialActividades: actividades con más de una semana de antigüedad.
+// Este historial es de solo lectura (no se puede editar ni eliminar desde la UI).
+export const obtenerHistorialActividades = async (): Promise<Actividad[]> => {
+  const db = getDB();
+  const haceUnaSemana = new Date();
+  haceUnaSemana.setDate(haceUnaSemana.getDate() - 7);
+  const limite = haceUnaSemana.toISOString().split('T')[0];
+
+  const filas: ActividadRow[] = await db.all(
+    `SELECT * FROM Actividad WHERE fecha < ? ORDER BY fecha DESC, hora_inicio DESC`,
+    [limite]
+  );
+
+  return filas.map(mapRowToActividad);
+};
+
 interface ActividadConTipoRow {
   id_actividad: number;
   id_tipo: number;

@@ -7,7 +7,8 @@ import {
   editarActividad,
   actividadesSemana,
   obtenerTiposActividad,
-  obtenerResumenesSemanales
+  obtenerResumenesSemanales,
+  obtenerHistorialActividades
 } from '../services/ActividadManager';
 import Tipo_actividad from '../models/Tipo_actividad';
 
@@ -96,6 +97,17 @@ router.get('/semanas', async (req, res) => {
     try {
         const resumenes = await obtenerResumenesSemanales();
         res.json(resumenes);
+    } catch (error: unknown) {
+        const mensaje = error instanceof Error ? error.message : "Error desconocido";
+        res.status(500).json({ error: mensaje });
+    }
+});
+
+// GET: Historial de actividades con más de una semana de antigüedad (solo lectura)
+router.get('/historial', async (req, res) => {
+    try {
+        const historial = await obtenerHistorialActividades();
+        res.json(historial);
     } catch (error: unknown) {
         const mensaje = error instanceof Error ? error.message : "Error desconocido";
         res.status(500).json({ error: mensaje });

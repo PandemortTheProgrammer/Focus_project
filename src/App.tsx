@@ -13,6 +13,7 @@ import Dashboard from './Components/Dashboard'
 import ActivitiesMain from './Components/Activities_main'
 import ActivitiesAdd from './Components/Activities_add'
 import ActivitiesEdit from './Components/Activities_edit'
+import ActivitiesHistory from './Components/Activities_history'
 import WeeklyProgress from './Components/Weekly_progress'
 import Download from './Components/download'
 import Perfil from './models/Perfil'
@@ -90,6 +91,7 @@ export default function App() {
         <Route path="/actividades" element={<ActivitiesMain />} />
         <Route path="/actividades/agregar" element={<ActivitiesAdd />} />
         <Route path="/actividades/editar/:id" element={<ActivitiesEdit />} />
+        <Route path="/actividades/historial" element={<ActivitiesHistory />} />
         <Route path="/progreso-semanal" element={<WeeklyProgress />} />
         <Route path="/resumenes-semanales" element={<WeeklySummaries />} />
         <Route path="/resumen-semanal/:id" element={<WeeklySummaryDetail/>} />

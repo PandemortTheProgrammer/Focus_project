@@ -95,9 +95,18 @@ export default function ActivitiesMain() {
         <h1 className="text-4xl font-bold" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
           Actividades
         </h1>
-        <button onClick={() => navigate('/actividades/agregar')} className="px-6 py-2 rounded-full bg-zinc-900 text-white">
-          + Agregar actividad
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/actividades/historial')}
+            title="Ver actividades con más de una semana de antigüedad"
+            className="px-6 py-2 rounded-full text-white transition hover:opacity-80"
+            style={{ backgroundColor: '#1a7a6e' }}>
+            Historial semanal
+          </button>
+          <button onClick={() => navigate('/actividades/agregar')} className="px-6 py-2 rounded-full bg-zinc-900 text-white">
+            + Agregar actividad
+          </button>
+        </div>
       </div>
       {/* Lista de actividades Dinámica */}
       <div className="relative z-10 flex flex-col gap-4 px-8 py-4">
