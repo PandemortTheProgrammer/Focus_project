@@ -45,7 +45,10 @@ const TooltipBarras = ({ active, payload, label }: BarraTooltipProps) => {
       <div className="flex flex-col gap-0.5">
         {items.map(item => (
           <div key={item.dataKey} className="flex items-center gap-2 text-xs" style={{ color: 'rgba(255,255,255,0.75)' }}>
-            {/* <span className="w-2 h-2 rounded-sm inline-block" style={{ backgroundColor: coloresTipo[item.dataKey] ?? '#888' }} /> */}
+            <span
+              className="w-2 h-2 rounded-sm inline-block"
+              style={{ backgroundColor: item.color ?? '#888' }}
+            />
             <span>{item.dataKey}:</span>
             <span className="font-semibold">{item.value} min ({(item.value / 60).toFixed(1)}h)</span>
           </div>
