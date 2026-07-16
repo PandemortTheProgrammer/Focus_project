@@ -7,19 +7,6 @@ import {
   ResponsiveContainer, Cell, PieChart, Pie
 } from 'recharts'
 
-// Colores por tipo de actividad
-const coloresTipo: Record<string, string> = {
-  "Estudio":                  '#1a7a6e',
-  "Dormir":                   '#3b82f6',
-  "Ejercicio":                '#d946ef',
-  "Lectura":                  '#f97316',
-  "Trabajo":                  '#eab308',
-  "Deporte":                  '#22c55e',
-  "Series o Películas":       '#e11d48',
-  "Música":                   '#8b5cf6',
-  "Redes sociales":           '#64748b',
-}
-
 // Genera los últimos 7 días como strings "YYYY-MM-DD"
 const obtenerUltimosSieteDias = (): string[] => {
   const dias = []
@@ -81,7 +68,7 @@ export default function WeeklyProgress() {
       .flat()
       .filter((a: Actividad) => a.id_tipo === tipo.id_tipo)
       .reduce((sum: number, a: Actividad) => sum + a.duracion_minutos, 0)
-    return { name: tipo.nombre_tipo, value: total }
+    return { name: tipo.nombre_tipo, value: total, color: tipo.codigo_color ?? '#888' }
   }).filter(d => d.value > 0)
 
   // Calcula tarjetas resumen
@@ -156,7 +143,7 @@ export default function WeeklyProgress() {
               {catalogoTipos.map(tipo => (
                 <Bar key={tipo.id_tipo} dataKey={tipo.nombre_tipo}
                   stackId="a"
-                  fill={coloresTipo[tipo.nombre_tipo] ?? '#888'}
+                  fill={tipo.codigo_color ?? '#888'}
                   radius={[4, 4, 0, 0]}
                 />
               ))}
@@ -169,7 +156,7 @@ export default function WeeklyProgress() {
               <span key={tipo.id_tipo} className="flex items-center gap-1 text-xs"
                 style={{ color: 'rgba(255,255,255,0.6)' }}>
                 <span className="w-3 h-3 rounded-sm inline-block"
-                  style={{ backgroundColor: coloresTipo[tipo.nombre_tipo] ?? '#888' }} />
+                  style={{ backgroundColor: tipo.codigo_color ?? '#888' }} />
                 {tipo.nombre_tipo}
               </span>
             ))}
@@ -188,7 +175,7 @@ export default function WeeklyProgress() {
                   <Pie data={datosDona} dataKey="value" cx="50%" cy="50%"
                     innerRadius={40} outerRadius={65}>
                     {datosDona.map((entry, index) => (
-                      <Cell key={index} fill={coloresTipo[entry.name] ?? '#888'} />
+                      <Cell key={index} fill={entry.color ?? '#888'} />
                     ))}
                   </Pie>
                 </PieChart>
@@ -217,7 +204,7 @@ export default function WeeklyProgress() {
                     </div>
                     <div className="rounded-full h-2" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}>
                       <div className="h-2 rounded-full transition-all"
-                        style={{ width: `${porcentaje}%`, backgroundColor: coloresTipo[tipo.nombre_tipo] ?? '#888' }} />
+                        style={{ width: `${porcentaje}%`, backgroundColor: tipo.codigo_color ?? '#888' }} />
                     </div>
                   </div>
                 )

@@ -3,20 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import type Tipo_actividad from '../models/Tipo_actividad'
 import type Actividad from '../models/Actividad'
 
-// Mapeo de colores adaptado a los nombres que pusiste en tu backend
-const tagColor: Record<number, string> = {
-  1: '#1a7a6e',
-  2: '#135850', 
-  3: '#d946ef',
-  4: '#b227c7',
-  5: '#f97316',
-  6: '#3b82f6',
-  7: '#eab308',
-  8: '#ff987a',
-  9: '#8b7fef',
-}
-
-
 // Función auxiliar para calcular si pasaron 24 horas desde la creación
 const esActividadBloqueada = (fechaCreacion?: string | Date | null) => {
   if (!fechaCreacion) return false;
@@ -126,7 +112,7 @@ export default function ActivitiesMain() {
             // 4. Buscamos el nombre del tipo basándonos en el id_tipo que guardó el backend
             const tipoEncontrado = tipos.find((t) => Number(t.id_tipo) === Number(actividad.id_tipo));
             const nombreTipo = tipoEncontrado?.nombre_tipo ?? 'Actividad';
-            const idTipo = tipoEncontrado ? Number(tipoEncontrado.id_tipo) : 0;
+            const colorTipo = tipoEncontrado?.codigo_color ?? '#888';
 
             // Evaluamos si el registro ya cumplió las 24 horas de antigüedad
             const fechaCreacion = actividad.hora_creacion ?? actividad.fecha ?? '';
@@ -151,7 +137,7 @@ export default function ActivitiesMain() {
                       </span>
                     </div>
                     <div className="w-3 h-12 rounded-full"
-                      style={{ backgroundColor: tagColor[idTipo] ?? '#888' }} />
+                      style={{ backgroundColor: colorTipo }} />
                   </div>
                   
                   {/* Candado visual: Solo se dibuja si la actividad está bloqueada */}

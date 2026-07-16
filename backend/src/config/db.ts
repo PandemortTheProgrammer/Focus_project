@@ -30,7 +30,8 @@ export const inicializarBD = async () => {
             CREATE TABLE IF NOT EXISTS Tipo_actividad (
                 Id_tipo INTEGER PRIMARY KEY AUTOINCREMENT,
                 Nombre_activ VARCHAR(20) NOT NULL,
-                Utilidad_objet INTEGER CHECK(Utilidad_objet <= 5)
+                Utilidad_objet INTEGER CHECK(Utilidad_objet <= 5),
+                Codigo_color VARCHAR(7) NOT NULL
             );
         `);
 
@@ -77,14 +78,42 @@ export const inicializarBD = async () => {
         const tiposExisten = await dbInstance.get("SELECT COUNT(*) as count FROM Tipo_actividad");
         if (tiposExisten.count === 0) {
             await dbInstance.exec(`
-                INSERT INTO Tipo_actividad (Nombre_activ, Utilidad_objet) VALUES 
-                ('Estudio', 5), ('Dormir', 5), ('Ejercicio', 4), ('Lectura', 4), ('Trabajo', 3), ('Deporte', 3), ('Series o Películas', 2), ('Música', 2), ('Redes sociales', 1);
+                INSERT INTO Tipo_actividad (Nombre_activ, Utilidad_objet, Codigo_color) VALUES 
+                ('Comer', 5, '#eab308'), 
+                ('Expresión artística', 3, '#f97316'), 
+                ('Cuidado de mascotas', 4, '#ed75ff'), 
+                ('Realizar un trámite', 2, '#1f7b71'), 
+                ('Planificación de actividades', 4, '#4c9088'), 
+                ('Familia', 5, '#b227c7'), 
+                ('Pareja', 5, '#9624a7'), 
+                ('Higiene personal', 5, '#f5d986'), 
+                ('Meditación', 3, '#1352b8'), 
+                ('Transporte', 4, '#759692'), 
+                ('Socializar', 3, '#b227c7'), 
+                ('Tareas del hogar', 4, '#275751'), 
+                ('Ir de Compras (ocio)', 2, '#ff987a'), 
+                ('Hacer el mandado', 4, '#135850'), 
+                ('Ir al médico', 5, '#81734a'), 
+                ('Autocuidado', 4, '#d946ef'), 
+                ('Proyecto personal', 5, '#008575'), 
+                ('Descanso activo', 3, '#0062ff'), 
+                ('Estudio', 5, '#1a7a6e'), 
+                ('Dormir', 5, '#3b82f6'), 
+                ('Actividad física', 4, '#872d95'), 
+                ('Lectura', 4, '#bb570f'), 
+                ('Trabajo', 3, '#1a7a6e'), 
+                ('Series o Películas', 2, '#7062ef'), 
+                ('Música', 2, '#ff987a'), 
+                ('Videojuegos', 1, '#8b7fef'), 
+                ('Redes sociales', 1, '#6d6999');
                 
                 INSERT INTO Enfoque (nombre_enf, descrip_enf) VALUES 
                 ('Académico', 'Prioriza actividades de estudio y aprendizaje'), 
                 ('Tiempo libre', 'Prioriza recuperar tiempo libre en una vida ajetreada'),
                 ('Atlético', 'Prioriza actividades que conlleven ejercicio'),
                 ('Económico', 'Prioriza actividades que te ofrezcan algún beneficio económico'),
+                ('Salud mental y descanso', 'Prioriza actividades que te ofrezcan tranquilidad emocional y mejora en tu calidad de vida'),
+                ('Flexibilidad', 'Prioriza desarrollar tus actividades de manera que te permitan adaptarte a cambios y situaciones imprevistas'),
                 ('Equilibrado', 'Balance entre trabajo, salud y descanso');
             `);
             console.log("Catálogos iniciales insertados.");

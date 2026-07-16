@@ -19,7 +19,9 @@ router.get('/tipos-actividad', async (req, res) => {
         const tipos = await obtenerTiposActividad();
         const tiposFormateados = tipos.map((t: Tipo_actividad) => ({
             id_tipo: t.id_tipo,
-            nombre_tipo: t.nombre_tipo
+            nombre_tipo: t.nombre_tipo,
+            utilidad_objetiva: t.utilidad_objetiva,
+            codigo_color: t.codigo_color
         }));
         res.json(tiposFormateados);
     } catch (error: unknown) {

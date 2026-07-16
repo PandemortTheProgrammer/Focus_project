@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import type Perfil from '../models/Perfil'
 
 type TipoResumen = {
   id_tipo: number
@@ -33,16 +32,13 @@ type SemanaResumen = {
   tipos: TipoResumen[]
 }
 
-interface WeeklySummaryDetailProps {
-  perfilGlobal: Perfil
-}
 
 const formatearFecha = (fecha: string): string => {
   const [year, month, day] = fecha.split('-')
   return `${day}/${month}/${year}`
 }
 
-export default function WeeklySummaryDetail({ perfilGlobal }: WeeklySummaryDetailProps) {
+export default function WeeklySummaryDetail() {
   const navigate = useNavigate()
   const { id } = useParams<{ id?: string }>()
   const [semanas, setSemanas] = useState<SemanaResumen[]>([])

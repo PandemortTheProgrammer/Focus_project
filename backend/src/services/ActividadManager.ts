@@ -47,14 +47,19 @@ function mapRowToActividad(row: ActividadRow): Actividad {
 // Obtener tipos desde la tabla Tipo_actividad (fuente de verdad)
 export const obtenerTiposActividad = async (): Promise<Tipo_actividad[]> => {
   const db = getDB();
-  const filas: Array<{ Id_tipo?: number; Nombre_activ?: string; Utilidad_objet?: number }> =
-    await db.all("SELECT * FROM Tipo_actividad ORDER BY Id_tipo ASC");
+  const filas: Array<{
+    Id_tipo?: number;
+    Nombre_activ?: string;
+    Utilidad_objet?: number;
+    Codigo_color?: string;
+  }> = await db.all("SELECT * FROM Tipo_actividad ORDER BY Id_tipo ASC");
 
   return filas.map((f) =>
     new Tipo_actividad(
       Number(f.Id_tipo ?? 0),
       String(f.Nombre_activ ?? ''),
-      Number(f.Utilidad_objet ?? 0)
+      Number(f.Utilidad_objet ?? 0),
+      String(f.Codigo_color ?? '#6b7280')
     )
   );
 };
@@ -169,6 +174,7 @@ interface ActividadConTipoRow {
   hora_creacion?: string;
   nombre_tipo: string;
   peso: number;
+  codigo_color: string;
 }
 
 export interface TipoResumenSemanal {
@@ -209,19 +215,7 @@ const addDays = (date: Date, days: number): Date => {
   return result;
 };
 
-const getColorForType = (nombreTipo: string): string => {
-  const normalized = nombreTipo.toLowerCase();
-  if (normalized.includes('estudio')) return '#1a7a6e';
-  if (normalized.includes('dormir')) return '#3b82f6';
-  if (normalized.includes('ejercicio')) return '#d946ef';
-  if (normalized.includes('lectura') || normalized.includes('leer')) return '#f97316';
-  if (normalized.includes('trabajo')) return '#eab308';
-  if (normalized.includes('deporte')) return '#10b981';
-  if (normalized.includes('series')) return '#8b5cf6';
-  if (normalized.includes('música') || normalized.includes('musica')) return '#ec4899';
-  if (normalized.includes('redes')) return '#f43f5e';
-  return '#6b7280';
-};
+
 
 const generarResumenTipo = (nombreTipo: string, horas: number): string => {
   return `Durante la semana destinaste ${horas.toFixed(1)}h a ${nombreTipo.toLowerCase()}.`;
@@ -278,7 +272,7 @@ const generarDescripcionGeneralPorSemana = (actividades: ActividadConTipoRow[]):
 };
 
 const resumirTiposPorSemana = (actividades: ActividadConTipoRow[]): TipoResumenSemanal[] => {
-  const tipoMap = new Map<number, { nombre_tipo: string; peso: number; minutos: number }>();
+  const tipoMap = new Map<number, { nombre_tipo: string; peso: number; minutos: number; codigo_color: string }>();
 
   actividades.forEach((actividad) => {
     const actual = tipoMap.get(actividad.id_tipo);
@@ -287,13 +281,15 @@ const resumirTiposPorSemana = (actividades: ActividadConTipoRow[]): TipoResumenS
       tipoMap.set(actividad.id_tipo, {
         nombre_tipo: actividad.nombre_tipo,
         peso: actividad.peso,
-        minutos: actual.minutos + minutos
+        minutos: actual.minutos + minutos,
+        codigo_color: actividad.codigo_color || actual.codigo_color
       });
     } else {
       tipoMap.set(actividad.id_tipo, {
         nombre_tipo: actividad.nombre_tipo,
         peso: actividad.peso,
-        minutos
+        minutos,
+        codigo_color: actividad.codigo_color || '#6b7280'
       });
     }
   });
@@ -304,7 +300,7 @@ const resumirTiposPorSemana = (actividades: ActividadConTipoRow[]): TipoResumenS
       id_tipo,
       nombre_tipo: datos.nombre_tipo,
       peso: datos.peso,
-      color: getColorForType(datos.nombre_tipo),
+      color: datos.codigo_color,
       horas,
       resumen: generarResumenTipo(datos.nombre_tipo, horas),
       mensaje: generarMensajeMotivacional(datos.peso, horas)
@@ -325,9 +321,10 @@ export const obtenerResumenesSemanales = async (): Promise<SemanaResumen[]> => {
     hora_creac?: string;
     Nombre_activ?: string;
     Utilidad_objet?: number;
+    Codigo_color?: string;
   }> = await db.all(
     `SELECT a.Id_actividad, a.Id_tipo, a.hora_inicio, a.durac_min, a.desc_activ, a.fecha, a.hora_creac,
-            t.Nombre_activ, t.Utilidad_objet
+            t.Nombre_activ, t.Utilidad_objet, t.Codigo_color
        FROM Actividad a
        JOIN Tipo_actividad t ON a.Id_tipo = t.Id_tipo
       WHERE a.fecha IS NOT NULL
@@ -354,7 +351,8 @@ export const obtenerResumenesSemanales = async (): Promise<SemanaResumen[]> => {
       fecha: String(fila.fecha),
       hora_creacion: fila.hora_creac,
       nombre_tipo: String(fila.Nombre_activ ?? ''),
-      peso: Number(fila.Utilidad_objet ?? 0)
+      peso: Number(fila.Utilidad_objet ?? 0),
+      codigo_color: String(fila.Codigo_color ?? '#6b7280')
     };
 
     const semanaExistente = semanasMap.get(inicioSemana);
