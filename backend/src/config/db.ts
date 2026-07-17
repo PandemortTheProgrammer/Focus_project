@@ -33,6 +33,12 @@ export const inicializarBD = async () => {
                 Utilidad_objet INTEGER CHECK(Utilidad_objet <= 5),
                 Codigo_color VARCHAR(7) NOT NULL
             );
+
+            -- NUEVO: Catálogo de Íconos (Recursos visuales)
+            CREATE TABLE IF NOT EXISTS Icono (
+                Id_icono INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre_icono VARCHAR(50) NOT NULL
+            );
         `);
 
         // ==========================================
@@ -47,6 +53,7 @@ export const inicializarBD = async () => {
                 Id_enfoque INTEGER,
                 genero VARCHAR(1) NOT NULL,
                 Id_icono INTEGER NOT NULL DEFAULT 0,
+                icono VARCHAR(60), -- Guarda el ID del ícono activo seleccionado (compatibilidad)
                 FOREIGN KEY (Id_enfoque) REFERENCES Enfoque(Id_enfoque) ON DELETE SET NULL
             );
 
@@ -70,11 +77,37 @@ export const inicializarBD = async () => {
                 Prog_optimizac INTEGER CHECK(Prog_optimizac <= 100),
                 FOREIGN KEY (Id_enfoque) REFERENCES Enfoque(Id_enfoque) ON DELETE CASCADE
             );
+
+            -- NUEVO: Catálogo de Recompensas (Depende de Icono)
+            CREATE TABLE IF NOT EXISTS Recompensa (
+                Id_recompensa INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre_recompensa VARCHAR(50) NOT NULL,
+                descripcion VARCHAR(150),
+                tipo_recompensa VARCHAR(20) NOT NULL, -- Ej: 'ICONO'
+                Id_icono INTEGER,
+                FOREIGN KEY (Id_icono) REFERENCES Icono(Id_icono) ON DELETE SET NULL
+            );
+
+            -- NUEVO: Tabla Relacional (El puente N:M entre Perfil y Recompensa)
+            CREATE TABLE IF NOT EXISTS Perfil_Recompensa (
+                Id_perfil INTEGER,
+                Id_recompensa INTEGER,
+                fecha_obtencion DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (Id_perfil, Id_recompensa),
+                FOREIGN KEY (Id_perfil) REFERENCES Perfil(Id_perfil) ON DELETE CASCADE,
+                FOREIGN KEY (Id_recompensa) REFERENCES Recompensa(Id_recompensa) ON DELETE CASCADE
+            );
         `);
 
-        // Migración compatible con bases de datos ya existentes que no tengan la columna Id_icono
+        // Migración compatible con bases de datos ya existentes que no tengan las columnas nuevas o antiguas
         try {
             await dbInstance.exec(`ALTER TABLE Perfil ADD COLUMN Id_icono INTEGER DEFAULT 0;`);
+        } catch {
+            // La columna ya existe, no hay nada que hacer
+        }
+
+        try {
+            await dbInstance.exec(`ALTER TABLE Perfil ADD COLUMN icono VARCHAR(60);`);
         } catch {
             // La columna ya existe, no hay nada que hacer
         }
@@ -92,7 +125,7 @@ export const inicializarBD = async () => {
         // ==========================================
         // 3. POBLAR CATÁLOGOS (SEEDING)
         // ==========================================
-        // Si las tablas están vacías, insertamos los datos base para que el Frontend no se rompa
+        
         const tiposExisten = await dbInstance.get("SELECT COUNT(*) as count FROM Tipo_actividad");
         if (tiposExisten.count === 0) {
             await dbInstance.exec(`
@@ -107,7 +140,7 @@ export const inicializarBD = async () => {
                 ('Higiene personal', 5, '#f5d986'), 
                 ('Meditación', 3, '#1352b8'), 
                 ('Transporte', 4, '#759692'), 
-                ('Socializar', 3, '#b227c7'), 
+                ('Socializar', 3, '#d233eb'), 
                 ('Tareas del hogar', 4, '#275751'), 
                 ('Ir de Compras (ocio)', 2, '#ff987a'), 
                 ('Hacer el mandado', 4, '#135850'), 
@@ -135,6 +168,29 @@ export const inicializarBD = async () => {
                 ('Equilibrado', 'Balance entre trabajo, salud y descanso');
             `);
             console.log("Catálogos iniciales insertados.");
+        }
+
+        // NUEVO SEEDING: Íconos y Recompensas Iniciales
+        const iconosExisten = await dbInstance.get("SELECT COUNT(*) as count FROM Icono");
+        if (iconosExisten.count === 0) {
+            await dbInstance.exec(`
+                INSERT INTO Icono (nombre_icono) VALUES 
+                ('Espíritu Novato'), 
+                ('Primeros pasos'), 
+                ('Maratonista'),
+                ('Reflexivo'),
+                ('Maestro del Tiempo'),
+                ('Ícono Secreto');
+
+                INSERT INTO Recompensa (nombre_recompensa, descripcion, tipo_recompensa, Id_icono) VALUES 
+                ('Bienvenida', 'Tu primer perfil en Focus', 'ICONO', 1),
+                ('Iniciador', 'Registraste tu primera actividad', 'ICONO', 2),
+                ('Constancia', 'Alcanzaste 10 horas de actividades', 'ICONO', 3),
+                ('Analista', 'Revisaste tu primer reporte semanal', 'ICONO', 4),
+                ('Veterano', 'Llegaste a tu cuarta semana usando Focus', 'ICONO', 5),
+                ('Coleccionista', 'Exploraste todas las funciones de la aplicación', 'ICONO', 6);
+            `);
+            console.log("Catálogo de Íconos y Recompensas inicializado.");
         }
 
         return dbInstance;

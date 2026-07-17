@@ -2,7 +2,7 @@
 import { getDB } from '../config/db';
 import Actividad from '../models/Actividad';
 import Tipo_actividad from '../models/Tipo_actividad';
-
+import { evaluarNuevosLogros } from './RecompensasManager';
 
 // El catálogo de tipos se obtiene siempre desde la base de datos.
 // No se mantiene un array hardcodeado porque puede desincronizarse con lo que existe en BD.
@@ -81,6 +81,18 @@ export const registrarActividad = async (datos: Actividad): Promise<void> => {
     
   ]);
 
+  try {
+    // Como es una app local de un usuario, obtenemos el primer perfil existente
+    const perfilActivo = await db.get("SELECT Id_perfil FROM Perfil LIMIT 1");
+    
+    if (perfilActivo && perfilActivo.Id_perfil) {
+      // Llamamos al motor silenciosamente en segundo plano
+      await evaluarNuevosLogros(perfilActivo.Id_perfil);
+    }
+  } catch (error) {
+    // Si falla la gamificación, no rompemos el guardado de la actividad
+    console.error("🔴 Error al evaluar recompensas tras registrar actividad:", error);
+  }
   console.log("Actividad guardada en SQLite");
 };
 
