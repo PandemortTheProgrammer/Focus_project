@@ -7,14 +7,12 @@ import {
   editarActividad,
   actividadesSemana,
   obtenerTiposActividad,
-  obtenerResumenesSemanales,
   obtenerHistorialActividades
 } from '../services/ActividadManager';
 import Tipo_actividad from '../models/Tipo_actividad';
 
 const router = Router();
 
-// GET: Obtener tipos para el Select de Activities_add
 router.get('/tipos-actividad', async (req, res) => {
     try {
         const tipos = await obtenerTiposActividad();
@@ -31,7 +29,6 @@ router.get('/tipos-actividad', async (req, res) => {
     }
 });
 
-// GET: Obtener todas las actividades
 router.get('/', async (req, res) => {
     try {
         const lista = await obtenerActividades();
@@ -42,7 +39,6 @@ router.get('/', async (req, res) => {
     }
 });
 
-// POST: Guardar nueva actividad
 router.post('/', async (req, res) => {
     try {
         await registrarActividad(req.body);
@@ -53,7 +49,6 @@ router.post('/', async (req, res) => {
     }
 });
 
-// DELETE: Borrar actividad por ID
 router.delete('/:id', async (req, res) => {
     try {
         const idBorrar = parseInt(req.params.id);
@@ -65,7 +60,6 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-// PUT: Editar actividad por ID
 router.put('/:id', async (req, res) => {
     try {
         const id = parseInt(req.params.id);
@@ -81,7 +75,6 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// GET: Actividades agrupadas por día de los últimos 7 días
 router.get('/semana', async (req, res) => {
     try {
         const datos = await actividadesSemana();
@@ -92,18 +85,6 @@ router.get('/semana', async (req, res) => {
     }
 });
 
-// GET: Resúmenes semanales por semana completa (lunes a domingo)
-router.get('/semanas', async (req, res) => {
-    try {
-        const resumenes = await obtenerResumenesSemanales();
-        res.json(resumenes);
-    } catch (error: unknown) {
-        const mensaje = error instanceof Error ? error.message : "Error desconocido";
-        res.status(500).json({ error: mensaje });
-    }
-});
-
-// GET: Historial de actividades con más de una semana de antigüedad (solo lectura)
 router.get('/historial', async (req, res) => {
     try {
         const historial = await obtenerHistorialActividades();

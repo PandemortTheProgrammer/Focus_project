@@ -32,7 +32,6 @@ type SemanaResumen = {
   tipos: TipoResumen[]
 }
 
-
 const formatearFecha = (fecha: string): string => {
   const [year, month, day] = fecha.split('-')
   return `${day}/${month}/${year}`
@@ -48,7 +47,8 @@ export default function WeeklySummaryDetail() {
   useEffect(() => {
     const cargarResumenes = async () => {
       try {
-        const res = await fetch('http://localhost:3000/api/actividades/semanas')
+        // Se actualizó el endpoint a la nueva API de reportes
+        const res = await fetch('http://localhost:3000/api/reportes/semanas')
         if (!res.ok) {
           throw new Error('No se pudo cargar el resumen semanal')
         }

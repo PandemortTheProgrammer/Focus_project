@@ -157,7 +157,7 @@ export const inicializarBD = async () => {
                 ('Dormir', 5, '#3b82f6'), 
                 ('Actividad física', 4, '#872d95'), 
                 ('Lectura', 4, '#bb570f'), 
-                ('Trabajo', 3, '#1a7a6e'), 
+                ('Trabajo', 3, '#20ab9a'), 
                 ('Series o Películas', 2, '#7062ef'), 
                 ('Música', 2, '#ff987a'), 
                 ('Videojuegos', 1, '#8b7fef'), 
