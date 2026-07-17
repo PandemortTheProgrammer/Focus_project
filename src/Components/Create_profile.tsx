@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import IconPicker from './IconPicker'
 
+interface EnfoqueCatalogoRow {
+  Id_enfoque: number;
+  nombre_enf: string;
+  descrip_enf?: string;
+}
+
 interface CreateProfileProps {
   setPerfilGlobal: (perfil: { nickname: string; age_rank: string; genero: string; id_focus: number; id_icono?: number }) => void;
 }
@@ -12,28 +18,13 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
   const [ageRank, setAgeRank] = useState('');
   const [focus, setFocus] = useState('');
   const [genero, setGenero] = useState('');
-  const [idIcono, setIdIcono] = useState<number>(0);
+  const [idIcono, setIdIcono] = useState<number>(1);
   
-  const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<{Id_enfoque: number, nombre_enf: string}[]>([]);
+  const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<EnfoqueCatalogoRow[]>([]);
   const [cargandoEnfoques, setCargandoEnfoques] = useState(true);
 
-  // ── Agrega aquí el texto de contexto de cada enfoque ──────────────────────
-  // La clave de cada entrada debe coincidir con el Id_enfoque de tu base de datos.
-  const enfoquesConTexto: Record<number, string> = {
-    1: 'Descripción del enfoque 1. Reemplaza este texto con tu propio contenido.',
-    2: 'Descripción del enfoque 2. Reemplaza este texto con tu propio contenido.',
-    3: 'Descripción del enfoque 3. Reemplaza este texto con tu propio contenido.',
-    4: 'Descripción del enfoque 4. Reemplaza este texto con tu propio contenido.',
-    5: 'Descripción del enfoque 5. Reemplaza este texto con tu propio contenido.',
-    6: 'Descripción del enfoque 6. Reemplaza este texto con tu propio contenido.',
-    7: 'Descripción del enfoque 7. Reemplaza este texto con tu propio contenido.',
-    
-
-  };
-  // ──────────────────────────────────────────────────────────────────────────
-
   const descripcionSeleccionada = focus
-    ? (enfoquesConTexto[parseInt(focus)] ?? '')
+    ? (enfoquesCatalogo.find((enfoque) => enfoque.Id_enfoque === Number(focus))?.descrip_enf ?? '')
     : '';
 
   useEffect(() => {
@@ -41,7 +32,8 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
       try {
         const res = await fetch('http://localhost:3000/api/perfil/enfoques');
         if (res.ok) {
-          setEnfoquesCatalogo(await res.json());
+          const datos = await res.json() as EnfoqueCatalogoRow[];
+          setEnfoquesCatalogo(datos);
         }
       } catch (error: unknown) {
         const mensaje = error instanceof Error ? error.message : "Error desconocido";
@@ -99,6 +91,8 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
       {/* Formulario */}
       <div className="relative z-10 flex flex-col gap-4 w-72">
 
+      <IconPicker nickname={nickname} iconoSeleccionado={idIcono} onSeleccionar={setIdIcono} />
+      
         <div className="flex flex-col gap-1">
           <label className="text-white text-sm px-2">
             Identificate por un nickname:
@@ -113,9 +107,6 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
           />
         </div>
 
-        <IconPicker nickname={nickname} iconoSeleccionado={idIcono} onSeleccionar={setIdIcono} />
-
-        {/* NUEVO CAMPO: Género / Pronombres */}
         <div className="flex flex-col gap-1">
           <label className="text-white text-sm px-2">
             ¿Cómo prefieres que te llamemos?

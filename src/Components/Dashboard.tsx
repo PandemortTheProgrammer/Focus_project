@@ -2,13 +2,14 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type Perfil from '../models/Perfil'
 
-// Importamos los íconos de HeroIcons (asegúrate de haber ejecutado: npm install @heroicons/react)
+// Importamos los íconos de HeroIcons 
 import { 
   ClipboardDocumentListIcon, 
   ChartBarIcon, 
   DocumentTextIcon, 
   UserCircleIcon, 
-  ArrowDownTrayIcon 
+  ArrowDownTrayIcon,
+  TrophyIcon 
 } from '@heroicons/react/24/outline'
 
 interface DashboardProps {
@@ -99,6 +100,15 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
             <p className="text-white text-sm font-semibold text-center">Descarga tu perfil</p>
           </div>
 
+        {/* Tarjeta 6: Recompensas */}
+          <div
+            onClick={() => navigate('/recompensas')}
+            className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
+            style={{ backgroundColor: '#2a2a2a' }}>
+            {/* Usamos un color dorado/amarillo para que resalte como un premio */}
+            <TrophyIcon className="w-12 h-12 text-[#fbbf24] transition group-hover:text-white" />
+            <p className="text-white text-sm font-semibold text-center">Mis recompensas</p>
+          </div>
         </div>
       </div>
     </div>

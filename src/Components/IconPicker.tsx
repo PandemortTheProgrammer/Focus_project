@@ -1,19 +1,72 @@
-import { useRef } from 'react'
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
-import { iconosDisponibles } from '../utils/icons'
+import { useEffect, useRef, useState } from 'react'
+import { ChevronLeftIcon, ChevronRightIcon, LockClosedIcon } from '@heroicons/react/24/outline'
+import Icono from '../models/Icono'
+import { iconosDisponibles, obtenerUrlIcono } from '../utils/icons'
 
 interface IconPickerProps {
   nickname: string;
   iconoSeleccionado: number;
   onSeleccionar: (idIcono: number) => void;
+  idPerfil?: number; // Lo hacemos opcional y por defecto será 1 para mantener compatibilidad
 }
 
-const VELOCIDAD_DESPLAZAMIENTO = 4; // px por tick mientras el cursor permanece sobre una flecha
+const VELOCIDAD_DESPLAZAMIENTO = 4;
 
-export default function IconPicker({ nickname, iconoSeleccionado, onSeleccionar }: IconPickerProps) {
+export default function IconPicker({ nickname, iconoSeleccionado, onSeleccionar, idPerfil = 1 }: IconPickerProps) {
   const inicial = (nickname || '?').charAt(0).toUpperCase();
   const carruselRef = useRef<HTMLDivElement>(null);
   const intervaloRef = useRef<number | null>(null);
+  
+  const [iconosCatalogo, setIconosCatalogo] = useState<Icono[]>([]);
+  // NUEVO ESTADO: Guardará un arreglo con los IDs que el usuario ya ganó
+  const [idsDesbloqueados, setIdsDesbloqueados] = useState<number[]>([]);
+
+  useEffect(() => {
+    const cargarDatos = async () => {
+      try {
+        // Ejecutamos ambas peticiones al mismo tiempo para mayor velocidad
+        const [resCatalogo, resDesbloqueados] = await Promise.all([
+          fetch('http://localhost:3000/api/recompensas/iconos'),
+          fetch(`http://localhost:3000/api/recompensas/iconos/${idPerfil}`)
+        ]);
+
+        if (!resCatalogo.ok || !resDesbloqueados.ok) {
+          throw new Error('Error al cargar datos de iconos');
+        }
+
+        // 1. Procesar el catálogo completo
+        const datosCatalogo = await resCatalogo.json() as Array<{ id_icono?: number; Id_icono?: number; nombre_icono?: string; nombre?: string }>;
+        const normalizadoCatalogo = datosCatalogo
+          .map((item) => new Icono(
+            Number(item.id_icono ?? item.Id_icono ?? 0),
+            String(item.nombre_icono ?? item.nombre ?? '')
+          ))
+          .filter((icono) => icono.id_icono > 1)
+          .sort((a, b) => a.id_icono - b.id_icono);
+
+        // 2. Procesar los desbloqueados
+        const datosDesbloqueados = await resDesbloqueados.json() as Array<{ id_icono?: number; Id_icono?: number }>;
+        const desbloqueadosArray = datosDesbloqueados.map(item => Number(item.id_icono ?? item.Id_icono ?? 0));
+
+        setIconosCatalogo(normalizadoCatalogo);
+        setIdsDesbloqueados(desbloqueadosArray);
+
+      } catch (error: unknown) {
+        const mensaje = error instanceof Error ? error.message : 'Error desconocido';
+        console.error('Error al cargar datos de iconos:', mensaje);
+        
+        // Fallback en caso de error (mostrar el catálogo por defecto, pero bloqueado)
+        setIconosCatalogo(
+          iconosDisponibles
+            .filter((item) => item.id > 1)
+            .map((item) => new Icono(item.id, `Icono ${item.id}`))
+        );
+        setIdsDesbloqueados([]); // Asumimos que no tiene nada desbloqueado si hay error
+      }
+    };
+
+    cargarDatos();
+  }, [idPerfil]); // Se vuelve a ejecutar si cambia el idPerfil
 
   const detenerDesplazamiento = () => {
     if (intervaloRef.current !== null) {
@@ -36,7 +89,7 @@ export default function IconPicker({ nickname, iconoSeleccionado, onSeleccionar 
         Elige un ícono para tu perfil (opcional):
       </label>
 
-      {iconosDisponibles.length === 0 ? (
+      {iconosCatalogo.length === 0 ? (
         <p className="text-xs px-2" style={{ color: 'rgba(255,255,255,0.5)' }}>
           Aún no hay íconos disponibles. Por ahora se mostrará la inicial de tu nickname.
         </p>
@@ -45,7 +98,7 @@ export default function IconPicker({ nickname, iconoSeleccionado, onSeleccionar 
           className="relative flex items-center gap-2 p-3 rounded-2xl"
           style={{ backgroundColor: '#2a2a2a' }}
         >
-          {/* Flecha izquierda: mantener el cursor aquí revela los íconos anteriores */}
+          {/* Flecha izquierda */}
           <div
             onMouseEnter={() => iniciarDesplazamiento('izquierda')}
             onMouseLeave={detenerDesplazamiento}
@@ -54,45 +107,66 @@ export default function IconPicker({ nickname, iconoSeleccionado, onSeleccionar 
             <ChevronLeftIcon className="w-5 h-5 text-white opacity-70" />
           </div>
 
-          {/* Viewport de tamaño fijo: los íconos se desplazan dentro sin agrandar el formulario */}
+          {/* Viewport de iconos */}
           <div
             ref={carruselRef}
             className="flex items-center gap-3 overflow-x-hidden scroll-smooth scrollbar-none"
             style={{ width: '13.5rem' }}
           >
-            {/* Opción "sin ícono": mantiene el avatar con la inicial del nickname */}
+            {/* Ícono 1: Inicial (Siempre desbloqueado) */}
             <button
               type="button"
-              onClick={() => onSeleccionar(0)}
+              onClick={() => onSeleccionar(1)}
               title="Sin ícono (usar inicial)"
               className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm transition hover:scale-110"
               style={{
                 backgroundColor: '#1a7a6e',
-                outline: iconoSeleccionado === 0 ? '3px solid #5ecfb8' : 'none',
+                outline: iconoSeleccionado === 1 ? '3px solid #5ecfb8' : 'none',
                 outlineOffset: '2px',
               }}
             >
               {inicial}
             </button>
 
-            {iconosDisponibles.map((icono) => (
-              <button
-                key={icono.id}
-                type="button"
-                onClick={() => onSeleccionar(icono.id)}
-                title={String(icono.id)}
-                className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden shadow-sm transition hover:scale-110"
-                style={{
-                  outline: iconoSeleccionado === icono.id ? '3px solid #5ecfb8' : 'none',
-                  outlineOffset: '2px',
-                }}
-              >
-                <img src={icono.url} alt={String(icono.id)} className="w-full h-full object-cover" />
-              </button>
-            ))}
+            {/* Íconos Dinámicos (IDs 2 en adelante) */}
+            {iconosCatalogo
+              .filter((icono) => obtenerUrlIcono(icono.id_icono))
+              .map((icono) => {
+                const urlIcono = obtenerUrlIcono(icono.id_icono);
+                const estaDesbloqueado = idsDesbloqueados.includes(icono.id_icono);
+
+                return (
+                  <button
+                    key={icono.id_icono}
+                    type="button"
+                    // Si está bloqueado, no hace nada al hacer clic
+                    onClick={() => estaDesbloqueado ? onSeleccionar(icono.id_icono) : null}
+                    title={estaDesbloqueado ? (icono.nombre_icono || `Icono ${icono.id_icono}`) : 'Bloqueado'}
+                    // Clases dinámicas dependiendo de si está bloqueado o no
+                    className={`relative flex-shrink-0 w-12 h-12 rounded-full overflow-hidden shadow-sm transition 
+                      ${estaDesbloqueado 
+                        ? 'hover:scale-110 cursor-pointer' 
+                        : 'cursor-not-allowed opacity-50 grayscale hover:opacity-70'
+                      }`}
+                    style={{
+                      outline: iconoSeleccionado === icono.id_icono ? '3px solid #5ecfb8' : 'none',
+                      outlineOffset: '2px',
+                    }}
+                  >
+                    <img src={urlIcono ?? ''} alt={icono.nombre_icono || String(icono.id_icono)} className="w-full h-full object-cover" />
+                    
+                    {/* Capa oscura y candado si está bloqueado */}
+                    {!estaDesbloqueado && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                        <LockClosedIcon className="w-5 h-5 text-white drop-shadow-md" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
           </div>
 
-          {/* Flecha derecha: mantener el cursor aquí revela los íconos siguientes */}
+          {/* Flecha derecha */}
           <div
             onMouseEnter={() => iniciarDesplazamiento('derecha')}
             onMouseLeave={detenerDesplazamiento}

@@ -52,9 +52,9 @@ export const inicializarBD = async () => {
                 rango_edad VARCHAR(15) NOT NULL,
                 Id_enfoque INTEGER,
                 genero VARCHAR(1) NOT NULL,
-                Id_icono INTEGER NOT NULL DEFAULT 0,
-                icono VARCHAR(60), -- Guarda el ID del ícono activo seleccionado (compatibilidad)
-                FOREIGN KEY (Id_enfoque) REFERENCES Enfoque(Id_enfoque) ON DELETE SET NULL
+                Id_icono INTEGER NOT NULL DEFAULT 1,
+                FOREIGN KEY (Id_enfoque) REFERENCES Enfoque(Id_enfoque) ON DELETE SET NULL,
+                FOREIGN KEY (Id_icono) REFERENCES Icono(Id_icono) ON DELETE SET NULL
             );
 
             CREATE TABLE IF NOT EXISTS Actividad (
@@ -101,7 +101,7 @@ export const inicializarBD = async () => {
 
         // Migración compatible con bases de datos ya existentes que no tengan las columnas nuevas o antiguas
         try {
-            await dbInstance.exec(`ALTER TABLE Perfil ADD COLUMN Id_icono INTEGER DEFAULT 0;`);
+            await dbInstance.exec(`ALTER TABLE Perfil ADD COLUMN Id_icono INTEGER DEFAULT 1;`);
         } catch {
             // La columna ya existe, no hay nada que hacer
         }
@@ -112,11 +112,16 @@ export const inicializarBD = async () => {
             // La columna ya existe, no hay nada que hacer
         }
 
+        await dbInstance.run(`
+            INSERT OR IGNORE INTO Icono (Id_icono, nombre_icono)
+            VALUES (1, 'Sin icono (usar inicial)')
+        `);
+
         try {
             const perfilActual = await dbInstance.get("SELECT Id_icono, icono FROM Perfil LIMIT 1");
             if (perfilActual && (perfilActual.Id_icono === null || perfilActual.Id_icono === 0) && perfilActual.icono) {
-                const idExtraido = parseInt(String(perfilActual.icono).match(/\d+/)?.[0] ?? '0', 10);
-                await dbInstance.run("UPDATE Perfil SET Id_icono = ? WHERE Id_perfil = 1", [Number.isNaN(idExtraido) ? 0 : idExtraido]);
+                const idExtraido = parseInt(String(perfilActual.icono).match(/\d+/)?.[0] ?? '1', 10);
+                await dbInstance.run("UPDATE Perfil SET Id_icono = ? WHERE Id_perfil = 1", [Number.isNaN(idExtraido) ? 1 : idExtraido]);
             }
         } catch {
             // Ignoramos si la columna vieja no existe
@@ -175,6 +180,7 @@ export const inicializarBD = async () => {
         if (iconosExisten.count === 0) {
             await dbInstance.exec(`
                 INSERT INTO Icono (nombre_icono) VALUES 
+                ('Sin icono (usar inicial)'),
                 ('Espíritu Novato'), 
                 ('Primeros pasos'), 
                 ('Maratonista'),

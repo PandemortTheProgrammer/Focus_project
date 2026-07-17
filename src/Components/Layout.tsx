@@ -7,6 +7,15 @@ import type Perfil from '../models/Perfil';
 import type Enfoque from '../models/Enfoque';
 import { obtenerUrlIcono } from '../utils/icons';
 
+interface EnfoqueApiRow {
+  id_enfoque?: number;
+  Id_enfoque?: number;
+  nombre_enfoque?: string;
+  nombre_enf?: string;
+  descripcion_enfoque?: string;
+  descrip_enf?: string;
+}
+
 interface LayoutProps {
   children: React.ReactNode; // Aquí se inyectará la pantalla actual (Dashboard, Actividades, etc.)
   perfilGlobal?: Perfil | null;
@@ -31,15 +40,7 @@ export default function Layout({ children, perfilGlobal }: LayoutProps) {
   const urlIcono = obtenerUrlIcono(perfilGlobal?.id_icono);
 
   const focusName = perfilGlobal?.id_focus
-    ? enfoques.find((enfoque) =>
-        enfoque.id_enfoque === perfilGlobal.id_focus ||
-        // Compatibilidad con el shape que devuelve el backend SQLite
-        (enfoque as unknown as Record<string, any>).Id_enfoque === perfilGlobal.id_focus
-      )?.nombre_enfoque ??
-      (enfoques.find((enfoque) =>
-        (enfoque as unknown as Record<string, any>).Id_enfoque === perfilGlobal.id_focus ||
-        enfoque.id_enfoque === perfilGlobal.id_focus
-      ) as unknown as Record<string, any>)?.nombre_enf ??
+    ? enfoques.find((enfoque) => enfoque.id_enfoque === perfilGlobal.id_focus)?.nombre_enfoque ??
       '--'
     : '--';
 
@@ -48,16 +49,17 @@ export default function Layout({ children, perfilGlobal }: LayoutProps) {
       try {
         const res = await fetch('http://localhost:3000/api/perfil/enfoques');
         if (res.ok) {
-          const data = await res.json();
-          const normalizado = data.map((item: any) => ({
-            id_enfoque: item.id_enfoque ?? item.Id_enfoque,
-            nombre_enfoque: item.nombre_enfoque ?? item.nombre_enf,
-            descripcion_enfoque: item.descripcion_enfoque ?? item.descrip_enf ?? ''
+          const data = await res.json() as EnfoqueApiRow[];
+          const normalizado: Enfoque[] = data.map((item) => ({
+            id_enfoque: Number(item.id_enfoque ?? item.Id_enfoque ?? 0),
+            nombre_enfoque: String(item.nombre_enfoque ?? item.nombre_enf ?? ''),
+            descripcion_enfoque: String(item.descripcion_enfoque ?? item.descrip_enf ?? '')
           }));
           setEnfoques(normalizado);
         }
-      } catch (error) {
-        console.error('Error al cargar enfoques en Layout:', error);
+      } catch (error: unknown) {
+        const mensaje = error instanceof Error ? error.message : 'Error desconocido';
+        console.error('Error al cargar enfoques en Layout:', mensaje);
       }
     };
     cargarEnfoques();

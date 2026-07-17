@@ -336,21 +336,17 @@ const resumirTiposPorSemana = (actividades: ActividadConTipoRow[]): TipoResumenS
   });
 };
 
+// Modificación en backend/src/services/ActividadManager.ts
+
 export const obtenerResumenesSemanales = async (): Promise<SemanaResumen[]> => {
   const db = getDB();
 
-  const filas: Array<{
-    Id_actividad: number;
-    Id_tipo: number;
-    hora_inicio: string;
-    durac_min: number;
-    desc_activ: string;
-    fecha: string;
-    hora_creac?: string;
-    Nombre_activ?: string;
-    Utilidad_objet?: number;
-    Codigo_color?: string;
-  }> = await db.all(
+  // 1. Obtenemos el enfoque del perfil actual para ligar el reporte
+  const perfil = await db.get("SELECT Id_enfoque FROM Perfil LIMIT 1");
+  const idEnfoque = perfil?.Id_enfoque || 1;
+
+  // 2. Traer todas las actividades con fecha
+  const filas = await db.all(
     `SELECT a.Id_actividad, a.Id_tipo, a.hora_inicio, a.durac_min, a.desc_activ, a.fecha, a.hora_creac,
             t.Nombre_activ, t.Utilidad_objet, t.Codigo_color
        FROM Actividad a
@@ -361,7 +357,8 @@ export const obtenerResumenesSemanales = async (): Promise<SemanaResumen[]> => {
 
   const semanasMap = new Map<string, { fecha_inicio: string; fecha_fin: string; actividades: ActividadConTipoRow[] }>();
 
-  filas.forEach((fila) => {
+  // Agrupamos en semanas (Igual que antes)
+  filas.forEach((fila: any) => {
     if (!fila.fecha) return;
     const fechaActividad = new Date(`${fila.fecha}T00:00:00Z`);
     if (Number.isNaN(fechaActividad.getTime())) return;
@@ -396,20 +393,63 @@ export const obtenerResumenesSemanales = async (): Promise<SemanaResumen[]> => {
     });
   });
 
-  const semanasOrdenadas = Array.from(semanasMap.values()).sort((a, b) => a.fecha_inicio.localeCompare(b.fecha_inicio));
+  // 3. LA REGLA DEL TIEMPO: Filtrar solo semanas "cerradas" (donde Hoy > Domingo)
+  const hoyStr = formatDate(new Date()); 
+  
+  const semanasCerradas = Array.from(semanasMap.values())
+    .filter(semana => semana.fecha_fin < hoyStr) // Compara cadenas YYYY-MM-DD. Si Domingo es '2026-07-19' y hoy es Lunes '2026-07-20', es true.
+    .sort((a, b) => a.fecha_inicio.localeCompare(b.fecha_inicio));
 
-  return semanasOrdenadas.map((semana, index) => {
+  // 4. Consultar los reportes que YA están guardados en la BD
+  const reportesExistentes = await db.all("SELECT * FROM Reporte_semanal");
+  const reportesMap = new Map();
+  reportesExistentes.forEach(r => reportesMap.set(r.Fecha_i_semana, r));
+
+  const resultadoFinal: SemanaResumen[] = [];
+
+  // 5. Evaluar, Guardar (si es necesario) y Construir la respuesta
+  for (let i = 0; i < semanasCerradas.length; i++) {
+    const semana = semanasCerradas[i];
+    let conclusionDB = "";
+
+    // ¿Ya existe el reporte en la BD?
+    if (reportesMap.has(semana.fecha_inicio)) {
+      // Usamos el texto congelado del pasado
+      conclusionDB = reportesMap.get(semana.fecha_inicio).Conclusion;
+    } else {
+      // ES UNA SEMANA NUEVA RECIÉN CERRADA: Generamos la conclusión y la guardamos en BD
+      conclusionDB = generarDescripcionGeneralPorSemana(semana.actividades);
+      
+      // Calculamos un porcentaje de optimización básico (puedes ajustar esta lógica luego)
+      const progOptimizac = 85; 
+
+      await db.run(
+        `INSERT INTO Reporte_semanal (Id_enfoque, Fecha_i_semana, Fecha_f_semana, Conclusion, Prog_optimizac)
+         VALUES (?, ?, ?, ?, ?)`,
+        [idEnfoque, semana.fecha_inicio, semana.fecha_fin, conclusionDB, progOptimizac]
+      );
+      console.log(`💾 Reporte automático generado y guardado para la semana del ${semana.fecha_inicio}`);
+
+      // BONUS: Podemos llamar al motor de recompensas aquí, por si el "Analista" requiere un reporte emitido
+      const { evaluarNuevosLogros } = require('./RecompensasManager');
+      await evaluarNuevosLogros(perfil.Id_perfil || 1);
+    }
+
+    // Armamos el objeto para React
     const totalMinutos = semana.actividades.reduce((sum, actividad) => sum + actividad.durac_min, 0);
     const totalHoras = Number((totalMinutos / 60).toFixed(1));
 
-    return {
-      numero_semana: index + 1,
+    resultadoFinal.push({
+      numero_semana: i + 1,
       fecha_inicio: semana.fecha_inicio,
       fecha_fin: semana.fecha_fin,
       total_horas: totalHoras,
       total_actividades: semana.actividades.length,
-      descripcion_general: generarDescripcionGeneralPorSemana(semana.actividades),
+      descripcion_general: conclusionDB, // Aquí mandamos lo que está en la BD
       actividades: semana.actividades,
       tipos: resumirTiposPorSemana(semana.actividades)
-    };
-  });};
+    });
+  }
+
+  return resultadoFinal;
+};

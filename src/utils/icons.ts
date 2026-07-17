@@ -44,7 +44,7 @@ export const iconosDisponibles: IconoPerfil[] = Object.entries(modulos)
   .sort((a, b) => a.id - b.id);
 
 export const obtenerUrlIcono = (id?: string | number | null): string | undefined => {
-  if (id === null || id === undefined || id === '' || id === 0) return undefined;
+  if (id === null || id === undefined || id === '' || id === 0 || id === 1) return undefined;
   const idNumerico = Number(id);
   return iconosDisponibles.find((icono) => icono.id === idNumerico)?.url;
 };

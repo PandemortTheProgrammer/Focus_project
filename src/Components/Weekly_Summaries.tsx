@@ -61,6 +61,12 @@ export default function WeeklySummaries() {
           <p className="text-sm text-white opacity-70 mt-3 leading-relaxed">
             Cada semana muestra un análisis breve generado automáticamente, horas totales y el conteo de actividades. Solo aparecen las semanas con al menos una actividad registrada.
           </p>
+          <div className="mt-4 p-4 rounded-xl border border-zinc-600 flex items-center gap-3" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+            <span className="text-xl">🕒</span>
+            <p className="text-xs text-white opacity-80">
+              <strong>Nota:</strong> Los reportes semanales se emiten y guardan automáticamente el <b>primer minuto de cada Lunes</b>. Las actividades de tu semana actual están en progreso y aún no generan un reporte definitivo.
+            </p>
+          </div>
         </div>
 
         {loading ? (

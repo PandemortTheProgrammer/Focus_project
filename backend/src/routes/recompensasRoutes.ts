@@ -3,7 +3,8 @@ import { Router, Request, Response } from 'express';
 import {
     obtenerRecompensasDePerfil,
     obtenerIconosDesbloqueados,
-    obtenerRelacionesPerfilRecompensa
+    obtenerRelacionesPerfilRecompensa,
+    obtenerCatalogoIconos
 } from '../services/RecompensasManager';
 
 const router = Router();
@@ -17,6 +18,18 @@ router.get('/perfil/:idPerfil', async (req: Request, res: Response): Promise<voi
     } catch (error: unknown) {
         const mensaje = error instanceof Error ? error.message : 'Error desconocido';
         console.error('Error al obtener recompensas:', error);
+        res.status(500).json({ error: mensaje });
+    }
+});
+
+// GET /api/recompensas/iconos
+router.get('/iconos', async (_req: Request, res: Response): Promise<void> => {
+    try {
+        const iconos = await obtenerCatalogoIconos();
+        res.json(iconos);
+    } catch (error: unknown) {
+        const mensaje = error instanceof Error ? error.message : 'Error desconocido';
+        console.error('Error al obtener catálogo de iconos:', error);
         res.status(500).json({ error: mensaje });
     }
 });

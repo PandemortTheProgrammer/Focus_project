@@ -3,6 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import Perfil from '../models/Perfil'
 import IconPicker from './IconPicker'
 
+interface EnfoqueCatalogoRow {
+  Id_enfoque: number;
+  nombre_enf: string;
+  descrip_enf?: string;
+}
+
 interface EditProfileProps {
   perfilGlobal: Perfil;
   setPerfilGlobal: (perfil: Perfil) => void;
@@ -14,8 +20,11 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
   const [ageRank, setAgeRank] = useState(perfilGlobal?.age_rank || '')
   const [focus, setFocus] = useState(perfilGlobal?.id_focus ? String(perfilGlobal.id_focus) : '')
   const [genero, setGenero] = useState(perfilGlobal?.genero || '')
-  const [idIcono, setIdIcono] = useState<number>(Number(perfilGlobal?.id_icono ?? 0))
-  const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<{ Id_enfoque: number, nombre_enf: string }[]>([])
+  const [idIcono, setIdIcono] = useState<number>(Number(perfilGlobal?.id_icono ?? 1))
+  const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<EnfoqueCatalogoRow[]>([])
+  const descripcionSeleccionada = focus
+    ? (enfoquesCatalogo.find((enfoque) => enfoque.Id_enfoque === Number(focus))?.descrip_enf ?? '')
+    : ''
 
   // Carga los enfoques desde la BD
   useEffect(() => {
@@ -23,7 +32,8 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
       try {
         const res = await fetch('http://localhost:3000/api/perfil/enfoques')
         if (res.ok) {
-          setEnfoquesCatalogo(await res.json())
+          const datos = await res.json() as EnfoqueCatalogoRow[]
+          setEnfoquesCatalogo(datos)
         }
       } catch (error: unknown) {
         const mensaje = error instanceof Error ? error.message : "Error desconocido"
@@ -80,6 +90,8 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
       <div className="relative z-10 flex flex-col items-center justify-center flex-1">
         <div className="flex flex-col gap-4 w-72">
 
+          <IconPicker nickname={nickname} iconoSeleccionado={idIcono} onSeleccionar={setIdIcono} />
+          
           <div className="flex flex-col gap-1">
             <label className="text-white text-sm px-2">Cambia tu nickname:</label>
             <input
@@ -92,7 +104,6 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
             />
           </div>
 
-          <IconPicker nickname={nickname} iconoSeleccionado={idIcono} onSeleccionar={setIdIcono} />
 
           <div className="flex flex-col gap-1">
             <label className="text-white text-sm px-2">¿Cómo prefieres que te llamemos ahora?</label>
@@ -136,6 +147,28 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
                 </option>
               ))}
             </select>
+          </div>
+
+          <div
+            style={{
+              overflow: 'hidden',
+              maxHeight: descripcionSeleccionada ? '120px' : '0px',
+              opacity: descripcionSeleccionada ? 1 : 0,
+              transition: 'max-height 450ms ease, opacity 400ms ease',
+              marginTop: descripcionSeleccionada ? '0' : '0',
+            }}
+          >
+            <p
+              style={{
+                fontSize: '0.78rem',
+                color: 'rgba(255,255,255,0.55)',
+                lineHeight: '1.6',
+                paddingLeft: '0.75rem',
+                paddingRight: '0.25rem',
+              }}
+            >
+              {descripcionSeleccionada}
+            </p>
           </div>
 
           {/* Botones */}

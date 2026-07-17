@@ -13,7 +13,7 @@ export default class Perfil {
         age_rank: string = '',
         id_focus: number = 0,
         genero: string = '',
-        id_icono: number = 0
+        id_icono: number = 1
     ) {
         this.id_perfil = id_perfil;
         this.nickname = nickname;

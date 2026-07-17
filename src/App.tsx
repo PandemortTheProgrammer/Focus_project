@@ -19,10 +19,11 @@ import Download from './Components/download'
 import Perfil from './models/Perfil'
 import WeeklySummaries from './Components/Weekly_Summaries'
 import WeeklySummaryDetail from './Components/Weekly_Summaries_details'
+import RewardsMain from './Components/Rewards_main';
 
 export default function App() {
   // Estado global para el perfil
-  const perfilInicial: Perfil = new Perfil(1, '', '', 0, '', 0)
+  const perfilInicial: Perfil = new Perfil(1, '', '', 0, '', 1)
   const [perfilGlobal, setPerfilGlobal] = useState<Perfil>(perfilInicial);
 
   // Si el usuario recarga la página, intentamos recuperar el perfil de Express
@@ -39,7 +40,7 @@ export default function App() {
               datos.age_rank ?? '',
               Number(datos.id_focus ?? 0),
               datos.genero ?? '',
-              Number(datos.id_icono ?? 0)
+              Number(datos.id_icono ?? 1)
             )
           );
         }
@@ -61,7 +62,7 @@ export default function App() {
         <Route path="/" element={<Mainpage />} />
         <Route 
           path="/crear-perfil" 
-          element={<CreateProfile setPerfilGlobal={(perfil) => setPerfilGlobal(new Perfil(1, perfil.nickname, perfil.age_rank, perfil.id_focus, perfil.genero, perfil.id_icono ?? 0))} />} 
+          element={<CreateProfile setPerfilGlobal={(perfil) => setPerfilGlobal(new Perfil(1, perfil.nickname, perfil.age_rank, perfil.id_focus, perfil.genero, perfil.id_icono ?? 1))} />} 
         />
         <Route
           path="/editar-perfil"
@@ -96,6 +97,10 @@ export default function App() {
         <Route path="/resumenes-semanales" element={<WeeklySummaries />} />
         <Route path="/resumen-semanal/:id" element={<WeeklySummaryDetail/>} />
         <Route path="/Download" element={<Download />}/>
+        <Route 
+          path="/recompensas" 
+          element={<RewardsMain perfilGlobal={perfilGlobal} />} 
+        />
       </Routes>
     </Layout>
   )

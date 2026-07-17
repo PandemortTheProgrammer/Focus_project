@@ -45,6 +45,18 @@ const mapRowToIcono = (row: RecompensaRow): Icono => {
     );
 };
 
+export const obtenerCatalogoIconos = async (): Promise<Icono[]> => {
+    const db = getDB();
+    const filas: RecompensaRow[] = await db.all(
+        `SELECT Id_icono, nombre_icono FROM Icono ORDER BY Id_icono ASC`
+    );
+
+    return filas.map((fila) => new Icono(
+        Number(fila.Id_icono ?? 0),
+        String(fila.nombre_icono ?? '')
+    ));
+};
+
 const mapRowToPerfilRecompensa = (row: PerfilRecompensaRow): Recompensa_perfil => {
     return new Recompensa_perfil(
         Number(row.Id_perfil ?? 0),
