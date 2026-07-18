@@ -71,8 +71,8 @@ const generarMensajeMotivacional = (peso: number, horas: number): string => {
     }
     if (peso === 1) {
         if (horas < 1) return 'Neutral: este ocio menor no está afectando tu equilibrio semanal.';
-        if (horas <= 3) return 'Atención: modera estas horas de redes sociales y prioriza otros hábitos.';
-        return 'Excesivo: demasiado tiempo en redes sociales. Busca un cambio de ritmo.';
+        if (horas <= 3) return 'Atención: modera estas horas de ocio y prioriza otros hábitos.';
+        return 'Excesivo: demasiado tiempo en habilidades de bajo impacto. Busca un cambio de ritmo.';
     }
     return 'Sigue observando cómo se integra esta actividad en tu semana.';
 };
@@ -201,19 +201,18 @@ export const obtenerResumenesSemanales = async (): Promise<SemanaResumen[]> => {
         let conclusionDB = "";
 
         if (reportesMap.has(semana.fecha_inicio)) {
-            // Ya está en BD, usamos esa conclusión
             conclusionDB = reportesMap.get(semana.fecha_inicio).Conclusion;
         } else {
-            // NUEVO REPORTE: Generamos, insertamos en BD y evaluamos logros
+            // Generamos, insertamos en BD y evaluamos logros
             conclusionDB = generarDescripcionGeneralPorSemana(semana.actividades);
-            const progOptimizac = 85; // Puedes volver esto dinámico luego
+            const progOptimizac = 85; 
             
             await db.run(
                 `INSERT INTO Reporte_semanal (Id_enfoque, Fecha_i_semana, Fecha_f_semana, Conclusion, Prog_optimizac)
-                 VALUES (?, ?, ?, ?, ?)`,
+                VALUES (?, ?, ?, ?, ?)`,
                 [idEnfoque, semana.fecha_inicio, semana.fecha_fin, conclusionDB, progOptimizac]
             );
-            console.log(`💾 Reporte automático generado para la semana del ${semana.fecha_inicio}`);
+            console.log(` Reporte automático generado para la semana del ${semana.fecha_inicio}`);
 
             // Evaluamos logros por si gana la recompensa "Analista"
             await evaluarNuevosLogros(idPerfil);

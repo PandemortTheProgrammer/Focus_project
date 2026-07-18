@@ -14,7 +14,7 @@ export const inicializarBD = async () => {
 
         // Habilitar Llaves Foráneas (SQLite las trae apagadas por defecto)
         await dbInstance.exec('PRAGMA foreign_keys = ON;');
-        console.log("🟢 Base de Datos SQLite conectada con éxito.");
+        console.log("Base de Datos SQLite conectada con éxito.");
 
         // ==========================================
         // 1. CREACIÓN DE TABLAS INDEPENDIENTES
@@ -99,24 +99,6 @@ export const inicializarBD = async () => {
             );
         `);
 
-        // Migración compatible con bases de datos ya existentes que no tengan las columnas nuevas o antiguas
-        try {
-            await dbInstance.exec(`ALTER TABLE Perfil ADD COLUMN Id_icono INTEGER DEFAULT 1;`);
-        } catch {
-            // La columna ya existe, no hay nada que hacer
-        }
-
-        try {
-            await dbInstance.exec(`ALTER TABLE Perfil ADD COLUMN icono VARCHAR(60);`);
-        } catch {
-            // La columna ya existe, no hay nada que hacer
-        }
-
-        await dbInstance.run(`
-            INSERT OR IGNORE INTO Icono (Id_icono, nombre_icono)
-            VALUES (1, 'Sin icono (usar inicial)')
-        `);
-
         try {
             const perfilActual = await dbInstance.get("SELECT Id_icono, icono FROM Perfil LIMIT 1");
             if (perfilActual && (perfilActual.Id_icono === null || perfilActual.Id_icono === 0) && perfilActual.icono) {
@@ -128,7 +110,7 @@ export const inicializarBD = async () => {
         }
 
         // ==========================================
-        // 3. POBLAR CATÁLOGOS (SEEDING)
+        // 3. POBLAR CATÁLOGOS
         // ==========================================
         
         const tiposExisten = await dbInstance.get("SELECT COUNT(*) as count FROM Tipo_actividad");
@@ -175,7 +157,7 @@ export const inicializarBD = async () => {
             console.log("Catálogos iniciales insertados.");
         }
 
-        // NUEVO SEEDING: Íconos y Recompensas Iniciales
+        // Íconos y Recompensas Iniciales
         const iconosExisten = await dbInstance.get("SELECT COUNT(*) as count FROM Icono");
         if (iconosExisten.count === 0) {
             await dbInstance.exec(`
@@ -209,4 +191,17 @@ export const inicializarBD = async () => {
 export const getDB = () => {
     if (!dbInstance) throw new Error("La BD no ha sido inicializada");
     return dbInstance;
+};
+
+export const cerrarBD = async (): Promise<void> => {
+    if (dbInstance) {
+        try {
+            await dbInstance.close();
+            dbInstance = null;
+            console.log("🔴 Conexión a SQLite cerrada temporalmente para reemplazo.");
+        } catch (error) {
+            console.error("Error al intentar cerrar la base de datos:", error);
+            throw error;
+        }
+    }
 };

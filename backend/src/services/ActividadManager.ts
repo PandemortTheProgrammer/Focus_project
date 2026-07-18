@@ -43,13 +43,17 @@ export const registrarActividad = async (datos: Actividad): Promise<void> => {
   const db = getDB();
   const query = `INSERT INTO Actividad (Id_tipo, hora_inicio, durac_min, desc_activ, fecha, hora_creac) VALUES (?, ?, ?, ?, ?, ?)`;
   const horaCreacion = datos.hora_creacion ? datos.hora_creacion.toISOString() : new Date().toISOString();
+  const now = new Date();
+  // Ajuste de 5 horas: 5 * 60 * 60 * 1000 ms
+  const utcMinus5 = new Date(now.getTime() - (5 * 60 * 60 * 1000));
+  const fechaLocal = utcMinus5.toISOString().split('T')[0]; // YYYY-MM-DD local
 
   await db.run(query, [
     datos.id_tipo,
     datos.hora_inicio,
     datos.duracion_minutos,
     datos.descripcion_actividad,
-    datos.fecha ? datos.fecha.toISOString().split('T')[0] : null,
+    fechaLocal,
     horaCreacion
   ]);
 
