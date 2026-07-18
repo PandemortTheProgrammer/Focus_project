@@ -92,7 +92,7 @@ export default function ActivitiesMain() {
         <button onClick={() => navigate('/dashboard')} className="px-6 py-2 rounded-full bg-zinc-900 text-white">
           ← Volver
         </button>
-        <h1 className="text-4xl font-bold" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
+        <h1 className="text-4xl font-bold text-center" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
           Actividades
         </h1>
         <div className="flex items-center gap-3">
