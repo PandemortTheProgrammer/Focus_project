@@ -52,7 +52,16 @@ router.post('/', async (req, res) => {
 router.delete('/:id', async (req, res) => {
     try {
         const idBorrar = parseInt(req.params.id);
-        await eliminarActividad(idBorrar);
+        const resultado = await eliminarActividad(idBorrar);
+
+        if (resultado === 'no_encontrada') {
+            res.status(404).json({ mensaje: `Actividad ${idBorrar} no encontrada` });
+            return;
+        }
+        if (resultado === 'bloqueada') {
+            res.status(403).json({ mensaje: 'La actividad ya fue archivada (24h) y no puede eliminarse.' });
+            return;
+        }
         res.json({ mensaje: `Actividad ${idBorrar} eliminada con éxito` });
     } catch (error: unknown) {
         const mensaje = error instanceof Error ? error.message : "Error desconocido";
@@ -64,8 +73,13 @@ router.put('/:id', async (req, res) => {
     try {
         const id = parseInt(req.params.id);
         const actualizada = await editarActividad(id, req.body);
-        if (!actualizada) {
+
+        if (actualizada === null) {
             res.status(404).json({ mensaje: `Actividad ${id} no encontrada` });
+            return;
+        }
+        if (actualizada === 'bloqueada') {
+            res.status(403).json({ mensaje: 'La actividad ya fue archivada (24h) y no puede editarse.' });
             return;
         }
         res.json({ mensaje: "Actividad actualizada", actividad: actualizada });

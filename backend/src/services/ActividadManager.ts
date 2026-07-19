@@ -33,6 +33,16 @@ function mapRowToActividad(row: ActividadRow): Actividad {
   return actividad;
 }
 
+// Una actividad se archiva (pasa de "activa" a "historial") 24 horas después de registrada.
+const VENTANA_EDICION_MS = 24 * 60 * 60 * 1000;
+
+function estaArchivada(horaCreacion?: string | null): boolean {
+  if (!horaCreacion) return false;
+  const creado = new Date(horaCreacion).getTime();
+  if (Number.isNaN(creado)) return false;
+  return Date.now() - creado >= VENTANA_EDICION_MS;
+}
+
 export const obtenerTiposActividad = async (): Promise<Tipo_actividad[]> => {
   const db = getDB();
   const filas: Array<{Id_tipo?: number; Nombre_activ?: string; Utilidad_objet?: number; Codigo_color?: string;}> = await db.all("SELECT * FROM Tipo_actividad ORDER BY Id_tipo ASC");
@@ -70,7 +80,10 @@ export const registrarActividad = async (datos: Actividad): Promise<void> => {
 
 export const obtenerActividades = async (): Promise<Actividad[]> => {
   const db = getDB();
-  const query = `SELECT * FROM Actividad ORDER BY id_actividad DESC`;
+  // Solo actividades aún activas (menos de 24h desde su registro). Pasadas las 24h se archivan al historial.
+  const query = `SELECT * FROM Actividad
+                  WHERE hora_creac IS NULL OR datetime(hora_creac) > datetime('now', '-1 day')
+                  ORDER BY id_actividad DESC`;
   const filas: ActividadRow[] = await db.all(query);
   return filas.map(mapRowToActividad);
 };
@@ -82,16 +95,23 @@ export const obtenerActividadPorId = async (id: number): Promise<Actividad | nul
   return mapRowToActividad(fila);
 };
 
-export const eliminarActividad = async (id: number): Promise<void> => {
+export type ResultadoEliminacion = 'eliminada' | 'no_encontrada' | 'bloqueada';
+
+export const eliminarActividad = async (id: number): Promise<ResultadoEliminacion> => {
   const db = getDB();
-  const query = `DELETE FROM Actividad WHERE id_actividad = ?`;
-  await db.run(query, [id]);
+  const actual: ActividadRow | undefined = await db.get(`SELECT hora_creac FROM Actividad WHERE id_actividad = ?`, [id]);
+  if (!actual) return 'no_encontrada';
+  if (estaArchivada(actual.hora_creac)) return 'bloqueada';
+
+  await db.run(`DELETE FROM Actividad WHERE id_actividad = ?`, [id]);
+  return 'eliminada';
 };
 
-export const editarActividad = async (id: number, datos: Partial<Actividad>): Promise<Actividad | null> => {
+export const editarActividad = async (id: number, datos: Partial<Actividad>): Promise<Actividad | null | 'bloqueada'> => {
   const db = getDB();
   const actual: ActividadRow | undefined = await db.get(`SELECT * FROM Actividad WHERE id_actividad = ?`, [id]);
   if (!actual) return null;
+  if (estaArchivada(actual.hora_creac)) return 'bloqueada';
 
   const id_tipo = (datos.id_tipo !== undefined) ? Number(datos.id_tipo) : actual.id_tipo;
   const hora_inicio = (datos.hora_inicio !== undefined) ? datos.hora_inicio : actual.hora_inicio;
@@ -133,10 +153,11 @@ export const actividadesSemana = async (): Promise<Record<string, Actividad[]>> 
 
 export const obtenerHistorialActividades = async (): Promise<Actividad[]> => {
   const db = getDB();
-  const haceUnaSemana = new Date();
-  haceUnaSemana.setDate(haceUnaSemana.getDate() - 7);
-  const limite = haceUnaSemana.toISOString().split('T')[0];
-
-  const filas: ActividadRow[] = await db.all(`SELECT * FROM Actividad WHERE fecha < ? ORDER BY fecha DESC, hora_inicio DESC`, [limite]);
+  // Historial = actividades ya archivadas (24h o más desde su registro).
+  const filas: ActividadRow[] = await db.all(
+    `SELECT * FROM Actividad
+      WHERE hora_creac IS NOT NULL AND datetime(hora_creac) <= datetime('now', '-1 day')
+      ORDER BY fecha DESC, hora_inicio DESC`
+  );
   return filas.map(mapRowToActividad);
 };

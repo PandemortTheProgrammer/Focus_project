@@ -58,7 +58,7 @@ export default function ActivitiesHistory() {
       </div>
 
       <p className="text-white opacity-50 text-sm text-center -mt-2 mb-2">
-        Actividades que ya llevan más de una semana registradas. Este historial es solo de consulta.
+        Actividades archivadas (más de 24 horas desde su registro). Este historial es solo de consulta.
       </p>
 
       <div className="relative z-10 flex flex-col gap-4 px-8 py-4">
@@ -66,7 +66,7 @@ export default function ActivitiesHistory() {
           <p className="text-white text-center opacity-60 mt-10">Cargando historial...</p>
         ) : historial.length === 0 ? (
           <p className="text-white text-center opacity-60 mt-10">
-            Aún no hay actividades con más de una semana de antigüedad.
+            Aún no hay actividades archivadas (más de 24 horas de antigüedad).
           </p>
         ) : (
           historial.map((actividad) => {

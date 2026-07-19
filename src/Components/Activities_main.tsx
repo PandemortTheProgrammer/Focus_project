@@ -79,6 +79,10 @@ export default function ActivitiesMain() {
       if (res.ok) {
         // Borramos visualmente la actividad sin recargar la página
         setActividades(actividades.filter(act => act.id_actividad !== id_actividad));
+      } else if (res.status === 403) {
+        alert("Esta actividad ya fue archivada (24h) y no puede eliminarse.");
+      } else {
+        alert("Hubo un problema al eliminar la actividad.");
       }
     } catch (error) {
       alert("Error al intentar eliminar la actividad.");
@@ -98,10 +102,10 @@ export default function ActivitiesMain() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/actividades/historial')}
-            title="Ver actividades con más de una semana de antigüedad"
+            title="Ver actividades archivadas (más de 24 horas desde su registro)"
             className="px-6 py-2 rounded-full text-white transition hover:opacity-80"
             style={{ backgroundColor: '#1a7a6e' }}>
-            Historial semanal
+            Historial
           </button>
           <button onClick={() => navigate('/actividades/agregar')} className="px-6 py-2 rounded-full bg-zinc-900 text-white">
             + Agregar actividad

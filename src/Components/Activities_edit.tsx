@@ -36,6 +36,9 @@ export default function ActivitiesEdit() {
             setHora(actividad.hora_inicio)
             setDuracion(actividad.duracion_minutos)
             setDescripcion(actividad.descripcion_actividad)
+          } else {
+            alert('Esta actividad ya fue archivada (24h) y no puede editarse.')
+            navigate('/actividades')
           }
         }
 
@@ -77,6 +80,9 @@ export default function ActivitiesEdit() {
       })
 
       if (res.ok) {
+        navigate('/actividades')
+      } else if (res.status === 403) {
+        alert('Esta actividad ya fue archivada (24h) y no puede editarse.')
         navigate('/actividades')
       } else {
         alert('Hubo un problema al actualizar la actividad.')
