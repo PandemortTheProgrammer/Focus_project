@@ -15,14 +15,34 @@ export interface ActividadConTipoRow {
     codigo_color: string;
 }
 
+interface ActividadConTipoRawRow {
+    Id_actividad: number;
+    Id_tipo: number;
+    hora_inicio: string | null;
+    durac_min: number | null;
+    desc_activ: string | null;
+    fecha: string | null;
+    hora_creac?: string;
+    Nombre_activ: string | null;
+    Utilidad_objet: number | null;
+    Codigo_color: string | null;
+}
+
 export interface TipoResumenSemanal {
     id_tipo: number;
     nombre_tipo: string;
     peso: number;
     color: string;
     horas: number;
+    porcentaje_semana: number;
+    num_actividades: number;
+    promedio_sesion_min: number;
+    dias_activos: number;
+    tendencia: 'subio' | 'bajo' | 'igual' | 'nuevo';
+    variacion_horas: number;
     resumen: string;
     mensaje: string;
+    consejo: string;
 }
 
 export interface SemanaResumen {
@@ -53,14 +73,56 @@ const addDays = (date: Date, days: number): Date => {
     return result;
 };
 
-const generarResumenTipo = (nombreTipo: string, horas: number): string => {
-    return `Durante la semana destinaste ${horas.toFixed(1)}h a ${nombreTipo.toLowerCase()}.`;
+const generarResumenTipo = (
+    nombreTipo: string,
+    horas: number,
+    numActividades: number,
+    porcentajeSemana: number,
+    diasActivos: number,
+    promedioSesionMin: number
+): string => {
+    const frecuencia = numActividades === 1
+        ? 'en 1 sesión'
+        : `en ${numActividades} sesiones repartidas en ${diasActivos} día${diasActivos === 1 ? '' : 's'}`;
+    return `Durante la semana destinaste ${horas.toFixed(1)}h a ${nombreTipo.toLowerCase()} ${frecuencia} (${porcentajeSemana}% de tu tiempo registrado), con un promedio de ${promedioSesionMin} min por sesión.`;
 };
 
-const generarMensajeMotivacional = (peso: number, horas: number): string => {
+// Algunas actividades del catálogo necesitan un trato distinto al que dicta únicamente su "peso",
+// porque su naturaleza real (trabajo, trámites, bienestar, vida social) no encaja con el patrón
+// genérico de "ocio moderado" o "prioridad sin límite".
+const ACTIVIDADES_TRABAJO = new Set(['Trabajo']);
+const ACTIVIDADES_ADMINISTRATIVAS = new Set(['Realizar un trámite']);
+const ACTIVIDADES_BIENESTAR = new Set(['Meditación', 'Descanso activo']);
+const ACTIVIDADES_SOCIAL_CREATIVA = new Set(['Socializar', 'Expresión artística']);
+
+const generarMensajeMotivacional = (nombreTipo: string, peso: number, horas: number, diasActivos: number): string => {
+    if (ACTIVIDADES_TRABAJO.has(nombreTipo)) {
+        if (horas > 60) return 'Alerta de sobrecarga: superaste las 60h semanales de trabajo, un nivel asociado a agotamiento; considera reducir la carga o delegar tareas.';
+        if (horas > 48) return 'Carga alta: trabajaste por encima de una jornada estándar; vigila tu descanso para evitar el desgaste.';
+        if (horas >= 20) return 'Buen ritmo laboral: mantienes una dedicación estable a tu trabajo esta semana.';
+        if (horas > 0) return 'Actividad laboral moderada esta semana; trabajar es necesario, solo asegúrate de que se ajuste bien a tus demás compromisos.';
+        return 'No registraste horas de trabajo esta semana.';
+    }
+    if (ACTIVIDADES_ADMINISTRATIVAS.has(nombreTipo)) {
+        if (horas === 0) return 'No tuviste trámites pendientes registrados esta semana.';
+        if (horas <= 3) return 'Mantienes tus trámites bajo control, resolviéndolos sin que te quiten demasiado tiempo.';
+        return 'Dedicaste bastante tiempo a trámites esta semana; si se repite, revisa si puedes agilizarlos o programarlos con anticipación.';
+    }
+    if (ACTIVIDADES_BIENESTAR.has(nombreTipo)) {
+        if (horas < 0.5) return 'Podrías beneficiarte de dedicar un poco más de tiempo a esta práctica de bienestar.';
+        if (horas <= 7) return 'Buen hábito de bienestar: este tiempo apoya tu equilibrio emocional y físico.';
+        return 'Le dedicas bastante tiempo a esta práctica; sigue siendo positivo, solo confirma que no esté sustituyendo otras responsabilidades.';
+    }
+    if (ACTIVIDADES_SOCIAL_CREATIVA.has(nombreTipo)) {
+        if (horas < 1) return 'Podrías beneficiarte de más momentos así durante la semana.';
+        if (horas <= 8) return 'Buen balance: este tiempo aporta positivamente a tu bienestar social o creativo.';
+        return 'Le dedicas mucho tiempo a esta actividad; está bien si te llena, solo vigila que no reste espacio a otras responsabilidades.';
+    }
     if (peso >= 4) {
-        if (horas > 5) return 'Excelente dedicación: estás reforzando tus prioridades más importantes.';
-        if (horas >= 2) return 'Bien hecho: mantienes una rutina positiva en actividades clave.';
+        if (horas > 5 && diasActivos >= 4) return 'Excelente dedicación: mantienes una rutina constante y sólida en tus prioridades más importantes durante casi toda la semana.';
+        if (horas > 5) return 'Excelente dedicación: estás reforzando tus prioridades más importantes, aunque concentrada en pocos días; repártela más para ganar consistencia.';
+        if (horas >= 2 && diasActivos >= 3) return 'Bien hecho: mantienes una rutina positiva y constante en actividades clave.';
+        if (horas >= 2) return 'Bien hecho: mantienes una rutina positiva en actividades clave, aunque podrías distribuirla en más días.';
         if (horas >= 0.5) return 'Buen arranque: intenta alargar un poco más estas sesiones para ganar impulso.';
         return 'Alerta leve: dedica un poco más de tiempo a esta actividad prioritaria.';
     }
@@ -75,6 +137,65 @@ const generarMensajeMotivacional = (peso: number, horas: number): string => {
         return 'Excesivo: demasiado tiempo en habilidades de bajo impacto. Busca un cambio de ritmo.';
     }
     return 'Sigue observando cómo se integra esta actividad en tu semana.';
+};
+
+const generarConsejoTipo = (
+    nombreTipo: string,
+    peso: number,
+    horas: number,
+    numActividades: number,
+    diasActivos: number,
+    promedioSesionMin: number
+): string => {
+    if (ACTIVIDADES_TRABAJO.has(nombreTipo)) {
+        if (horas > 60) return 'Considera hablar con tu equipo o superior sobre la carga de trabajo; un ritmo así de forma sostenida aumenta el riesgo de agotamiento.';
+        if (horas > 48) return 'Procura delimitar horarios de desconexión; trabajar por encima de una jornada estándar de forma constante puede afectar tu descanso.';
+        if (horas > 0 && diasActivos <= 2) return 'Repartir tus horas laborales en más días puede ayudarte a mantener un ritmo más sostenible.';
+        return 'Mantén tus límites de horario para conservar el equilibrio entre trabajo y vida personal.';
+    }
+    if (ACTIVIDADES_ADMINISTRATIVAS.has(nombreTipo)) {
+        if (numActividades > 5) return 'Agrupa tus trámites en un mismo bloque o día para resolverlos con menos fricción.';
+        return 'Sigue resolviendo tus trámites a tiempo para evitar que se acumulen.';
+    }
+    if (ACTIVIDADES_BIENESTAR.has(nombreTipo)) {
+        if (promedioSesionMin > 0 && promedioSesionMin < 10) return 'Prueba extender un poco estas sesiones; unos minutos más pueden profundizar sus beneficios.';
+        return 'Continúa con esta práctica; es un buen pilar para tu bienestar.';
+    }
+    if (ACTIVIDADES_SOCIAL_CREATIVA.has(nombreTipo)) {
+        if (diasActivos <= 1 && horas > 0) return 'Intenta repartir estos momentos en más días para disfrutar sus beneficios de forma más constante.';
+        return 'Sigue cultivando este espacio; aporta positivamente a tu bienestar.';
+    }
+    if (peso >= 4) {
+        if (horas > 0 && diasActivos <= 2) return 'Prueba distribuir esta actividad en más días de la semana para construir un hábito más estable.';
+        if (promedioSesionMin > 0 && promedioSesionMin < 20) return 'Tus sesiones son cortas; bloques de al menos 25-30 minutos suelen mejorar el enfoque y los resultados.';
+        return 'Mantén este ritmo y considera fijar un horario recurrente para automatizar el hábito.';
+    }
+    if (peso >= 2) {
+        if (numActividades > 8) return 'Repites esta actividad muy seguido; agrupa sesiones para liberar tiempo hacia tus prioridades.';
+        return 'Vigila que estas horas no crezcan demasiado para que sigan siendo un descanso planificado y no un refugio del resto de tus responsabilidades.';
+    }
+    if (peso === 1) {
+        if (horas > 3) return 'Define un límite diario para este tipo de ocio y sustitúyelo gradualmente por actividades de mayor impacto.';
+        return 'Está bajo control; solo asegúrate de que no reemplace tiempo de descanso reparador.';
+    }
+    return 'Sigue registrando esta actividad para obtener recomendaciones más precisas.';
+};
+
+const calcularTendencia = (
+    horasActual: number,
+    horasAnterior: number | undefined
+): { tendencia: 'subio' | 'bajo' | 'igual' | 'nuevo'; variacion: number; texto: string } => {
+    if (horasAnterior === undefined) {
+        return { tendencia: 'nuevo', variacion: horasActual, texto: 'Es la primera semana en la que registras este tipo de actividad.' };
+    }
+    const variacion = Number((horasActual - horasAnterior).toFixed(1));
+    if (Math.abs(variacion) < 0.3) {
+        return { tendencia: 'igual', variacion, texto: 'Mantuviste un ritmo similar al de la semana pasada.' };
+    }
+    if (variacion > 0) {
+        return { tendencia: 'subio', variacion, texto: `Aumentaste ${variacion.toFixed(1)}h respecto a la semana anterior.` };
+    }
+    return { tendencia: 'bajo', variacion, texto: `Redujiste ${Math.abs(variacion).toFixed(1)}h respecto a la semana anterior.` };
 };
 
 const generarDescripcionGeneralPorSemana = (actividades: ActividadConTipoRow[]): string => {
@@ -95,41 +216,61 @@ const generarDescripcionGeneralPorSemana = (actividades: ActividadConTipoRow[]):
     return 'Buena semana con espacio para seguir mejorando el equilibrio entre rutinas y descanso.';
 };
 
-const resumirTiposPorSemana = (actividades: ActividadConTipoRow[]): TipoResumenSemanal[] => {
-    const tipoMap = new Map<number, { nombre_tipo: string; peso: number; minutos: number; codigo_color: string }>();
+const resumirTiposPorSemana = (
+    actividades: ActividadConTipoRow[],
+    totalMinutosSemana: number,
+    horasSemanaAnteriorPorTipo: Map<number, number>
+): TipoResumenSemanal[] => {
+    const tipoMap = new Map<number, { nombre_tipo: string; peso: number; minutos: number; codigo_color: string; numActividades: number; dias: Set<string> }>();
 
     actividades.forEach((actividad) => {
         const actual = tipoMap.get(actividad.id_tipo);
         const minutos = Number(actividad.durac_min || 0);
         if (actual) {
-            tipoMap.set(actividad.id_tipo, {
-                nombre_tipo: actividad.nombre_tipo,
-                peso: actividad.peso,
-                minutos: actual.minutos + minutos,
-                codigo_color: actividad.codigo_color || actual.codigo_color
-            });
+            actual.minutos += minutos;
+            actual.numActividades += 1;
+            actual.dias.add(actividad.fecha);
+            actual.nombre_tipo = actividad.nombre_tipo;
+            actual.peso = actividad.peso;
+            actual.codigo_color = actividad.codigo_color || actual.codigo_color;
         } else {
             tipoMap.set(actividad.id_tipo, {
                 nombre_tipo: actividad.nombre_tipo,
                 peso: actividad.peso,
                 minutos,
-                codigo_color: actividad.codigo_color || '#6b7280'
+                codigo_color: actividad.codigo_color || '#6b7280',
+                numActividades: 1,
+                dias: new Set([actividad.fecha])
             });
         }
     });
 
-    return Array.from(tipoMap.entries()).map(([id_tipo, datos]) => {
-        const horas = Number((datos.minutos / 60).toFixed(1));
-        return {
-            id_tipo,
-            nombre_tipo: datos.nombre_tipo,
-            peso: datos.peso,
-            color: datos.codigo_color,
-            horas,
-            resumen: generarResumenTipo(datos.nombre_tipo, horas),
-            mensaje: generarMensajeMotivacional(datos.peso, horas)
-        };
-    });
+    return Array.from(tipoMap.entries())
+        .map(([id_tipo, datos]) => {
+            const horas = Number((datos.minutos / 60).toFixed(1));
+            const porcentajeSemana = totalMinutosSemana > 0 ? Number(((datos.minutos / totalMinutosSemana) * 100).toFixed(0)) : 0;
+            const diasActivos = datos.dias.size;
+            const promedioSesionMin = datos.numActividades > 0 ? Number((datos.minutos / datos.numActividades).toFixed(0)) : 0;
+            const { tendencia, variacion, texto: tendenciaTexto } = calcularTendencia(horas, horasSemanaAnteriorPorTipo.get(id_tipo));
+
+            return {
+                id_tipo,
+                nombre_tipo: datos.nombre_tipo,
+                peso: datos.peso,
+                color: datos.codigo_color,
+                horas,
+                porcentaje_semana: porcentajeSemana,
+                num_actividades: datos.numActividades,
+                promedio_sesion_min: promedioSesionMin,
+                dias_activos: diasActivos,
+                tendencia,
+                variacion_horas: variacion,
+                resumen: generarResumenTipo(datos.nombre_tipo, horas, datos.numActividades, porcentajeSemana, diasActivos, promedioSesionMin),
+                mensaje: `${generarMensajeMotivacional(datos.nombre_tipo, datos.peso, horas, diasActivos)} ${tendenciaTexto}`,
+                consejo: generarConsejoTipo(datos.nombre_tipo, datos.peso, horas, datos.numActividades, diasActivos, promedioSesionMin)
+            };
+        })
+        .sort((a, b) => b.horas - a.horas);
 };
 
 export const obtenerResumenesSemanales = async (): Promise<SemanaResumen[]> => {
@@ -152,7 +293,7 @@ export const obtenerResumenesSemanales = async (): Promise<SemanaResumen[]> => {
 
     const semanasMap = new Map<string, { fecha_inicio: string; fecha_fin: string; actividades: ActividadConTipoRow[] }>();
 
-    filas.forEach((fila: any) => {
+    filas.forEach((fila: ActividadConTipoRawRow) => {
         if (!fila.fecha) return;
         const fechaActividad = new Date(`${fila.fecha}T00:00:00Z`);
         if (Number.isNaN(fechaActividad.getTime())) return;
@@ -198,7 +339,7 @@ export const obtenerResumenesSemanales = async (): Promise<SemanaResumen[]> => {
     // 5. Evaluar, Guardar y Construir respuesta
     for (let i = 0; i < semanasCerradas.length; i++) {
         const semana = semanasCerradas[i];
-        let conclusionDB = "";
+        let conclusionDB: string;
 
         if (reportesMap.has(semana.fecha_inicio)) {
             conclusionDB = reportesMap.get(semana.fecha_inicio).Conclusion;
@@ -221,6 +362,11 @@ export const obtenerResumenesSemanales = async (): Promise<SemanaResumen[]> => {
         const totalMinutos = semana.actividades.reduce((sum, actividad) => sum + actividad.durac_min, 0);
         const totalHoras = Number((totalMinutos / 60).toFixed(1));
 
+        const horasSemanaAnteriorPorTipo = new Map<number, number>();
+        if (i > 0) {
+            resultadoFinal[i - 1].tipos.forEach((tipo) => horasSemanaAnteriorPorTipo.set(tipo.id_tipo, tipo.horas));
+        }
+
         resultadoFinal.push({
             numero_semana: i + 1,
             fecha_inicio: semana.fecha_inicio,
@@ -229,7 +375,7 @@ export const obtenerResumenesSemanales = async (): Promise<SemanaResumen[]> => {
             total_actividades: semana.actividades.length,
             descripcion_general: conclusionDB,
             actividades: semana.actividades,
-            tipos: resumirTiposPorSemana(semana.actividades)
+            tipos: resumirTiposPorSemana(semana.actividades, totalMinutos, horasSemanaAnteriorPorTipo)
         });
     }
 

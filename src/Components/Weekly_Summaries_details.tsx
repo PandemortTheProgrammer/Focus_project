@@ -6,8 +6,15 @@ type TipoResumen = {
   nombre_tipo: string
   horas: number
   color: string
+  porcentaje_semana: number
+  num_actividades: number
+  promedio_sesion_min: number
+  dias_activos: number
+  tendencia: 'subio' | 'bajo' | 'igual' | 'nuevo'
+  variacion_horas: number
   resumen: string
   mensaje: string
+  consejo: string
 }
 
 type ActividadDetalle = {
@@ -35,6 +42,13 @@ type SemanaResumen = {
 const formatearFecha = (fecha: string): string => {
   const [year, month, day] = fecha.split('-')
   return `${day}/${month}/${year}`
+}
+
+const tendenciaInfo: Record<TipoResumen['tendencia'], { icono: string; texto: string; color: string }> = {
+  subio: { icono: '▲', texto: 'Subió', color: '#f2a65a' },
+  bajo: { icono: '▼', texto: 'Bajó', color: '#5ecfb8' },
+  igual: { icono: '■', texto: 'Estable', color: 'rgba(255,255,255,0.6)' },
+  nuevo: { icono: '★', texto: 'Nuevo', color: '#8fb8f5' }
 }
 
 export default function WeeklySummaryDetail() {
@@ -131,11 +145,39 @@ export default function WeeklySummaryDetail() {
                         <span className="w-3 h-3 rounded-full" style={{ backgroundColor: tipo.color }} />
                         <span className="text-white font-semibold text-lg">{tipo.nombre_tipo}</span>
                       </div>
-                      <span className="text-white opacity-70 text-sm">{tipo.horas.toFixed(1)}h</span>
+                      <div className="flex items-center gap-3">
+                        <span
+                          className="text-xs font-semibold px-2 py-1 rounded-full"
+                          style={{ color: tendenciaInfo[tipo.tendencia].color, backgroundColor: 'rgba(255,255,255,0.08)' }}
+                        >
+                          {tendenciaInfo[tipo.tendencia].icono} {tendenciaInfo[tipo.tendencia].texto}
+                        </span>
+                        <span className="text-white opacity-70 text-sm">{tipo.horas.toFixed(1)}h</span>
+                      </div>
                     </div>
+
+                    <div className="flex flex-wrap gap-4 mt-4">
+                      <div className="text-xs text-white opacity-60">
+                        <span className="font-semibold text-white opacity-90">{tipo.porcentaje_semana}%</span> del tiempo de la semana
+                      </div>
+                      <div className="text-xs text-white opacity-60">
+                        <span className="font-semibold text-white opacity-90">{tipo.num_actividades}</span> sesión{tipo.num_actividades === 1 ? '' : 'es'}
+                      </div>
+                      <div className="text-xs text-white opacity-60">
+                        <span className="font-semibold text-white opacity-90">{tipo.dias_activos}</span> día{tipo.dias_activos === 1 ? '' : 's'} activos
+                      </div>
+                      <div className="text-xs text-white opacity-60">
+                        <span className="font-semibold text-white opacity-90">{tipo.promedio_sesion_min}</span> min/sesión en promedio
+                      </div>
+                    </div>
+
                     <p className="text-white opacity-70 text-sm mt-4">{tipo.resumen}</p>
                     <div className="mt-4 rounded-2xl p-4" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
                       <p className="text-sm font-medium text-[#f5e6c8]">{tipo.mensaje}</p>
+                    </div>
+                    <div className="mt-3 rounded-2xl p-4" style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}>
+                      <p className="text-xs uppercase tracking-wide text-white opacity-50 mb-1">Consejo</p>
+                      <p className="text-sm font-medium text-white opacity-85">{tipo.consejo}</p>
                     </div>
                   </div>
                 ))}
