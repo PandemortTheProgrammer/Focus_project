@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import IconPicker from './IconPicker'
+import { useToast } from './ToastContext' // Importamos el sistema de notificaciones
 
 interface EnfoqueCatalogoRow {
   Id_enfoque: number;
@@ -14,6 +15,8 @@ interface CreateProfileProps {
 
 export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
   const navigate = useNavigate();
+  const { mostrarToast } = useToast(); // Extraemos la función global
+
   const [nickname, setNickname] = useState('');
   const [ageRank, setAgeRank] = useState('');
   const [focus, setFocus] = useState('');
@@ -34,24 +37,27 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
         if (res.ok) {
           const datos = await res.json() as EnfoqueCatalogoRow[];
           setEnfoquesCatalogo(datos);
+        } else {
+          mostrarToast('error', 'Error al cargar', 'No se pudieron cargar los enfoques disponibles.');
         }
       } catch (error: unknown) {
         const mensaje = error instanceof Error ? error.message : "Error desconocido";
         console.error('Error al cargar enfoques:', mensaje);
+        mostrarToast('error', 'Error de conexión', 'No se pudo conectar con el servidor.');
       } finally {
         setCargandoEnfoques(false);
       }
     };
     cargarEnfoques();
-  }, []);
+  }, [mostrarToast]);
 
   const handleSave = async () => {
+    // 1. Validación de campos vacíos usando el Toast de advertencia
     if (!nickname || !ageRank || !focus || !genero) {
-        alert("Por favor llena todos los campos");
+        mostrarToast('advertencia', 'Datos incompletos', 'Por favor llena todos los campos para crear tu perfil.');
         return;
     }
 
-    // Estructura limpia que coincide al 100% con las propiedades leídas por Dashboard.tsx
     const nuevoPerfil = {
         nickname: nickname,
         age_rank: ageRank,
@@ -67,15 +73,21 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
             body: JSON.stringify(nuevoPerfil)
         });
 
+        // 2. Leemos la respuesta estructurada de Express (que configuramos en PerfilRoutes)
+        const data = await respuesta.json().catch(() => ({}));
+
         if (respuesta.ok) {
-            // Al pasarle el objeto completo, React redibuja el Dashboard al instante con el saludo correcto
+            // 3. Éxito: Mostramos notificación, actualizamos estado global y navegamos
+            mostrarToast('exito', '¡Bienvenido a Focus!', data.mensaje || 'Tu perfil se ha creado exitosamente.');
             setPerfilGlobal(nuevoPerfil);
             navigate('/dashboard');
         } else {
-            alert("Hubo un problema al guardar el perfil.");
+            // 4. Error desde el Backend (ej. código 400 por campos vacíos pasados por alto)
+            mostrarToast('error', 'No se pudo crear el perfil', data.error || 'Hubo un problema al guardar el perfil.');
         }
     } catch {
-        alert("Error al conectar con el servidor.");
+        // 5. Error de servidor caído
+        mostrarToast('error', 'Error de conexión', 'No se pudo conectar con el servidor.');
     }
 };
 
@@ -114,7 +126,7 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
           <select
             value={genero}
             onChange={(e) => setGenero(e.target.value)}
-            className="w-full px-5 py-3 rounded-full text-white text-lg outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
+            className="w-full px-5 py-3 rounded-full text-white text-lg outline-none cursor-pointer transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
             style={{ backgroundColor: '#2a2a2a' }}>
             <option value="" disabled>Selecciona una opción</option>
             <option value="M">Él (Bienvenido)</option>
@@ -130,7 +142,7 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
           <select
             value={ageRank}
             onChange={(e) => setAgeRank(e.target.value)}
-            className="w-full px-5 py-3 rounded-full text-white text-lg outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
+            className="w-full px-5 py-3 rounded-full text-white text-lg outline-none cursor-pointer transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
             style={{ backgroundColor: '#2a2a2a' }}>
             <option value="" disabled>Selecciona tu rango</option>
             <option value="15-17">15-17</option>
@@ -146,7 +158,7 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
           <select
             value={focus}
             onChange={(e) => setFocus(e.target.value)}
-            className="w-full px-5 py-3 rounded-full text-white text-lg outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
+            className="w-full px-5 py-3 rounded-full text-white text-lg outline-none cursor-pointer transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
             style={{ backgroundColor: '#2a2a2a' }}>
             <option value="" disabled>
               {cargandoEnfoques ? 'Cargando enfoques...' : 'Selecciona tu enfoque'}
@@ -190,14 +202,14 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
         <div className="flex gap-4 mt-2 justify-center">
           <button
             onClick={() => navigate('/')}
-            className="px-10 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80 hover:scale-105"
+            className="px-10 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80 border border-zinc-600"
             style={{ backgroundColor: '#1a1a1a' }}>
             Volver
           </button>
           <button
             onClick={handleSave}
-            className="px-10 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80 hover:scale-105"
-            style={{ backgroundColor: '#1a1a1a' }}>
+            className="px-10 py-3 rounded-full text-[#1a1a1a] text-lg font-bold shadow-lg transition hover:scale-105"
+            style={{ backgroundColor: '#5ecfb8' }}>
             Guardar
           </button>
         </div>

@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import type Actividad from '../models/Actividad'
 import type Tipo_actividad from '../models/Tipo_actividad'
+import { useToast } from './ToastContext' // Importamos el contexto global
 
 export default function ActivitiesEdit() {
   const navigate = useNavigate()
   const { id } = useParams() // obtiene el ID de la URL
+  const { mostrarToast } = useToast() // Extraemos la función global
 
   const [tipos, setTipos] = useState<Tipo_actividad[]>([])
   const [tag, setTag] = useState('')
@@ -37,19 +39,21 @@ export default function ActivitiesEdit() {
             setDuracion(actividad.duracion_minutos)
             setDescripcion(actividad.descripcion_actividad)
           } else {
-            alert('Esta actividad ya fue archivada (24h) y no puede editarse.')
+            // Si no la encuentra (ej. el usuario escribió la URL a mano de una actividad vieja)
+            mostrarToast('error', 'Acceso denegado', 'Esta actividad ya fue archivada o no existe, por lo que no puede editarse.')
             navigate('/actividades')
           }
         }
 
       } catch (error) {
         console.error('Error al cargar datos:', error)
+        mostrarToast('error', 'Error de carga', 'No se pudieron cargar los datos de la actividad.')
       } finally {
         setCargando(false)
       }
     }
     cargarDatos()
-  }, [id])
+  }, [id, navigate, mostrarToast])
 
   const ajustarDuracion = (minutos: number) => {
     setDuracion(prev => Math.max(0, prev + minutos))
@@ -62,8 +66,9 @@ export default function ActivitiesEdit() {
   }
 
   const handleGuardar = async () => {
+    // 1. Validación de campos vacíos
     if (!tag || !hora || duracion === 0) {
-      alert('Por favor completa todos los campos')
+      mostrarToast('advertencia', 'Datos incompletos', 'Por favor completa todos los campos obligatorios.')
       return
     }
 
@@ -79,30 +84,39 @@ export default function ActivitiesEdit() {
         })
       })
 
+      const data = await res.json().catch(() => ({}))
+
       if (res.ok) {
+        mostrarToast('exito', '¡Actualizada!', 'Los cambios de tu actividad fueron guardados exitosamente.')
         navigate('/actividades')
       } else if (res.status === 403) {
-        alert('Esta actividad ya fue archivada (24h) y no puede editarse.')
+        // Error específico del backend (Medianoche superada)
+        mostrarToast('error', 'Edición bloqueada', data.error || 'La actividad superó la medianoche y ya no puede editarse.')
         navigate('/actividades')
       } else {
-        alert('Hubo un problema al actualizar la actividad.')
+        // Otro tipo de error 400 o 500
+        mostrarToast('error', 'No se pudo guardar', data.error || 'Hubo un problema al actualizar la actividad.')
       }
     } catch (error) {
       console.error('Error:', error)
-      alert('No se pudo conectar con el servidor.')
+      mostrarToast('error', 'Error de conexión', 'No se pudo conectar con el servidor.')
     }
   }
 
   if (cargando) {
     return (
       <div className="w-full min-h-screen flex items-center justify-center">
-        <p className="text-white text-xl">Cargando...</p>
+        <p className="text-white text-xl animate-pulse">Cargando detalles de la actividad...</p>
       </div>
     )
   }
 
   return (
     <div className="relative w-full min-h-screen overflow-auto flex flex-col">
+
+      <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center mt-8" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
+          Editar actividad
+      </h1>
 
       {/* Contenido */}
       <div className="relative z-10 flex gap-6 px-8 py-8 w-full max-w-4xl mx-auto flex-1 items-center">
@@ -114,7 +128,7 @@ export default function ActivitiesEdit() {
           <select
             value={tag}
             onChange={(e) => setTag(e.target.value)}
-            className="w-full px-5 py-3 rounded-full text-white text-lg outline-none"
+            className="w-full px-5 py-3 rounded-full text-white text-lg outline-none cursor-pointer"
             style={{ backgroundColor: '#1a1a1a' }}>
             <option value="" disabled>Selecciona un tipo</option>
             {tipos.map((tipo) => (
@@ -146,7 +160,7 @@ export default function ActivitiesEdit() {
                 style={{ backgroundColor: '#d946ef' }}>
                 -5
               </button>
-              <span className="text-white font-bold text-lg px-2">
+              <span className="text-white font-bold text-lg px-2 min-w-[80px] text-center">
                 {formatearDuracion(duracion)} hrs
               </span>
               <button onClick={() => ajustarDuracion(10)}
@@ -179,16 +193,16 @@ export default function ActivitiesEdit() {
             style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
           />
 
-          <div className="flex gap-4 justify-end">
+          <div className="flex gap-4 justify-end mt-4">
             <button
               onClick={handleGuardar}
-              className="px-8 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80"
-              style={{ backgroundColor: '#1a1a1a' }}>
+              className="px-8 py-3 rounded-full text-[#1a1a1a] text-lg font-bold transition hover:scale-105"
+              style={{ backgroundColor: '#5ecfb8' }}>
               Guardar cambios
             </button>
             <button
               onClick={() => navigate('/actividades')}
-              className="px-8 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80"
+              className="px-8 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80 border border-zinc-600"
               style={{ backgroundColor: '#1a1a1a' }}>
               Cancelar
             </button>

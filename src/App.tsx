@@ -20,6 +20,7 @@ import Perfil from './models/Perfil'
 import WeeklySummaries from './Components/Weekly_Summaries'
 import WeeklySummaryDetail from './Components/Weekly_Summaries_details'
 import RewardsMain from './Components/Rewards_main';
+import { ToastProvider } from './Components/ToastContext'
 
 export default function App() {
   // Estado global para el perfil
@@ -57,51 +58,53 @@ export default function App() {
 
   return (
     // NUEVO: Envolvemos todas las rutas con el Layout y le pasamos el perfilGlobal
-    <Layout perfilGlobal={perfilGlobal}>
-      <Routes>
-        <Route path="/" element={<Mainpage />} />
-        <Route 
-          path="/crear-perfil" 
-          element={<CreateProfile setPerfilGlobal={(perfil) => setPerfilGlobal(new Perfil(1, perfil.nickname, perfil.age_rank, perfil.id_focus, perfil.genero, perfil.id_icono ?? 1))} />} 
-        />
-        <Route
-          path="/editar-perfil"
-          element={
-            <EditProfile
-              perfilGlobal={perfilGlobal}
-              setPerfilGlobal={(perfil) =>
-                setPerfilGlobal(
-                  new Perfil(
-                    perfil.id_perfil ?? 1,
-                    perfil.nickname,
-                    perfil.age_rank,
-                    perfil.id_focus,
-                    perfil.genero,
-                    perfil.id_icono
+    <ToastProvider>
+      <Layout perfilGlobal={perfilGlobal}>
+        <Routes>
+          <Route path="/" element={<Mainpage />} />
+          <Route
+            path="/crear-perfil"
+            element={<CreateProfile setPerfilGlobal={(perfil) => setPerfilGlobal(new Perfil(1, perfil.nickname, perfil.age_rank, perfil.id_focus, perfil.genero, perfil.id_icono ?? 1))} />}
+          />
+          <Route
+            path="/editar-perfil"
+            element={
+              <EditProfile
+                perfilGlobal={perfilGlobal}
+                setPerfilGlobal={(perfil) =>
+                  setPerfilGlobal(
+                    new Perfil(
+                      perfil.id_perfil ?? 1,
+                      perfil.nickname,
+                      perfil.age_rank,
+                      perfil.id_focus,
+                      perfil.genero,
+                      perfil.id_icono
+                    )
                   )
-                )
-              }
-            />
-          }
-        />
-        <Route path="/subir-perfil" element={<UploadProfile />} />
-        <Route 
-          path="/dashboard" 
-          element={<Dashboard perfilGlobal={perfilGlobal} />} 
-        />
-        <Route path="/actividades" element={<ActivitiesMain />} />
-        <Route path="/actividades/agregar" element={<ActivitiesAdd />} />
-        <Route path="/actividades/editar/:id" element={<ActivitiesEdit />} />
-        <Route path="/actividades/historial" element={<ActivitiesHistory />} />
-        <Route path="/progreso-semanal" element={<WeeklyProgress />} />
-        <Route path="/resumenes-semanales" element={<WeeklySummaries />} />
-        <Route path="/resumen-semanal/:id" element={<WeeklySummaryDetail/>} />
-        <Route path="/Download" element={<Download />}/>
-        <Route 
-          path="/recompensas" 
-          element={<RewardsMain perfilGlobal={perfilGlobal} />} 
-        />
-      </Routes>
-    </Layout>
+                }
+              />
+            }
+          />
+          <Route path="/subir-perfil" element={<UploadProfile />} />
+          <Route
+            path="/dashboard"
+            element={<Dashboard perfilGlobal={perfilGlobal} />}
+          />
+          <Route path="/actividades" element={<ActivitiesMain />} />
+          <Route path="/actividades/agregar" element={<ActivitiesAdd />} />
+          <Route path="/actividades/editar/:id" element={<ActivitiesEdit />} />
+          <Route path="/actividades/historial" element={<ActivitiesHistory />} />
+          <Route path="/progreso-semanal" element={<WeeklyProgress />} />
+          <Route path="/resumenes-semanales" element={<WeeklySummaries />} />
+          <Route path="/resumen-semanal/:id" element={<WeeklySummaryDetail />} />
+          <Route path="/Download" element={<Download />} />
+          <Route
+            path="/recompensas"
+            element={<RewardsMain perfilGlobal={perfilGlobal} />}
+          />
+        </Routes>
+      </Layout>
+    </ToastProvider>
   )
 }

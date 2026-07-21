@@ -1,56 +1,58 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useToast } from './ToastContext' // Importamos el sistema de notificaciones global
 
 export default function UploadProfile() {
   const navigate = useNavigate()
+  const { mostrarToast } = useToast() // Extraemos la función global
+  
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [status, setStatus] = useState<{ loading: boolean; message: string; error: boolean }>({
-    loading: false,
-    message: '',
-    error: false
-  })
+  const [loading, setLoading] = useState(false)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       setSelectedFile(file)
-      setStatus({ loading: false, message: '', error: false }) // Limpiamos mensajes anteriores
     }
   }
 
   const handleUploadSubmit = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      mostrarToast('advertencia', 'Archivo requerido', 'Por favor selecciona un archivo .sqlite válido antes de continuar.')
+      return
+    }
 
-    setStatus({ loading: true, message: 'Subiendo y procesando perfil...', error: false });
+    setLoading(true)
 
     // Preparamos el archivo para enviarlo como formulario "multipart/form-data"
-    const formData = new FormData();
-    formData.append('database', selectedFile);
+    const formData = new FormData()
+    formData.append('database', selectedFile)
 
     try {
-      // Esta es la ruta que construiremos mañana en Express
-      const res = await fetch('http://localhost:3000/api/database/upload', {
+      // Apuntamos a la ruta correcta de PerfilRoutes
+      const res = await fetch('http://localhost:3000/api/perfil/cargar', {
         method: 'POST',
         body: formData,
-      });
+      })
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}))
 
       if (!res.ok) {
-        throw new Error(data.error || 'Error al subir el archivo');
+        throw new Error(data.error || 'Error al procesar el archivo de respaldo')
       }
 
-      setStatus({ loading: false, message: '¡Perfil cargado con éxito!', error: false });
+      // Notificamos el éxito con el mensaje del backend
+      mostrarToast('exito', '¡Perfil restaurado!', data.mensaje || 'Tus datos locales han sido actualizados con éxito.')
       
-      // Tras un par de segundos, lo mandamos al dashboard para que vea su perfil cargado
+      // Tras un par de segundos, recargamos hacia el dashboard para reflejar el nuevo perfil
       setTimeout(() => {
-        // Forzamos la recarga de la página para que el App.tsx vuelva a hacer el fetch del perfil
-        window.location.href = '/dashboard'; 
-      }, 2000);
+        window.location.href = '/dashboard' 
+      }, 2000)
 
     } catch (error: unknown) {
-      const mensaje = error instanceof Error ? error.message : 'Error desconocido';
-      setStatus({ loading: false, message: mensaje, error: true });
+      const mensaje = error instanceof Error ? error.message : 'Error desconocido'
+      setLoading(false)
+      mostrarToast('error', 'Fallo en la restauración', mensaje)
     }
   }
 
@@ -94,20 +96,13 @@ export default function UploadProfile() {
         {selectedFile && (
           <button
             onClick={handleUploadSubmit}
-            disabled={status.loading}
-            className={`px-10 py-3 rounded-full text-white text-lg font-bold transition shadow-lg mt-2 ${
-              status.loading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 hover:bg-[#4ab9a3]'
+            disabled={loading}
+            className={`px-10 py-3 rounded-full text-lg font-bold transition shadow-lg mt-2 ${
+              loading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 hover:bg-[#4ab9a3]'
             }`}
             style={{ backgroundColor: '#5ecfb8', color: '#1a1a1a' }}>
-            {status.loading ? 'Cargando...' : 'Confirmar y Cargar Perfil'}
+            {loading ? 'Cargando y procesando...' : 'Confirmar y Cargar Perfil'}
           </button>
-        )}
-
-        {/* Mensajes de Feedback (Éxito o Error) */}
-        {status.message && (
-          <p className={`mt-2 font-semibold text-center ${status.error ? 'text-red-400' : 'text-green-400'}`}>
-            {status.message}
-          </p>
         )}
 
         {/* Línea divisoria */}
@@ -116,7 +111,7 @@ export default function UploadProfile() {
         {/* Botón Back */}
         <button
           onClick={() => navigate('/')}
-          className="px-8 py-2 rounded-full text-white text-sm font-semibold transition hover:opacity-80"
+          className="px-8 py-2 rounded-full text-white text-sm font-semibold transition hover:opacity-80 border border-zinc-600"
           style={{ backgroundColor: '#1a1a1a' }}>
           Cancelar y regresar
         </button>

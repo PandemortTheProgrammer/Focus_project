@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type Tipo_actividad from '../models/Tipo_actividad'
-
+import { useToast } from './ToastContext' // Importado desde la misma carpeta components
 
 export default function ActivitiesAdd() {
   const navigate = useNavigate()
+  const { mostrarToast } = useToast() // Extraemos la función global del contexto
+
   const [tipos, setTipos] = useState<Tipo_actividad[]>([])
   const [tag, setTag] = useState(0)
   const [hora, setHora] = useState('')
@@ -36,30 +38,54 @@ export default function ActivitiesAdd() {
   }
 
   const handleSave = async () => {
+    // 1. Validación de campos vacíos usando el Toast
     if (!tag || !hora || duracion === 0) {
-      alert('Por favor completa todos los campos (incluyendo el tiempo)')
+      mostrarToast('advertencia', 'Datos incompletos', 'Por favor completa todos los campos (incluyendo el tiempo).')
       return
     }
+
     const nuevaActividad = {
       id_tipo: tag,
       hora_inicio: hora,
       duracion_minutos: duracion,
       descripcion_actividad: descripcion
     }
+
     try {
       const res = await fetch('http://localhost:3000/api/actividades', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(nuevaActividad)
       })
+
+      // Convertimos la respuesta para poder leer los mensajes del Backend
+      const data = await res.json()
+
       if (res.ok) {
+        // Verificamos si el backend envió un logro nuevo
+        if (data.logroDesbloqueado) {
+          mostrarToast(
+            'logro', 
+            '¡Nuevo Logro Desbloqueado!', 
+            `Has conseguido: ${data.logroDesbloqueado.nombre}`,
+            `/iconos/${data.logroDesbloqueado.id_icono}.png`
+          )
+        } else {
+          // Éxito normal
+          mostrarToast('exito', '¡Actividad Registrada!', data.mensaje || 'Tu actividad se ha guardado correctamente.')
+        }
+
+        // Navegación instantánea (el Toast sobrevivirá porque vive en el Layout)
         navigate('/actividades')
+
       } else {
-        alert('Hubo un problema al guardar en Express.')
+        // Mostramos el error exacto que mandó Express (ej. "Actividad bloqueada")
+        mostrarToast('error', 'No se pudo guardar', data.error || data.mensaje || 'Hubo un problema al guardar en Express.')
       }
     } catch (error) {
       console.error('Error:', error)
-      alert('No se pudo conectar con el servidor.')
+      // Error si el servidor está apagado o no hay red
+      mostrarToast('error', 'Error de conexión', 'No se pudo conectar con el servidor.')
     }
   }
 
@@ -68,6 +94,7 @@ export default function ActivitiesAdd() {
       <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
           Agregar actividad
       </h1>
+      
       {/* Contenido principal */}
       <div className="relative z-10 flex gap-6 px-8 py-8 w-full max-w-4xl mx-auto flex-1 items-center">
         
@@ -78,7 +105,7 @@ export default function ActivitiesAdd() {
           <select
             value={tag}
             onChange={(e) => setTag(Number(e.target.value))}
-            className="w-full px-5 py-3 rounded-full text-white text-lg outline-none"
+            className="w-full px-5 py-3 rounded-full text-white text-lg outline-none cursor-pointer"
             style={{ backgroundColor: '#1a1a1a' }}>
             <option value="">Selecciona un tipo de actividad</option>
             {tipos.map((tipo) => (

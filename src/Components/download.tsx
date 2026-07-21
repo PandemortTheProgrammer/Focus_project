@@ -1,16 +1,17 @@
-
 import { useNavigate } from 'react-router-dom';
+import { useToast } from './ToastContext'; // Importamos el sistema de notificaciones
 
 export default function Download() {
   const navigate = useNavigate();
+  const { mostrarToast } = useToast(); // Extraemos la función global
 
   const handleDescargar = async () => {
     try {
-      // 1. Hacemos la petición al endpoint que acabamos de crear
-      const respuesta = await fetch('http://localhost:3000/api/sistema/descargar-bd');
+      // 1. Hacemos la petición al endpoint de PerfilRoutes
+      const respuesta = await fetch('http://localhost:3000/api/perfil/descargar');
       
       if (!respuesta.ok) {
-        alert("Error al intentar descargar el respaldo.");
+        mostrarToast('error', 'Error de descarga', 'No se pudo generar el archivo de respaldo.');
         return;
       }
 
@@ -31,9 +32,12 @@ export default function Download() {
       enlaceInvisible.remove();
       window.URL.revokeObjectURL(url);
 
+      // 6. ¡Notificamos el éxito de la operación!
+      mostrarToast('exito', '¡Descarga completada!', 'Tu base de datos local ha sido respaldada con éxito.');
+
     } catch (error) {
       console.error("Error:", error);
-      alert("No se pudo conectar con el servidor.");
+      mostrarToast('error', 'Error de conexión', 'No se pudo conectar con el servidor.');
     }
   };
 
@@ -53,14 +57,14 @@ export default function Download() {
       <div className="relative z-10 flex flex-col gap-6 w-72">
         <button
           onClick={handleDescargar}
-          className="w-full px-8 py-4 rounded-full text-white text-xl font-bold transition hover:opacity-90 hover:scale-105 shadow-lg flex items-center justify-center gap-3"
-          style={{ backgroundColor: '#1a7a6e' }}>
+          className="w-full px-8 py-4 rounded-full text-[#1a1a1a] text-xl font-bold transition hover:opacity-90 hover:scale-105 shadow-lg flex items-center justify-center gap-3"
+          style={{ backgroundColor: '#5ecfb8' }}>
           ⬇️ Descargar Respaldo
         </button>
 
         <button
           onClick={() => navigate('/dashboard')}
-          className="w-full px-8 py-4 rounded-full text-white text-lg font-semibold transition hover:opacity-80"
+          className="w-full px-8 py-4 rounded-full text-white text-lg font-semibold transition hover:opacity-80 border border-zinc-600"
           style={{ backgroundColor: '#1a1a1a' }}>
           ← Volver al Dashboard
         </button>

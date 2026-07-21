@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Perfil from '../models/Perfil'
 import IconPicker from './IconPicker'
+import { useToast } from './ToastContext' // Importamos el sistema de notificaciones
 
 interface EnfoqueCatalogoRow {
   Id_enfoque: number;
@@ -16,6 +17,8 @@ interface EditProfileProps {
 
 export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfileProps) {
   const navigate = useNavigate()
+  const { mostrarToast } = useToast() // Extraemos la función global
+
   const [nickname, setNickname] = useState(perfilGlobal?.nickname || '')
   const [ageRank, setAgeRank] = useState(perfilGlobal?.age_rank || '')
   const [focus, setFocus] = useState(perfilGlobal?.id_focus ? String(perfilGlobal.id_focus) : '')
@@ -34,18 +37,22 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
         if (res.ok) {
           const datos = await res.json() as EnfoqueCatalogoRow[]
           setEnfoquesCatalogo(datos)
+        } else {
+          mostrarToast('error', 'Error de carga', 'No se pudieron cargar los enfoques disponibles.')
         }
       } catch (error: unknown) {
         const mensaje = error instanceof Error ? error.message : "Error desconocido"
         console.error('Error al cargar enfoques:', mensaje)
+        mostrarToast('error', 'Error de conexión', 'No se pudo conectar con el servidor.')
       }
     }
     cargarEnfoques()
-  }, [])
+  }, [mostrarToast])
 
   const handleSave = async () => {
+    // 1. Validación de campos vacíos con Toast de advertencia
     if (!nickname || !ageRank || !focus || !genero) {
-      alert('Por favor, completa todos los campos.')
+      mostrarToast('advertencia', 'Datos incompletos', 'Por favor, completa todos los campos.')
       return
     }
 
@@ -71,15 +78,20 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
         })
       })
 
+      // 2. Extraemos el mensaje de Express
+      const data = await res.json().catch(() => ({}))
+
       if (res.ok) {
+        mostrarToast('exito', '¡Perfil actualizado!', data.mensaje || 'Tus cambios se han guardado correctamente.')
         setPerfilGlobal(perfilActualizado)
         navigate('/dashboard')
       } else {
-        alert('Hubo un problema al guardar los cambios.')
+        mostrarToast('error', 'No se guardaron los cambios', data.error || 'Hubo un problema al guardar tu perfil.')
       }
     } catch (error: unknown) {
       const mensaje = error instanceof Error ? error.message : "Error desconocido"
-      alert(`Error al conectar con el servidor: ${mensaje}`)
+      console.error(mensaje)
+      mostrarToast('error', 'Error de conexión', 'No se pudo conectar con el servidor.')
     }
   }
 
@@ -110,7 +122,7 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
             <select
               value={genero}
               onChange={(e) => setGenero(e.target.value)}
-              className="w-full px-5 py-3 rounded-full text-white text-lg outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
+              className="w-full px-5 py-3 rounded-full text-white text-lg outline-none cursor-pointer transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
               style={{ backgroundColor: '#2a2a2a' }}>
               <option value="">Selecciona una opción</option>
               <option value="M">Él (Bienvenido)</option>
@@ -124,7 +136,7 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
             <select
               value={ageRank}
               onChange={(e) => setAgeRank(e.target.value)}
-              className="w-full px-5 py-3 rounded-full text-white text-lg outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
+              className="w-full px-5 py-3 rounded-full text-white text-lg outline-none cursor-pointer transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
               style={{ backgroundColor: '#2a2a2a' }}>
               <option value="">Cambia tu rango de edad</option>
               <option value="15-17">15-17</option>
@@ -138,7 +150,7 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
             <select
               value={focus}
               onChange={(e) => setFocus(e.target.value)}
-              className="w-full px-5 py-3 rounded-full text-white text-lg outline-none transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
+              className="w-full px-5 py-3 rounded-full text-white text-lg outline-none cursor-pointer transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
               style={{ backgroundColor: '#2a2a2a' }}>
               <option value="">Selecciona tu nuevo enfoque</option>
               {enfoquesCatalogo.map((enf) => (
@@ -175,14 +187,14 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
           <div className="flex gap-4 mt-2 justify-center">
             <button
               onClick={() => navigate('/dashboard')}
-              className="px-10 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80 hover:scale-105"
+              className="px-10 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80 border border-zinc-600"
               style={{ backgroundColor: '#1a1a1a' }}>
-              Regresar
+              Cancelar
             </button>
             <button
               onClick={handleSave}
-              className="px-10 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80 hover:scale-105"
-              style={{ backgroundColor: '#1a7a6e' }}>
+              className="px-10 py-3 rounded-full text-[#1a1a1a] text-lg font-bold shadow-lg transition hover:scale-105"
+              style={{ backgroundColor: '#5ecfb8' }}>
               Guardar cambios
             </button>
           </div>

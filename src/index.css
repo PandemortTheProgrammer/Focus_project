@@ -83,3 +83,18 @@ button {
 .scrollbar-none::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Edge basado en Chromium */
 }
+
+@keyframes fade-in-down {
+  0% {
+    opacity: 0;
+    transform: translate(0, -2rem);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+}
+
+.animate-fade-in-down {
+  animation: fade-in-down 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

@@ -41,8 +41,23 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
-        await registrarActividad(req.body);
-        res.status(201).json({ mensaje: "Actividad registrada en la BD" });
+        // 1. Validación de campos obligatorios para la alerta de "Advertencia"
+        const { id_tipo, hora_inicio, duracion_minutos } = req.body;
+        if (!id_tipo || !hora_inicio || duracion_minutos === undefined) {
+            res.status(400).json({ error: "Faltan campos por rellenar. Por favor completa todos los datos obligatorios." });
+            return;
+        }
+
+        // 2. Registrar actividad (se tipa como 'any' por si en el futuro modificas 
+        // ActividadManager para que devuelva un objeto con los logros/reportes)
+        const resultado: any = await registrarActividad(req.body); 
+        
+        // 3. Respuesta estructurada para los Toasts de Éxito, Logro y Reporte
+        res.status(201).json({ 
+            mensaje: "La actividad se registró con éxito.",
+            logroDesbloqueado: resultado?.logroDesbloqueado || null,
+            reporteGenerado: resultado?.reporteGenerado || false
+        });
     } catch (error: unknown) {
         const mensaje = error instanceof Error ? error.message : "Error desconocido";
         res.status(500).json({ error: mensaje });
@@ -55,14 +70,15 @@ router.delete('/:id', async (req, res) => {
         const resultado = await eliminarActividad(idBorrar);
 
         if (resultado === 'no_encontrada') {
-            res.status(404).json({ mensaje: `Actividad ${idBorrar} no encontrada` });
+            res.status(404).json({ error: `La actividad ${idBorrar} no existe o ya fue eliminada.` });
             return;
         }
         if (resultado === 'bloqueada') {
-            res.status(403).json({ mensaje: 'La actividad ya fue archivada (24h) y no puede eliminarse.' });
+            res.status(403).json({ error: 'La actividad superó la medianoche y ya no puede eliminarse.' });
             return;
         }
-        res.json({ mensaje: `Actividad ${idBorrar} eliminada con éxito` });
+        
+        res.json({ mensaje: `Actividad eliminada correctamente.` });
     } catch (error: unknown) {
         const mensaje = error instanceof Error ? error.message : "Error desconocido";
         res.status(500).json({ error: mensaje });
@@ -71,18 +87,25 @@ router.delete('/:id', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
+        // Validación de campos vacíos en edición
+        if (Object.keys(req.body).length === 0) {
+            res.status(400).json({ error: "No se enviaron datos para actualizar." });
+            return;
+        }
+
         const id = parseInt(req.params.id);
         const actualizada = await editarActividad(id, req.body);
 
         if (actualizada === null) {
-            res.status(404).json({ mensaje: `Actividad ${id} no encontrada` });
+            res.status(404).json({ error: `La actividad ${id} no fue encontrada.` });
             return;
         }
         if (actualizada === 'bloqueada') {
-            res.status(403).json({ mensaje: 'La actividad ya fue archivada (24h) y no puede editarse.' });
+            res.status(403).json({ error: 'La actividad superó la medianoche y ya no puede editarse.' });
             return;
         }
-        res.json({ mensaje: "Actividad actualizada", actividad: actualizada });
+        
+        res.json({ mensaje: "Los cambios de tu actividad fueron guardados.", actividad: actualizada });
     } catch (error: unknown) {
         const mensaje = error instanceof Error ? error.message : "Error desconocido";
         res.status(500).json({ error: mensaje });

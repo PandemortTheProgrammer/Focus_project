@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 backend/focus_database.sqlite
 backend/src/sql-terminal.ts
+uploads/
+temp/
