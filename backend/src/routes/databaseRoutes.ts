@@ -8,7 +8,12 @@ import { cerrarBD, inicializarBD } from '../config/db';
 const router = Router();
 
 // Configuramos multer para que guarde los archivos en una carpeta "temp"
-const upload = multer({ dest: 'temp/' });
+// Multer no crea la carpeta de destino automáticamente, así que la creamos si no existe
+const tempDir = path.resolve(process.cwd(), 'temp');
+if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
+}
+const upload = multer({ dest: tempDir });
 
 // POST: /api/database/upload
 router.post('/upload', upload.single('database'), async (req: Request, res: Response): Promise<void> => {
