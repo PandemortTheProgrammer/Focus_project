@@ -1,4 +1,4 @@
-// src/managers/recompensasManager.ts
+// backend/src/services/recompensasManager.ts
 import { getDB } from '../config/db';
 import Recompensa from '../models/Recompensa';
 import Icono from '../models/Icono';
@@ -65,8 +65,7 @@ const mapRowToPerfilRecompensa = (row: PerfilRecompensaRow): Recompensa_perfil =
     );
 };
 
-// 1. Obtener las recompensas (e íconos) que el usuario ya desbloqueó
-export const obtenerRecompensasDePerfil = async (idPerfil: number): Promise<Recompensa[]> => {
+export const obtenerRecompensasDePerfil = async (idPerfil: number) => {
     const db = getDB();
     const query = `
         SELECT r.Id_recompensa, r.nombre_recompensa, r.descripcion, r.tipo_recompensa, i.Id_icono, i.nombre_icono
@@ -77,14 +76,23 @@ export const obtenerRecompensasDePerfil = async (idPerfil: number): Promise<Reco
     `;
 
     const filas: RecompensaRow[] = await db.all(query, [idPerfil]);
-    return filas.map(mapRowToRecompensa);
+    
+    return filas.map(row => ({
+        Id_recompensa: Number(row.Id_recompensa ?? 0),
+        nombre_recompensa: String(row.nombre_recompensa ?? ''),
+        descripcion: String(row.descripcion ?? ''),
+        tipo_recompensa: String(row.tipo_recompensa ?? 'ICONO'),
+        Id_icono: row.Id_icono ?? row.Id_icono_recompensa,
+        nombre_icono: String(row.nombre_icono ?? 'Ícono Especial') 
+    }));
 };
 
-// 2. El motor de evaluación (Esta función hace la magia en segundo plano)
-export const evaluarNuevosLogros = async (idPerfil: number): Promise<void> => {
+// 2. El motor de evaluación actualizado con parámetro opcional 'eventoEspecial'
+export const evaluarNuevosLogros = async (idPerfil: number, eventoEspecial?: string) => {
     const db = getDB();
+    const nuevosLogrosIds: number[] = [];
 
-    const obtenidas: Array<{ Id_recompensa: number }> = await db.all(
+    const obtenidas = await db.all(
         `SELECT Id_recompensa FROM Perfil_Recompensa WHERE Id_perfil = ?`,
         [idPerfil]
     );
@@ -92,19 +100,76 @@ export const evaluarNuevosLogros = async (idPerfil: number): Promise<void> => {
 
     // --- REGLA 1: Iniciador (Id_recompensa: 2) ---
     if (!idsObtenidas.has(2)) {
-        const conteoActividades = await db.get<ConteoRow>(`SELECT COUNT(*) as total FROM Actividad`);
+        const conteoActividades = await db.get(`SELECT COUNT(*) as total FROM Actividad`);
         if ((conteoActividades?.total ?? 0) >= 1) {
             await db.run(`INSERT INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 2]);
+            nuevosLogrosIds.push(2);
         }
     }
 
     // --- REGLA 2: Maratonista (Id_recompensa: 3) ---
     if (!idsObtenidas.has(3)) {
-        const horas = await db.get<SumaMinutosRow>(`SELECT SUM(durac_min) as totalMinutos FROM Actividad`);
+        const horas = await db.get(`SELECT SUM(durac_min) as totalMinutos FROM Actividad`);
         if ((horas?.totalMinutos ?? 0) >= 600) {
             await db.run(`INSERT INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 3]);
+            nuevosLogrosIds.push(3);
         }
     }
+
+    // --- REGLA 7: Salvado (Id_recompensa: 7) ---
+    // Requiere que el controlador le pase explícitamente el evento 'DESCARGA_PERFIL'
+    if (!idsObtenidas.has(7) && eventoEspecial === 'DESCARGA_PERFIL') {
+        await db.run(`INSERT INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 7]);
+        nuevosLogrosIds.push(7);
+    }
+
+    // --- REGLA 8: Imparable (Id_recompensa: 8) ---
+    // Se activa al llegar a 50 actividades registradas
+    if (!idsObtenidas.has(8)) {
+        const conteoActividades = await db.get(`SELECT COUNT(*) as total FROM Actividad`);
+        if ((conteoActividades?.total ?? 0) >= 50) {
+            await db.run(`INSERT INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 8]);
+            nuevosLogrosIds.push(8);
+        }
+    }
+
+    // --- REGLA 9: Lechuza (Id_recompensa: 9) ---
+    // Se activa si existe alguna actividad cuya hora de inicio esté entre las 00:00 y las 04:00 am
+    if (!idsObtenidas.has(9)) {
+        const actividadNocturna = await db.get(`
+            SELECT 1 FROM Actividad 
+            WHERE hora_inicio >= '00:00' AND hora_inicio <= '04:00' 
+            LIMIT 1
+        `);
+        if (actividadNocturna) {
+            await db.run(`INSERT INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 9]);
+            nuevosLogrosIds.push(9);
+        }
+    }
+
+    // Si no ganó nada nuevo en esta evaluación, salimos en silencio
+    if (nuevosLogrosIds.length === 0) {
+        return [];
+    }
+
+    const placeholders = nuevosLogrosIds.map(() => '?').join(',');
+    const query = `
+        SELECT r.Id_recompensa, r.nombre_recompensa, r.descripcion, r.tipo_recompensa, i.Id_icono, i.nombre_icono
+        FROM Recompensa r
+        LEFT JOIN Icono i ON r.Id_icono = i.Id_icono
+        WHERE r.Id_recompensa IN (${placeholders})
+    `;
+
+    const filasRecientes = await db.all(query, nuevosLogrosIds);
+    
+    return filasRecientes.map(row => ({
+        Id_recompensa: Number(row.Id_recompensa ?? 0),
+        nombre_recompensa: String(row.nombre_recompensa ?? ''),
+        descripcion: String(row.descripcion ?? ''),
+        tipo_recompensa: String(row.tipo_recompensa ?? 'ICONO'),
+        Id_icono: row.Id_icono ?? row.Id_icono_recompensa,
+        nombre_icono: String(row.nombre_icono ?? '') 
+    }));
 };
 
 export const obtenerIconosDesbloqueados = async (idPerfil: number): Promise<Icono[]> => {

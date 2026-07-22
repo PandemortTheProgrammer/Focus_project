@@ -4,7 +4,8 @@ import {
     obtenerRecompensasDePerfil,
     obtenerIconosDesbloqueados,
     obtenerRelacionesPerfilRecompensa,
-    obtenerCatalogoIconos
+    obtenerCatalogoIconos,
+    evaluarNuevosLogros
 } from '../services/RecompensasManager';
 
 const router = Router();
@@ -70,6 +71,23 @@ router.get('/:idPerfil', async (req: Request, res: Response): Promise<void> => {
         const mensaje = error instanceof Error ? error.message : 'Error desconocido';
         console.error('Error al obtener recompensas:', error);
         res.status(500).json({ error: mensaje });
+    }
+});
+
+router.post('/evaluar-evento', async (req, res) => {
+    try {
+        const { eventoEspecial } = req.body;
+        
+        // Asumiendo que estamos evaluando siempre al perfil 1 (local-first)
+        const idPerfil = 1; 
+
+        // Pasamos la bandera al motor que acabamos de actualizar
+        const logrosNuevos = await evaluarNuevosLogros(idPerfil, eventoEspecial);
+
+        res.json({ logrosDesbloqueados: logrosNuevos });
+    } catch (error) {
+        console.error("Error al evaluar evento especial:", error);
+        res.status(500).json({ error: "Error interno del servidor" });
     }
 });
 

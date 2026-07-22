@@ -62,29 +62,30 @@ export default function ActivitiesAdd() {
       const data = await res.json()
 
       if (res.ok) {
-        // Verificamos si el backend envió un logro nuevo
-        if (data.logroDesbloqueado) {
-          mostrarToast(
-            'logro', 
-            '¡Nuevo Logro Desbloqueado!', 
-            `Has conseguido: ${data.logroDesbloqueado.nombre}`,
-            `/iconos/${data.logroDesbloqueado.id_icono}.png`
-          )
-        } else {
-          // Éxito normal
-          mostrarToast('exito', '¡Actividad Registrada!', data.mensaje || 'Tu actividad se ha guardado correctamente.')
+        
+        // 1. Mostramos el éxito normal primero
+        mostrarToast('exito', '¡Actividad Registrada!', data.mensaje || 'Tu actividad se ha guardado correctamente.')
+
+        // 2. Verificamos si el backend envió el arreglo de logros nuevos
+        if (data.logrosDesbloqueados && data.logrosDesbloqueados.length > 0) {
+          data.logrosDesbloqueados.forEach((logroNuevo: any, index: number) => {
+            // Retrasamos cada logro (1.5 segundos entre cada uno) para que caigan en cascada
+            setTimeout(() => {
+              // Pasamos el objeto logroNuevo en el quinto parámetro
+              mostrarToast('logro', '', '', '', logroNuevo)
+            }, 1000 + (index * 1500)) 
+          })
         }
 
-        // Navegación instantánea (el Toast sobrevivirá porque vive en el Layout)
+        // Navegación instantánea (los Toasts sobrevivirán porque viven en el Layout global)
         navigate('/actividades')
 
       } else {
-        // Mostramos el error exacto que mandó Express (ej. "Actividad bloqueada")
+        // Mostramos el error exacto que mandó Express
         mostrarToast('error', 'No se pudo guardar', data.error || data.mensaje || 'Hubo un problema al guardar en Express.')
       }
     } catch (error) {
       console.error('Error:', error)
-      // Error si el servidor está apagado o no hay red
       mostrarToast('error', 'Error de conexión', 'No se pudo conectar con el servidor.')
     }
   }
@@ -105,7 +106,7 @@ export default function ActivitiesAdd() {
           <select
             value={tag}
             onChange={(e) => setTag(Number(e.target.value))}
-            className="w-full px-5 py-3 rounded-full text-white text-lg outline-none cursor-pointer"
+            className="w-full px-5 py-3 rounded-full text-white text-lg outline-none cursor-pointer border border-zinc-700/50"
             style={{ backgroundColor: '#1a1a1a' }}>
             <option value="">Selecciona un tipo de actividad</option>
             {tipos.map((tipo) => (
@@ -120,7 +121,7 @@ export default function ActivitiesAdd() {
             type="time"
             value={hora}
             onChange={(e) => setHora(e.target.value)}
-            className="w-full px-5 py-3 rounded-full text-white text-lg outline-none"
+            className="w-full px-5 py-3 rounded-full text-white text-lg outline-none border border-zinc-700/50"
             style={{ backgroundColor: '#1a1a1a', colorScheme: 'dark' }}
           />
 
@@ -137,21 +138,21 @@ export default function ActivitiesAdd() {
                 style={{ backgroundColor: '#d946ef' }}>
                 -5
               </button>
-              <span className="text-white font-bold text-lg px-2">
+              <span className="text-[#f5e6c8] font-bold text-xl px-2">
                 {formatearDuracion(duracion)} hrs
               </span>
               <button onClick={() => ajustarDuracion(10)}
-                className="px-3 py-2 rounded-full text-white text-sm font-bold transition hover:opacity-80"
+                className="px-3 py-2 rounded-full text-white text-sm font-bold transition hover:opacity-80 border border-zinc-700/50"
                 style={{ backgroundColor: '#1a1a1a' }}>
                 +10
               </button>
               <button onClick={() => ajustarDuracion(15)}
-                className="px-3 py-2 rounded-full text-white text-sm font-bold transition hover:opacity-80"
+                className="px-3 py-2 rounded-full text-white text-sm font-bold transition hover:opacity-80 border border-zinc-700/50"
                 style={{ backgroundColor: '#1a1a1a' }}>
                 +15
               </button>
               <button onClick={() => ajustarDuracion(30)}
-                className="px-3 py-2 rounded-full text-white text-sm font-bold transition hover:opacity-80"
+                className="px-3 py-2 rounded-full text-white text-sm font-bold transition hover:opacity-80 border border-zinc-700/50"
                 style={{ backgroundColor: '#1a1a1a' }}>
                 +30
               </button>
@@ -167,22 +168,22 @@ export default function ActivitiesAdd() {
             value={descripcion}
             onChange={(e) => setDescripcion(e.target.value)}
             placeholder="Describe la actividad que realizaste..."
-            className="w-full h-40 px-5 py-4 rounded-2xl text-white text-lg outline-none resize-none"
+            className="w-full h-40 px-5 py-4 rounded-2xl text-white text-lg outline-none resize-none border border-zinc-700/50"
             style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
           />
 
-          <div className="flex gap-4 justify-end">
-            <button
-              onClick={handleSave}
-              className="px-8 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80"
-              style={{ backgroundColor: '#1a1a1a' }}>
-              Registrar actividad
-            </button>
+          <div className="flex gap-4 justify-end mt-4">
             <button
               onClick={() => navigate('/actividades')}
-              className="px-8 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80"
+              className="px-8 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80 border border-zinc-600"
               style={{ backgroundColor: '#1a1a1a' }}>
-              Regresar
+              Cancelar
+            </button>
+            <button
+              onClick={handleSave}
+              className="px-8 py-3 rounded-full text-[#1a1a1a] text-lg font-bold shadow-lg transition hover:scale-105"
+              style={{ backgroundColor: '#5ecfb8' }}>
+              Registrar actividad
             </button>
           </div>
 

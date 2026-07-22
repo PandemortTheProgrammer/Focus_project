@@ -129,20 +129,23 @@ export default function IconPicker({ nickname, iconoSeleccionado, onSeleccionar,
             </button>
 
             {/* Íconos Dinámicos (IDs 2 en adelante) */}
-            {iconosCatalogo
-              .filter((icono) => obtenerUrlIcono(icono.id_icono))
-              .map((icono) => {
-                const urlIcono = obtenerUrlIcono(icono.id_icono);
+            {iconosCatalogo.map((icono) => {
+                
+                // Usamos tu módulo de Vite para obtener la URL empaquetada
+                const urlIcono = obtenerUrlIcono(icono.id_icono); 
+                
+                // Si la BD tiene el ícono, pero olvidaste guardar la imagen en la carpeta 'assets', 
+                // saltamos este botón para que la app no truene mostrando una imagen rota.
+                if (!urlIcono) return null;
+
                 const estaDesbloqueado = idsDesbloqueados.includes(icono.id_icono);
 
                 return (
                   <button
                     key={icono.id_icono}
                     type="button"
-                    // Si está bloqueado, no hace nada al hacer clic
                     onClick={() => estaDesbloqueado ? onSeleccionar(icono.id_icono) : null}
                     title={estaDesbloqueado ? (icono.nombre_icono || `Icono ${icono.id_icono}`) : 'Bloqueado'}
-                    // Clases dinámicas dependiendo de si está bloqueado o no
                     className={`relative flex-shrink-0 w-12 h-12 rounded-full overflow-hidden shadow-sm transition 
                       ${estaDesbloqueado 
                         ? 'hover:scale-110 cursor-pointer' 
@@ -153,7 +156,12 @@ export default function IconPicker({ nickname, iconoSeleccionado, onSeleccionar,
                       outlineOffset: '2px',
                     }}
                   >
-                    <img src={urlIcono ?? ''} alt={icono.nombre_icono || String(icono.id_icono)} className="w-full h-full object-cover" />
+                    {/* Renderizamos la URL segura generada por tu import.meta.glob */}
+                    <img 
+                      src={urlIcono} 
+                      alt={icono.nombre_icono || String(icono.id_icono)} 
+                      className="w-full h-full object-cover bg-zinc-800" 
+                    />
                     
                     {/* Capa oscura y candado si está bloqueado */}
                     {!estaDesbloqueado && (

@@ -285,10 +285,10 @@ export const obtenerResumenesSemanales = async (): Promise<SemanaResumen[]> => {
     const filas = await db.all(
         `SELECT a.Id_actividad, a.Id_tipo, a.hora_inicio, a.durac_min, a.desc_activ, a.fecha, a.hora_creac,
                 t.Nombre_activ, t.Utilidad_objet, t.Codigo_color
-           FROM Actividad a
-           JOIN Tipo_actividad t ON a.Id_tipo = t.Id_tipo
-          WHERE a.fecha IS NOT NULL
-          ORDER BY a.fecha ASC, a.hora_inicio ASC`
+            FROM Actividad a
+            JOIN Tipo_actividad t ON a.Id_tipo = t.Id_tipo
+        WHERE a.fecha IS NOT NULL
+        ORDER BY a.fecha ASC, a.hora_inicio ASC`
     );
 
     const semanasMap = new Map<string, { fecha_inicio: string; fecha_fin: string; actividades: ActividadConTipoRow[] }>();

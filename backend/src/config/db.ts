@@ -34,7 +34,6 @@ export const inicializarBD = async () => {
                 Codigo_color VARCHAR(7) NOT NULL
             );
 
-            -- NUEVO: Catálogo de Íconos (Recursos visuales)
             CREATE TABLE IF NOT EXISTS Icono (
                 Id_icono INTEGER PRIMARY KEY AUTOINCREMENT,
                 nombre_icono VARCHAR(50) NOT NULL
@@ -78,17 +77,15 @@ export const inicializarBD = async () => {
                 FOREIGN KEY (Id_enfoque) REFERENCES Enfoque(Id_enfoque) ON DELETE CASCADE
             );
 
-            -- NUEVO: Catálogo de Recompensas (Depende de Icono)
             CREATE TABLE IF NOT EXISTS Recompensa (
                 Id_recompensa INTEGER PRIMARY KEY AUTOINCREMENT,
                 nombre_recompensa VARCHAR(50) NOT NULL,
                 descripcion VARCHAR(150),
-                tipo_recompensa VARCHAR(20) NOT NULL, -- Ej: 'ICONO'
+                tipo_recompensa VARCHAR(20) NOT NULL,
                 Id_icono INTEGER,
                 FOREIGN KEY (Id_icono) REFERENCES Icono(Id_icono) ON DELETE SET NULL
             );
 
-            -- NUEVO: Tabla Relacional (El puente N:M entre Perfil y Recompensa)
             CREATE TABLE IF NOT EXISTS Perfil_Recompensa (
                 Id_perfil INTEGER,
                 Id_recompensa INTEGER,
@@ -110,7 +107,7 @@ export const inicializarBD = async () => {
         }
 
         // ==========================================
-        // 3. POBLAR CATÁLOGOS
+        // 3. POBLAR CATÁLOGOS (Tipos y Enfoques)
         // ==========================================
         
         const tiposExisten = await dbInstance.get("SELECT COUNT(*) as count FROM Tipo_actividad");
@@ -154,32 +151,41 @@ export const inicializarBD = async () => {
                 ('Flexibilidad', 'Prioriza desarrollar tus actividades de manera que te permitan adaptarte a cambios y situaciones imprevistas'),
                 ('Equilibrado', 'Balance entre trabajo, salud y descanso');
             `);
-            console.log("Catálogos iniciales insertados.");
+            console.log("Catálogos de Actividades y Enfoques insertados.");
         }
 
-        // Íconos y Recompensas Iniciales
-        const iconosExisten = await dbInstance.get("SELECT COUNT(*) as count FROM Icono");
-        if (iconosExisten.count === 0) {
-            await dbInstance.exec(`
-                INSERT INTO Icono (nombre_icono) VALUES 
-                ('Sin icono (usar inicial)'),
-                ('Espíritu Novato'), 
-                ('Primeros pasos'), 
-                ('Maratonista'),
-                ('Reflexivo'),
-                ('Maestro del Tiempo'),
-                ('Ícono Secreto');
+        // ==========================================
+        // 4. ACTUALIZACIÓN AUTOMÁTICA DE ÍCONOS Y RECOMPENSAS
+        // Usamos INSERT OR IGNORE indicando el ID exacto. 
+        // Si el usuario ya tiene ese ID en su BD, lo ignora. Si no lo tiene, lo añade.
+        // ==========================================
 
-                INSERT INTO Recompensa (nombre_recompensa, descripcion, tipo_recompensa, Id_icono) VALUES 
-                ('Bienvenida', 'Tu primer perfil en Focus', 'ICONO', 1),
-                ('Iniciador', 'Registraste tu primera actividad', 'ICONO', 2),
-                ('Constancia', 'Alcanzaste 10 horas de actividades', 'ICONO', 3),
-                ('Analista', 'Revisaste tu primer reporte semanal', 'ICONO', 4),
-                ('Veterano', 'Llegaste a tu cuarta semana usando Focus', 'ICONO', 5),
-                ('Coleccionista', 'Exploraste todas las funciones de la aplicación', 'ICONO', 6);
-            `);
-            console.log("Catálogo de Íconos y Recompensas inicializado.");
-        }
+        await dbInstance.exec(`
+            INSERT OR IGNORE INTO Icono (Id_icono, nombre_icono) VALUES 
+            (1, 'Sin icono (usar inicial)'),
+            (2, 'Espíritu Novato'), 
+            (3, 'Lighty Realista'), 
+            (4, 'Maratonista'),
+            (5, 'Reflexivo'),
+            (6, 'Maestro del Tiempo'),
+            (7, 'Ícono Secreto'),
+            (8, 'Lighty'),
+            (9, 'Medalla Dorada'),
+            (10, 'Fuego Nocturno');
+
+            INSERT OR IGNORE INTO Recompensa (Id_recompensa, nombre_recompensa, descripcion, tipo_recompensa, Id_icono) VALUES 
+            (1, 'Bienvenida', 'Tu primer perfil en Focus', 'ICONO', 2),
+            (2, 'Iniciador', 'Registraste tu primera actividad', 'ICONO', 3),
+            (3, 'Constancia', 'Alcanzaste 10 horas de actividades', 'ICONO', 4),
+            (4, 'Analista', 'Revisaste tu primer reporte semanal', 'ICONO', 5),
+            (5, 'Veterano', 'Llegaste a tu cuarta semana usando Focus', 'ICONO', 6),
+            (6, 'Coleccionista', 'Exploraste todas las funciones de la aplicación', 'ICONO', 7),
+            (7, 'Salvado', 'Descargaste tu perfil por primera vez', 'ICONO', 8),
+            (8, 'Imparable', 'Registraste 50 actividades en la plataforma', 'ICONO', 9),
+            (9, 'Lechuza', 'Registraste una actividad después de medianoche', 'ICONO', 10);
+            
+        `);
+        console.log("Catálogo de Íconos y Recompensas verificado/actualizado.");
 
         return dbInstance;
     } catch (error) {
@@ -205,3 +211,12 @@ export const cerrarBD = async (): Promise<void> => {
         }
     }
 };
+
+/*
+-- EJEMPLOS NUEVOS (Se insertarán solos al reiniciar el backend):
+            
+-- EJEMPLOS NUEVOS:
+            (8, 'Imparable', 'Registraste 50 actividades en la plataforma', 'ICONO', 9),
+            (9, 'Lechuza', 'Registraste una actividad después de medianoche', 'ICONO', 10);
+
+*/

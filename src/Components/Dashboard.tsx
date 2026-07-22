@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type Perfil from '../models/Perfil'
+import { useToast } from './ToastContext'
 
 // Importamos los íconos de HeroIcons 
 import { 
@@ -18,6 +19,7 @@ interface DashboardProps {
 
 export default function Dashboard({ perfilGlobal }: DashboardProps) {
   const navigate = useNavigate()
+  const { mostrarToast } = useToast()
 
   // MANTENIDO: Tu lógica original de carga
   useEffect(() => {
@@ -40,6 +42,52 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
     if (generoSeleccionado === 'F') return 'Bienvenida';
     return 'Saludos'; // O tu saludo neutro por defecto
   };
+
+  // --- EFECTO DE NOTIFICACIÓN DE REPORTES SEMANALES ---
+  useEffect(() => {
+    const verificarNuevosReportes = async () => {
+      try {
+        const res = await fetch('http://localhost:3000/api/reportes/semanas')
+        if (!res.ok) return
+
+        const reportes = await res.json()
+        
+        // Si hay al menos un reporte generado
+        if (reportes.length > 0) {
+          // Tomamos el último reporte de la lista (el más reciente)
+          const ultimoReporte = reportes[reportes.length - 1]
+          const fechaInicioReciente = String(ultimoReporte.fecha_inicio)
+
+          // Leemos la memoria del navegador
+          const reporteNotificado = localStorage.getItem('ultimo_reporte_visto')
+
+          // Si el más reciente NO es el que tenemos guardado, ¡es nuevo!
+          if (reportes.length > 0 && fechaInicioReciente !== reporteNotificado) {
+            
+            // Retrasamos el Toast 1 segundo para que la animación de entrada 
+            // del dashboard termine primero y se vea más elegante
+            setTimeout(() => {
+              mostrarToast(
+                'exito', 
+                '¡Nuevo reporte disponible! 📊', 
+                `El resumen de tu semana del ${fechaInicioReciente} ya está listo para revisarse.`
+              )
+            }, 1000)
+
+            // Guardamos esta fecha para que no vuelva a saltar hasta el próximo lunes
+            localStorage.setItem('ultimo_reporte_visto', fechaInicioReciente)
+          }
+        }
+      } catch (error) {
+        console.error("Error al verificar los reportes semanales:", error)
+      }
+    }
+
+    // Solo ejecutamos la verificación si el usuario ya tiene un perfil cargado
+    if (perfilGlobal) {
+        verificarNuevosReportes()
+    }
+  }, [mostrarToast, perfilGlobal])
 
   return (
     <div className="relative w-full min-h-screen overflow-auto flex flex-col">

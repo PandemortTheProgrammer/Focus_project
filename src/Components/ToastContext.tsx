@@ -9,10 +9,12 @@ interface ToastState {
   titulo: string;
   mensaje: string;
   urlIcono?: string;
+  datosLogro?: any; // <-- Listo para recibir el objeto de la base de datos
 }
 
 interface ToastContextType {
-  mostrarToast: (tipo: ToastType, titulo: string, mensaje: string, urlIcono?: string) => void;
+  // Añadimos datosLogro como un quinto parámetro opcional
+  mostrarToast: (tipo: ToastType, titulo: string, mensaje: string, urlIcono?: string, datosLogro?: any) => void;
 }
 
 // Creamos el contexto
@@ -25,11 +27,13 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
     tipo: 'exito',
     titulo: '',
     mensaje: '',
-    urlIcono: ''
+    urlIcono: '',
+    datosLogro: undefined
   });
 
-  const mostrarToast = (tipo: ToastType, titulo: string, mensaje: string, urlIcono = '') => {
-    setToast({ visible: true, tipo, titulo, mensaje, urlIcono });
+  // Habilitamos la recepción del nuevo parámetro
+  const mostrarToast = (tipo: ToastType, titulo: string, mensaje: string, urlIcono = '', datosLogro?: any) => {
+    setToast({ visible: true, tipo, titulo, mensaje, urlIcono, datosLogro });
   };
 
   const cerrarToast = () => {
@@ -46,6 +50,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
         titulo={toast.titulo} 
         mensaje={toast.mensaje} 
         urlIcono={toast.urlIcono}
+        datosLogro={toast.datosLogro} // <-- Lo inyectamos al componente visual
         onClose={cerrarToast} 
       />
     </ToastContext.Provider>

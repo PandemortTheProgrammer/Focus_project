@@ -17,13 +17,16 @@ interface EnfoqueApiRow {
 }
 
 interface LayoutProps {
-  children: React.ReactNode; // Aquí se inyectará la pantalla actual (Dashboard, Actividades, etc.)
+  children: React.ReactNode; 
   perfilGlobal?: Perfil | null;
 }
 
 export default function Layout({ children, perfilGlobal }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
+
+  // ESTADO PARA EL MENÚ DESPLEGABLE DEL PERFIL
+  const [menuAbierto, setMenuAbierto] = useState(false);
 
   // 1. EL RADAR: Definimos en qué rutas exactas NO queremos que aparezca el Header
   const rutasSinHeader = [
@@ -32,7 +35,6 @@ export default function Layout({ children, perfilGlobal }: LayoutProps) {
     '/subir-perfil'      // Subir perfil
   ];
 
-  // Si la ruta actual NO está en el arreglo, mostramos el header
   const mostrarHeader = !rutasSinHeader.includes(location.pathname);
 
   const [enfoques, setEnfoques] = useState<Enfoque[]>([]);
@@ -118,29 +120,58 @@ export default function Layout({ children, perfilGlobal }: LayoutProps) {
           <img 
             src={FocusLogo} 
             alt="Focus Logo" 
-            className="h-10 object-contain cursor-pointer" 
-            onClick={() => navigate('/dashboard')} // Un buen toque: que el logo lleve al inicio
+            className="h-10 object-contain cursor-pointer transition hover:scale-105" 
+            onClick={() => navigate('/dashboard')} 
           />
 
-          {/* Info del usuario centralizada */}
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm overflow-hidden" style={{ backgroundColor: '#1a7a6e' }}>
-              {urlIcono ? (
-                <img src={urlIcono} alt={nickname} className="w-full h-full object-cover" />
-              ) : (
-                nickname.charAt(0).toUpperCase()
-              )}
+          {/* CONTENEDOR RELATIVO PARA EL MENÚ DESPLEGABLE */}
+          <div className="relative">
+            
+            {/* Zona clickeable del usuario */}
+            <div 
+              onClick={() => setMenuAbierto(!menuAbierto)}
+              className="flex items-center gap-4 cursor-pointer p-2 rounded-2xl transition hover:bg-black/20"
+            >
+              <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-sm overflow-hidden" style={{ backgroundColor: '#1a7a6e' }}>
+                {urlIcono ? (
+                  <img src={urlIcono} alt={nickname} className="w-full h-full object-cover" />
+                ) : (
+                  nickname.charAt(0).toUpperCase()
+                )}
+              </div>
+              <div className="text-left flex flex-col justify-center">
+                <p className="text-white font-semibold text-sm leading-tight">{nickname}</p>
+                <p className="text-white opacity-60 text-xs leading-tight">Enfoque: {focusName}</p>
+              </div>
+              
+              {/* Flecha indicadora que gira cuando se abre */}
+              <span className={`text-white opacity-50 text-xs ml-1 transition-transform duration-300 ${menuAbierto ? 'rotate-180' : 'rotate-0'}`}>
+                ▼
+              </span>
             </div>
-            <div className="text-right">
-              <p className="text-white font-semibold text-sm text-left">{nickname}</p>
-              <p className="text-white opacity-60 text-xs">Enfoque: {focusName}</p>
-            </div>
+
+            {/* Menú Flotante */}
+            {menuAbierto && (
+              <div 
+                className="absolute right-0 mt-2 w-52 rounded-2xl shadow-2xl overflow-hidden border border-zinc-700/50" 
+                style={{ backgroundColor: '#1a1a1a' }}
+              >
+                <button
+                  onClick={() => {
+                    setMenuAbierto(false); // Cerramos el menú
+                    navigate('/'); // Navegamos a MainPage
+                  }}
+                  className="w-full text-left px-5 py-4 text-white text-sm font-semibold hover:bg-zinc-800 transition flex items-center gap-3"
+                >
+                  <span className="text-lg">🚪</span> Salir del Perfil
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
 
       {/* 4. EL CONTENIDO DE LA PÁGINA */}
-      {/* Todo lo que esté en tu componente hijo aparecerá aquí */}
       <div className="relative z-10 flex-1 flex flex-col w-full h-full">
         {children}
       </div>
