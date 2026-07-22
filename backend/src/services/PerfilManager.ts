@@ -59,3 +59,29 @@ export const obtenerPerfil = async (): Promise<{ id: number; nickname: string; r
     const perfil = await db.get(query);
     return perfil;
 };
+
+export const reiniciarPerfilYDatos = async (): Promise<void> => {
+    const db = getDB();
+    
+    // Iniciamos una transacción segura
+    await db.run('BEGIN TRANSACTION');
+    try {
+        // Borramos las tablas del usuario dependientes primero (por las llaves foráneas)
+        await db.run('DELETE FROM Perfil_Recompensa');
+        await db.run('DELETE FROM Reporte_semanal');
+        await db.run('DELETE FROM Actividad');
+        
+        // Finalmente borramos el perfil
+        await db.run('DELETE FROM Perfil');
+
+        // Opcional: Reiniciamos los contadores de los IDs automáticos para que vuelvan a empezar en 1
+        await db.run('DELETE FROM sqlite_sequence WHERE name IN ("Actividad", "Reporte_semanal")');
+
+        await db.run('COMMIT');
+        console.log("🧹 Base de datos reiniciada con éxito. Lista para un nuevo perfil.");
+    } catch (error) {
+        await db.run('ROLLBACK');
+        console.error("Error al reiniciar la base de datos:", error);
+        throw error;
+    }
+};

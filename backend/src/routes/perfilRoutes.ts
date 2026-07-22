@@ -1,6 +1,6 @@
 // backend/src/routes/perfilRoutes.ts
 import { Router } from 'express';
-import { guardarPerfil, obtenerPerfil, obtenerEnfoques } from '../services/PerfilManager';
+import { guardarPerfil, obtenerPerfil, obtenerEnfoques, reiniciarPerfilYDatos } from '../services/PerfilManager';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -117,6 +117,23 @@ router.post('/cargar', upload.single('database'), (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "El archivo no es válido o hubo un error al restaurar." });
+    }
+});
+
+// 1. Modifica las importaciones arriba para incluir la nueva función:
+
+// ... (después de tus otras rutas en perfilRoutes.ts, agrega esto) ...
+
+// ---------------------------------------------------------
+// 6. REINICIAR BASE DE DATOS (Borrado total de usuario)
+// ---------------------------------------------------------
+router.delete('/reset', async (req, res) => {
+    try {
+        await reiniciarPerfilYDatos();
+        res.status(200).json({ mensaje: "Perfil y datos eliminados correctamente. Listo para empezar de cero." });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "No se pudo reiniciar la base de datos." });
     }
 });
 
