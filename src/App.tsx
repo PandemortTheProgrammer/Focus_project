@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
-import { inicializarBaseDeDatos } from './services/db'
 
 // NUEVO: Importamos el Layout
 import Layout from './Components/Layout'
@@ -52,12 +51,7 @@ export default function App() {
     recuperarPerfil();
   }, []);
 
-  useEffect(() => {
-    inicializarBaseDeDatos()
-  }, [])
-
   return (
-    // NUEVO: Envolvemos todas las rutas con el Layout y le pasamos el perfilGlobal
     <ToastProvider>
       <Layout perfilGlobal={perfilGlobal}>
         <Routes>

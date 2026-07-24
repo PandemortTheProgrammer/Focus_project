@@ -10,7 +10,7 @@ interface IconPickerProps {
   idPerfil?: number; // Lo hacemos opcional y por defecto será 1 para mantener compatibilidad
 }
 
-const VELOCIDAD_DESPLAZAMIENTO = 4;
+const VELOCIDAD_DESPLAZAMIENTO = 6;
 
 export default function IconPicker({ nickname, iconoSeleccionado, onSeleccionar, idPerfil = 1 }: IconPickerProps) {
   const inicial = (nickname || '?').charAt(0).toUpperCase();

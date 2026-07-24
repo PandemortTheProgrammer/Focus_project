@@ -1,19 +1,17 @@
-// backend/src/routes/focusRoutes.ts
-import { Router } from 'express';
+// backend/src/controllers/actividadController.ts
+import { Request, Response } from 'express';
 import { 
-  obtenerActividades, 
-  registrarActividad, 
-  eliminarActividad,
-  editarActividad,
-  actividadesSemana,
-  obtenerTiposActividad,
-  obtenerHistorialActividades
+    obtenerActividades, 
+    registrarActividad, 
+    eliminarActividad,
+    editarActividad,
+    actividadesSemana,
+    obtenerTiposActividad,
+    obtenerHistorialActividades
 } from '../services/ActividadManager';
 import Tipo_actividad from '../models/Tipo_actividad';
 
-const router = Router();
-
-router.get('/tipos-actividad', async (req, res) => {
+export const getTiposActividad = async (req: Request, res: Response): Promise<void> => {
     try {
         const tipos = await obtenerTiposActividad();
         const tiposFormateados = tipos.map((t: Tipo_actividad) => ({
@@ -27,9 +25,9 @@ router.get('/tipos-actividad', async (req, res) => {
         const mensaje = error instanceof Error ? error.message : "Error desconocido";
         res.status(500).json({ error: mensaje });
     }
-});
+};
 
-router.get('/', async (req, res) => {
+export const getActividades = async (req: Request, res: Response): Promise<void> => {
     try {
         const lista = await obtenerActividades();
         res.json(lista);
@@ -37,9 +35,9 @@ router.get('/', async (req, res) => {
         const mensaje = error instanceof Error ? error.message : "Error desconocido";
         res.status(500).json({ error: mensaje });
     }
-});
+};
 
-router.post('/', async (req, res) => {
+export const createActividad = async (req: Request, res: Response): Promise<void> => {
     try {
         // 1. Validación de campos obligatorios para la alerta de "Advertencia"
         const { id_tipo, hora_inicio, duracion_minutos } = req.body;
@@ -48,8 +46,7 @@ router.post('/', async (req, res) => {
             return;
         }
 
-        // 2. Registrar actividad (se tipa como 'any' por si en el futuro modificas 
-        // ActividadManager para que devuelva un objeto con los logros/reportes)
+        // 2. Registrar actividad
         const resultado: any = await registrarActividad(req.body); 
         
         // 3. Respuesta estructurada para los Toasts de Éxito, Logro y Reporte
@@ -62,11 +59,12 @@ router.post('/', async (req, res) => {
         const mensaje = error instanceof Error ? error.message : "Error desconocido";
         res.status(500).json({ error: mensaje });
     }
-});
+};
 
-router.delete('/:id', async (req, res) => {
+export const deleteActividad = async (req: Request, res: Response): Promise<void> => {
     try {
-        const idBorrar = parseInt(req.params.id);
+        // Usamos String() para asegurar que TypeScript reciba un string puro
+        const idBorrar = parseInt(String(req.params.id), 10);
         const resultado = await eliminarActividad(idBorrar);
 
         if (resultado === 'no_encontrada') {
@@ -83,9 +81,9 @@ router.delete('/:id', async (req, res) => {
         const mensaje = error instanceof Error ? error.message : "Error desconocido";
         res.status(500).json({ error: mensaje });
     }
-});
+};
 
-router.put('/:id', async (req, res) => {
+export const updateActividad = async (req: Request, res: Response): Promise<void> => {
     try {
         // Validación de campos vacíos en edición
         if (Object.keys(req.body).length === 0) {
@@ -93,7 +91,8 @@ router.put('/:id', async (req, res) => {
             return;
         }
 
-        const id = parseInt(req.params.id);
+        // Misma corrección aquí con String()
+        const id = parseInt(String(req.params.id), 10);
         const actualizada = await editarActividad(id, req.body);
 
         if (actualizada === null) {
@@ -110,9 +109,9 @@ router.put('/:id', async (req, res) => {
         const mensaje = error instanceof Error ? error.message : "Error desconocido";
         res.status(500).json({ error: mensaje });
     }
-});
+};
 
-router.get('/semana', async (req, res) => {
+export const getActividadesSemana = async (req: Request, res: Response): Promise<void> => {
     try {
         const datos = await actividadesSemana();
         res.json(datos);
@@ -120,9 +119,9 @@ router.get('/semana', async (req, res) => {
         const mensaje = error instanceof Error ? error.message : "Error desconocido";
         res.status(500).json({ error: mensaje });
     }
-});
+};
 
-router.get('/historial', async (req, res) => {
+export const getHistorialActividades = async (req: Request, res: Response): Promise<void> => {
     try {
         const historial = await obtenerHistorialActividades();
         res.json(historial);
@@ -130,6 +129,4 @@ router.get('/historial', async (req, res) => {
         const mensaje = error instanceof Error ? error.message : "Error desconocido";
         res.status(500).json({ error: mensaje });
     }
-});
-
-export default router;
+};

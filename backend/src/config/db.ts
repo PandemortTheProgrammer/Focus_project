@@ -168,10 +168,10 @@ export const inicializarBD = async () => {
             (4, 'Maratonista'),
             (5, 'Reflexivo'),
             (6, 'Maestro del Tiempo'),
-            (7, 'Ícono Secreto'),
+            (7, 'Dark Lighty'),
             (8, 'Lighty'),
             (9, 'Medalla Dorada'),
-            (10, 'Fuego Nocturno');
+            (10, 'Lechuza Coronada');
 
             INSERT OR IGNORE INTO Recompensa (Id_recompensa, nombre_recompensa, descripcion, tipo_recompensa, Id_icono) VALUES 
             (1, 'Bienvenida', 'Tu primer perfil en Focus', 'ICONO', 2),

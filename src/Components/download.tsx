@@ -8,7 +8,7 @@ export default function Download() {
   const handleDescargar = async () => {
     try {
       // 1. Hacemos la petición para obtener el archivo
-      const respuesta = await fetch('http://localhost:3000/api/perfil/descargar');
+      const respuesta = await fetch('http://localhost:3000/api/database/descargar-bd');
       
       if (!respuesta.ok) {
         mostrarToast('error', 'Error de descarga', 'No se pudo generar el archivo de respaldo.');
