@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+backend/focus_database.sqlite
+backend/src/sql-terminal.ts
+uploads/
+temp/

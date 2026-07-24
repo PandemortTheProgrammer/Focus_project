@@ -20,3 +20,81 @@ body {
 button {
     cursor: pointer;
 }
+
+@keyframes float {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  25% {
+    transform: translate3d(2rem, -3rem, 0) scale(1.05);
+  }
+  50% {
+    transform: translate3d(-2rem, 1.5rem, 0) scale(0.95);
+  }
+  75% {
+    transform: translate3d(1.5rem, 2rem, 0) scale(1.08);
+  }
+}
+
+.animate-float {
+  animation: float 10s infinite ease-in-out;
+}
+
+.decorative-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(40px);
+  opacity: 0.75;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation: float 16s ease-in-out infinite;
+}
+
+.decorative-orb--slow {
+  animation-duration: 18s;
+}
+
+.decorative-orb--fast {
+  animation-duration: 12s;
+}
+
+.decorative-orb--delay-1 {
+  animation-delay: -2s;
+}
+
+.decorative-orb--delay-2 {
+  animation-delay: -4s;
+}
+
+/* Retrasos para que no se muevan todos al mismo tiempo */
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+/* Oculta la barra de scroll manteniendo el desplazamiento funcional (ej. carrusel de íconos) */
+.scrollbar-none {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE / Edge legado */
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge basado en Chromium */
+}
+
+@keyframes fade-in-down {
+  0% {
+    opacity: 0;
+    transform: translate(0, -2rem);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+}
+
+.animate-fade-in-down {
+  animation: fade-in-down 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
