@@ -1,4 +1,4 @@
-// backend/src/services/ReportesManager.ts
+// backend/src/services/ReporteManager.ts
 import { getDB } from '../config/db';
 import { evaluarNuevosLogros } from './RecompensasManager';
 
@@ -87,9 +87,6 @@ const generarResumenTipo = (
     return `Durante la semana destinaste ${horas.toFixed(1)}h a ${nombreTipo.toLowerCase()} ${frecuencia} (${porcentajeSemana}% de tu tiempo registrado), con un promedio de ${promedioSesionMin} min por sesión.`;
 };
 
-// Algunas actividades del catálogo necesitan un trato distinto al que dicta únicamente su "peso",
-// porque su naturaleza real (trabajo, trámites, bienestar, vida social) no encaja con el patrón
-// genérico de "ocio moderado" o "prioridad sin límite".
 const ACTIVIDADES_TRABAJO = new Set(['Trabajo']);
 const ACTIVIDADES_ADMINISTRATIVAS = new Set(['Realizar un trámite']);
 const ACTIVIDADES_BIENESTAR = new Set(['Meditación', 'Descanso activo']);
@@ -273,10 +270,10 @@ const resumirTiposPorSemana = (
         .sort((a, b) => b.horas - a.horas);
 };
 
-export const obtenerResumenesSemanales = async (): Promise<SemanaResumen[]> => {
+export const obtenerResumenesSemanales = async (): Promise<{ reportes: SemanaResumen[]; logrosDesbloqueados: any[] }> => {
     const db = getDB();
 
-    // 1. Obtenemos el enfoque del perfil actual para ligar el reporte (Requisito de llave foránea)
+    // 1. Obtenemos el enfoque del perfil actual para ligar el reporte
     const perfil = await db.get("SELECT Id_perfil, Id_enfoque FROM Perfil LIMIT 1");
     const idEnfoque = perfil?.Id_enfoque || 1;
     const idPerfil = perfil?.Id_perfil || 1;
@@ -323,18 +320,24 @@ export const obtenerResumenesSemanales = async (): Promise<SemanaResumen[]> => {
         }
     });
 
-    // 3. LA REGLA DEL TIEMPO: Filtrar solo semanas "cerradas" (donde Hoy > Domingo)
+    // 3. LA REGLA DEL TIEMPO: Filtrar solo semanas "cerradas"
     const hoyStr = formatDate(new Date()); 
     const semanasCerradas = Array.from(semanasMap.values())
         .filter(semana => semana.fecha_fin < hoyStr)
         .sort((a, b) => a.fecha_inicio.localeCompare(b.fecha_inicio));
 
-    // 4. Consultar los reportes que YA están guardados en la tabla Reporte_semanal
-    const reportesExistentes = await db.all("SELECT * FROM Reporte_semanal");
+    // 4. Consultar reportes YA guardados
+    const reportesExistentes = await db.all("SELECT * FROM Reporte_semanal ORDER BY Fecha_i_semana ASC");
     const reportesMap = new Map();
     reportesExistentes.forEach(r => reportesMap.set(r.Fecha_i_semana, r));
 
+    // LÓGICA LOGRO 16: Rastrear el último enfoque conocido
+    let ultimoEnfoqueReportado = reportesExistentes.length > 0
+        ? reportesExistentes[reportesExistentes.length - 1].Id_enfoque
+        : null;
+
     const resultadoFinal: SemanaResumen[] = [];
+    const logrosTotalesDesbloqueados: any[] = [];
 
     // 5. Evaluar, Guardar y Construir respuesta
     for (let i = 0; i < semanasCerradas.length; i++) {
@@ -343,8 +346,9 @@ export const obtenerResumenesSemanales = async (): Promise<SemanaResumen[]> => {
 
         if (reportesMap.has(semana.fecha_inicio)) {
             conclusionDB = reportesMap.get(semana.fecha_inicio).Conclusion;
+            ultimoEnfoqueReportado = reportesMap.get(semana.fecha_inicio).Id_enfoque;
         } else {
-            // Generamos, insertamos en BD y evaluamos logros
+            // Generamos e insertamos en BD el nuevo reporte
             conclusionDB = generarDescripcionGeneralPorSemana(semana.actividades);
             const progOptimizac = 85; 
             
@@ -353,10 +357,22 @@ export const obtenerResumenesSemanales = async (): Promise<SemanaResumen[]> => {
                 VALUES (?, ?, ?, ?, ?)`,
                 [idEnfoque, semana.fecha_inicio, semana.fecha_fin, conclusionDB, progOptimizac]
             );
-            console.log(` Reporte automático generado para la semana del ${semana.fecha_inicio}`);
+            console.log(`✅ Reporte automático generado para la semana del ${semana.fecha_inicio}`);
 
-            // Evaluamos logros por si gana la recompensa "Analista"
-            await evaluarNuevosLogros(idPerfil);
+            // --- EVALUACIÓN ESPECIAL DE LOGROS ---
+            let eventoEspecial: string | undefined = undefined;
+
+            if (ultimoEnfoqueReportado !== null && ultimoEnfoqueReportado !== idEnfoque) {
+                eventoEspecial = 'REPORTE_NUEVO_ENFOQUE';
+            }
+
+            ultimoEnfoqueReportado = idEnfoque;
+
+            // Evaluamos logros y acumulamos los obtenidos
+            const logrosDeEstaSemana = await evaluarNuevosLogros(idPerfil, eventoEspecial);
+            if (logrosDeEstaSemana && logrosDeEstaSemana.length > 0) {
+                logrosTotalesDesbloqueados.push(...logrosDeEstaSemana);
+            }
         }
 
         const totalMinutos = semana.actividades.reduce((sum, actividad) => sum + actividad.durac_min, 0);
@@ -379,5 +395,8 @@ export const obtenerResumenesSemanales = async (): Promise<SemanaResumen[]> => {
         });
     }
 
-    return resultadoFinal;
+    return {
+        reportes: resultadoFinal,
+        logrosDesbloqueados: logrosTotalesDesbloqueados
+    };
 };

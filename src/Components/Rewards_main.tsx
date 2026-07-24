@@ -69,7 +69,7 @@ export default function RewardsMain({ perfilGlobal }: RewardsProps) {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
             {recompensas.map((logro) => {
-              const esSecreto = logro.Id_recompensa === 7;
+              const esSecreto = [7, 14, 18].includes(logro.Id_recompensa);
               const ocultarInfo = !logro.estaDesbloqueado && esSecreto;
 
               return (

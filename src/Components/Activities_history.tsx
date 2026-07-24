@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type Tipo_actividad from '../models/Tipo_actividad'
 import type Actividad from '../models/Actividad'
+import { useToast } from './ToastContext' // 1. Importamos el sistema de notificaciones
 
 const formatearFecha = (fecha?: string | Date | null) => {
   if (!fecha) return { dia: '—', mes: '', anio: '' }
@@ -18,6 +19,7 @@ const formatearFecha = (fecha?: string | Date | null) => {
 
 export default function ActivitiesHistory() {
   const navigate = useNavigate()
+  const { mostrarToast } = useToast() // 2. Extraemos la función global
 
   const [historial, setHistorial] = useState<Actividad[]>([])
   const [tipos, setTipos] = useState<Tipo_actividad[]>([])
@@ -41,8 +43,35 @@ export default function ActivitiesHistory() {
         setCargando(false)
       }
     }
+
+    // 3. Función silenciosa para evaluar el logro al visitar el historial
+    const evaluarVisitaHistorial = async () => {
+      try {
+        const res = await fetch('http://localhost:3000/api/recompensas/evaluar-evento', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ eventoEspecial: 'VISITA_HISTORIAL' })
+        })
+
+        if (res.ok) {
+          const data = await res.json()
+          if (data.logrosDesbloqueados && data.logrosDesbloqueados.length > 0) {
+            data.logrosDesbloqueados.forEach((logro: any, index: number) => {
+              setTimeout(() => {
+                // Se utilizan los 5 parámetros para que el ícono se procese correctamente
+                mostrarToast('logro', logro.nombre_recompensa, logro.descripcion, '', logro)
+              }, index * 1500)
+            })
+          }
+        }
+      } catch (error) {
+        console.error('Error evaluando el logro por visita al historial:', error)
+      }
+    }
+
     cargarDatos()
-  }, [])
+    evaluarVisitaHistorial() // Ejecutamos la evaluación en segundo plano
+  }, [mostrarToast]) // Añadimos mostrarToast como dependencia
 
   return (
     <div className="relative w-full flex flex-col">

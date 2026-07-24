@@ -21,7 +21,7 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
   const navigate = useNavigate()
   const { mostrarToast } = useToast()
 
-  // MANTENIDO: Tu lógica original de carga
+  // Carga de enfoques
   useEffect(() => {
     const cargarEnfoques = async () => {
       try {
@@ -36,36 +36,35 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
     cargarEnfoques()
   }, [])
 
-  // MANTENIDO: Tu lógica de saludo
   const obtenerSaludo = (generoSeleccionado?: string) => {
     if (generoSeleccionado === 'M') return 'Bienvenido';
     if (generoSeleccionado === 'F') return 'Bienvenida';
-    return 'Saludos'; // O tu saludo neutro por defecto
+    return 'Saludos'; 
   };
 
-  // --- EFECTO DE NOTIFICACIÓN DE REPORTES SEMANALES ---
+  // --- EFECTO DE NOTIFICACIÓN DE REPORTES SEMANALES Y LOGROS ---
   useEffect(() => {
     const verificarNuevosReportes = async () => {
       try {
         const res = await fetch('http://localhost:3000/api/reportes/semanas')
         if (!res.ok) return
 
-        const reportes = await res.json()
+        const data = await res.json()
         
-        // Si hay al menos un reporte generado
+        // Hacemos que sea compatible tanto si el backend devuelve un Array directo 
+        // como si devuelve un Objeto con { reportes: [], logrosDesbloqueados: [] }
+        const reportes = Array.isArray(data) ? data : (data.reportes || [])
+        const logrosReporte = data.logrosDesbloqueados || []
+        
         if (reportes.length > 0) {
-          // Tomamos el último reporte de la lista (el más reciente)
           const ultimoReporte = reportes[reportes.length - 1]
           const fechaInicioReciente = String(ultimoReporte.fecha_inicio)
-
-          // Leemos la memoria del navegador
           const reporteNotificado = localStorage.getItem('ultimo_reporte_visto')
 
-          // Si el más reciente NO es el que tenemos guardado, ¡es nuevo!
-          if (reportes.length > 0 && fechaInicioReciente !== reporteNotificado) {
+          // Si es un reporte nuevo que no hemos notificado aún
+          if (fechaInicioReciente !== reporteNotificado) {
             
-            // Retrasamos el Toast 1 segundo para que la animación de entrada 
-            // del dashboard termine primero y se vea más elegante
+            // 1. Lanzamos el Toast del reporte semanal (Retrasado 1 segundo)
             setTimeout(() => {
               mostrarToast(
                 'exito', 
@@ -74,7 +73,17 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
               )
             }, 1000)
 
-            // Guardamos esta fecha para que no vuelva a saltar hasta el próximo lunes
+            // 2. Lanzamos los Toasts de los logros obtenidos por este reporte en cascada
+            if (logrosReporte.length > 0) {
+              logrosReporte.forEach((logro: any, index: number) => {
+                setTimeout(() => {
+                  // Respetamos los 5 parámetros para que el ícono (r.Id_icono) se procese perfectamente
+                  mostrarToast('logro', logro.nombre_recompensa, logro.descripcion, '', logro)
+                }, index * 1500 + 2500) // Se muestran DESPUÉS del toast del reporte
+              })
+            }
+
+            // Guardamos la fecha para no repetir la animación
             localStorage.setItem('ultimo_reporte_visto', fechaInicioReciente)
           }
         }
@@ -83,7 +92,6 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
       }
     }
 
-    // Solo ejecutamos la verificación si el usuario ya tiene un perfil cargado
     if (perfilGlobal) {
         verificarNuevosReportes()
     }
@@ -153,7 +161,6 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
             onClick={() => navigate('/recompensas')}
             className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
             style={{ backgroundColor: '#2a2a2a' }}>
-            {/* Usamos un color dorado/amarillo para que resalte como un premio */}
             <TrophyIcon className="w-12 h-12 text-[#fbbf24] transition group-hover:text-white" />
             <p className="text-white text-sm font-semibold text-center">Logros</p>
           </div>

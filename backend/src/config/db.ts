@@ -175,12 +175,17 @@ export const inicializarBD = async () => {
             (11, '¿Eso es una ciudad?'),
             (12, 'Coleccionista'),
             (13, 'Mariposa'),
-            (14, 'Anne');
+            (14, 'Anne'),
+            (15, 'Reloj de Arena'),
+            (16, 'Sonámbulo'),
+            (17, 'Joven'),
+            (18, 'Sabio'),
+            (19, 'Ganador');
 
             INSERT OR IGNORE INTO Recompensa (Id_recompensa, nombre_recompensa, descripcion, tipo_recompensa, Id_icono) VALUES 
             (1, 'Bienvenida', 'Tu primer perfil en Focus', 'ICONO', 2),
             (2, 'Iniciador', 'Registraste tu primera actividad', 'ICONO', 3),
-            (3, 'Constancia', 'Alcanzaste 10 horas de actividades', 'ICONO', 4),
+            (3, 'Registrador', 'Alcanzaste 10 horas de actividades', 'ICONO', 4),
             (4, 'Analista', 'Revisaste tu primer reporte semanal', 'ICONO', 5),
             (5, 'Y este es solo el segundo', 'Recibiste tu segundo reporte semanal', 'ICONO', 6),
             (6, 'Coleccionista', 'Exploraste todas las funciones de la aplicación', 'ICONO', 7),
@@ -190,7 +195,12 @@ export const inicializarBD = async () => {
             (10, 'Gestor', 'Visita tu progreso semanal por primera vez', 'ICONO', 11),
             (11, 'Integral', 'Registra una actividad de cada tipo al menos una vez', 'ICONO', 12),
             (12, 'Evolución', 'Edita tu perfil por primera vez', 'ICONO', 13),
-            (13, 'Constante', 'Recibe 4 reportes semanales', 'ICONO', 14);
+            (13, 'Constante', 'Recibe 4 reportes semanales', 'ICONO', 14),
+            (14, '¿Ha pasado un año?', 'Ha pasado un año, si', 'ICONO', 15),
+            (15, 'Madrugador', 'Registraste una actividad tan pronto iniciaste tu día', 'ICONO', 16),
+            (16, 'Un nuevo comienzo', 'Recibe el primer reporte semanal bajo un nuevo enfoque', 'ICONO', 17),
+            (17, 'Recordando viejos tiempos', 'Exploraste tu historial de actividades por primera vez', 'ICONO', 18),
+            (18, 'Gran Maestro de los logros (de la versión 1)', 'Conseguiste todos los logros de Focus (v1)', 'ICONO', 19);
             
         `);
         console.log("Catálogo de Íconos y Recompensas verificado/actualizado.");
@@ -221,10 +231,5 @@ export const cerrarBD = async (): Promise<void> => {
 };
 
 /*
--- EJEMPLOS NUEVOS (Se insertarán solos al reiniciar el backend):
-            
--- EJEMPLOS NUEVOS:
-            (8, 'Imparable', 'Registraste 50 actividades en la plataforma', 'ICONO', 9),
-            (9, 'Lechuza', 'Registraste una actividad después de medianoche', 'ICONO', 10);
 
 */
