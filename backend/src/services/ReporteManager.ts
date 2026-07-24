@@ -270,7 +270,7 @@ const resumirTiposPorSemana = (
         .sort((a, b) => b.horas - a.horas);
 };
 
-export const obtenerResumenesSemanales = async (): Promise<{ reportes: SemanaResumen[]; logrosDesbloqueados: any[] }> => {
+export const obtenerResumenesSemanales = async (): Promise<SemanaResumen[]> => {
     const db = getDB();
 
     // 1. Obtenemos el enfoque del perfil actual para ligar el reporte
@@ -337,7 +337,6 @@ export const obtenerResumenesSemanales = async (): Promise<{ reportes: SemanaRes
         : null;
 
     const resultadoFinal: SemanaResumen[] = [];
-    const logrosTotalesDesbloqueados: any[] = [];
 
     // 5. Evaluar, Guardar y Construir respuesta
     for (let i = 0; i < semanasCerradas.length; i++) {
@@ -368,11 +367,8 @@ export const obtenerResumenesSemanales = async (): Promise<{ reportes: SemanaRes
 
             ultimoEnfoqueReportado = idEnfoque;
 
-            // Evaluamos logros y acumulamos los obtenidos
-            const logrosDeEstaSemana = await evaluarNuevosLogros(idPerfil, eventoEspecial);
-            if (logrosDeEstaSemana && logrosDeEstaSemana.length > 0) {
-                logrosTotalesDesbloqueados.push(...logrosDeEstaSemana);
-            }
+            // Evaluamos logros de forma silenciosa en segundo plano
+            await evaluarNuevosLogros(idPerfil, eventoEspecial);
         }
 
         const totalMinutos = semana.actividades.reduce((sum, actividad) => sum + actividad.durac_min, 0);
@@ -395,8 +391,6 @@ export const obtenerResumenesSemanales = async (): Promise<{ reportes: SemanaRes
         });
     }
 
-    return {
-        reportes: resultadoFinal,
-        logrosDesbloqueados: logrosTotalesDesbloqueados
-    };
+    // Devolvemos el array plano que tus vistas de frontend esperan
+    return resultadoFinal;
 };

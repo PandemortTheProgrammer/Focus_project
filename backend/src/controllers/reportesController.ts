@@ -7,10 +7,7 @@ export const getResumenesSemanales = async (req: Request, res: Response): Promis
         // El manager ahora devolverá un objeto con los reportes y los logros
         const resultado = await obtenerResumenesSemanales();
         
-        res.json({
-            reportes: resultado.reportes,
-            logrosDesbloqueados: resultado.logrosDesbloqueados
-        });
+        res.json(resultado);
     } catch (error: unknown) {
         const mensaje = error instanceof Error ? error.message : "Error desconocido";
         res.status(500).json({ error: mensaje });
