@@ -6,6 +6,7 @@ import {
   BarChart, Bar, XAxis, YAxis,
   ResponsiveContainer, Cell, PieChart, Pie, Tooltip
 } from 'recharts'
+import { useToast } from './ToastContext' // 1. Importamos el contexto de notificaciones
 
 // Genera los últimos 7 días como strings "YYYY-MM-DD"
 const obtenerUltimosSieteDias = (): string[] => {
@@ -24,7 +25,7 @@ const obtenerNombreDia = (fecha: string): string => {
   return nombres[new Date(fecha + 'T12:00:00').getDay()]
 }
 
-// Tooltip personalizado para la gráfica de barras: muestra el detalle de minutos/horas por actividad del día
+// Tooltip personalizado para la gráfica de barras
 interface BarraTooltipPayloadItem {
   dataKey: string
   value: number
@@ -60,10 +61,13 @@ const TooltipBarras = ({ active, payload, label }: BarraTooltipProps) => {
 
 export default function WeeklyProgress() {
   const navigate = useNavigate()
+  const { mostrarToast } = useToast() // 2. Extraemos la función para mostrar alertas/logros
+
   const [datosSemana, setDatosSemana] = useState<Record<string, Actividad[]>>({})
   const [catalogoTipos, setCatalogoTipos] = useState<Tipo_actividad[]>([])
   const [cargando, setCargando] = useState(true)
   const [mostrarTodaLaLeyenda, setMostrarTodaLaLeyenda] = useState(false)
+
   useEffect(() => {
     const cargarDatos = async () => {
       try {
@@ -81,8 +85,34 @@ export default function WeeklyProgress() {
         setCargando(false)
       }
     }
+
+    // 3. Función silenciosa para evaluar el logro de "Gestor" al visitar la vista
+    const evaluarVisita = async () => {
+      try {
+        const res = await fetch('http://localhost:3000/api/recompensas/evaluar-evento', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ eventoEspecial: 'VISITA_PROGRESO' })
+        })
+        if (res.ok) {
+          const data = await res.json()
+          // Si el backend nos devuelve logros, los mostramos en cascada
+          if (data.logrosDesbloqueados && data.logrosDesbloqueados.length > 0) {
+            data.logrosDesbloqueados.forEach((logro: any, index: number) => {
+              setTimeout(() => {
+                mostrarToast('logro', logro.nombre_recompensa, logro.descripcion, '', logro)
+              }, index * 1500) // Desfase de 1.5s entre cada logro para evitar superposiciones
+            })
+          }
+        }
+      } catch (error) {
+        console.error('Error evaluando el logro por visita:', error)
+      }
+    }
+
     cargarDatos()
-  }, [])
+    evaluarVisita() // Ejecutamos la evaluación en segundo plano
+  }, [mostrarToast]) // Añadimos mostrarToast al arreglo de dependencias por buenas prácticas de React
 
   // Construye los datos para la gráfica de barras
   const datosBarras = obtenerUltimosSieteDias().map(fecha => {
@@ -118,8 +148,7 @@ export default function WeeklyProgress() {
     return mins > maxMins ? fecha : max
   }, obtenerUltimosSieteDias()[0])
 
-  // La leyenda de la gráfica de barras puede tener muchos tipos de actividad definidos;
-  // por defecto solo mostramos los primeros para no saturar la vista, y el usuario decide ver el resto.
+  // Lógica de leyenda visual
   const LIMITE_LEYENDA_VISIBLE = 6
   const hayLeyendaOculta = catalogoTipos.length > LIMITE_LEYENDA_VISIBLE
   const tiposLeyendaVisibles = mostrarTodaLaLeyenda ? catalogoTipos : catalogoTipos.slice(0, LIMITE_LEYENDA_VISIBLE)

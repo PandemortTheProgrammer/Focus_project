@@ -84,6 +84,30 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
       if (res.ok) {
         mostrarToast('exito', '¡Perfil actualizado!', data.mensaje || 'Tus cambios se han guardado correctamente.')
         setPerfilGlobal(perfilActualizado)
+
+        // --- NUEVA LÓGICA: Evaluación del logro Evolución ---
+        try {
+          const resEvento = await fetch('http://localhost:3000/api/recompensas/evaluar-evento', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ eventoEspecial: 'EDICION_PERFIL' })
+          })
+
+          if (resEvento.ok) {
+            const dataEvento = await resEvento.json()
+            if (dataEvento.logrosDesbloqueados && dataEvento.logrosDesbloqueados.length > 0) {
+              dataEvento.logrosDesbloqueados.forEach((logro: any, index: number) => {
+                setTimeout(() => {
+                  mostrarToast('logro', logro.nombre_recompensa, logro.descripcion, '', logro)
+                }, index * 1500 + 1000) // +1000ms para que aparezca después del toast de éxito
+              })
+            }
+          }
+        } catch (eventoError) {
+          console.error('Error al evaluar el logro de edición:', eventoError)
+        }
+        // ----------------------------------------------------
+
         navigate('/dashboard')
       } else {
         mostrarToast('error', 'No se guardaron los cambios', data.error || 'Hubo un problema al guardar tu perfil.')

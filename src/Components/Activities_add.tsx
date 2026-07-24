@@ -69,11 +69,10 @@ export default function ActivitiesAdd() {
         // 2. Verificamos si el backend envió el arreglo de logros nuevos
         if (data.logrosDesbloqueados && data.logrosDesbloqueados.length > 0) {
           data.logrosDesbloqueados.forEach((logroNuevo: any, index: number) => {
-            // Retrasamos cada logro (1.5 segundos entre cada uno) para que caigan en cascada
+            // Retrasamos cada logro (1.5 segundos de cascada + 1 segundo inicial)
             setTimeout(() => {
-              // Pasamos el objeto logroNuevo en el quinto parámetro
               mostrarToast('logro', '', '', '', logroNuevo)
-            }, 1000 + (index * 1500)) 
+            }, index * 1500 + 1000) 
           })
         }
 

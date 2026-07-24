@@ -12,6 +12,7 @@ router.post('/evaluar-evento', RecompensasController.evaluarEventoEspecial);
 router.get('/perfil/:idPerfil', RecompensasController.getRecompensasDePerfil);
 router.get('/iconos/:idPerfil', RecompensasController.getIconosDesbloqueados);
 router.get('/relaciones/:idPerfil', RecompensasController.getRelacionesPerfil);
+router.get('/catalogo/:idPerfil', RecompensasController.getCatalogoRecompensasCompleto);
 
 // Ruta de compatibilidad (apunta exactamente a la misma función del controlador)
 router.get('/:idPerfil', RecompensasController.getRecompensasDePerfil);

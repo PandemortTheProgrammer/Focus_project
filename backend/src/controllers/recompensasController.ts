@@ -5,7 +5,8 @@ import {
     obtenerIconosDesbloqueados,
     obtenerRelacionesPerfilRecompensa,
     obtenerCatalogoIconos,
-    evaluarNuevosLogros
+    evaluarNuevosLogros,
+    obtenerCatalogoRecompensasConEstado
 } from '../services/RecompensasManager';
 
 export const getRecompensasDePerfil = async (req: Request, res: Response): Promise<void> => {
@@ -51,6 +52,18 @@ export const getRelacionesPerfil = async (req: Request, res: Response): Promise<
     } catch (error: unknown) {
         const mensaje = error instanceof Error ? error.message : 'Error desconocido';
         console.error('Error al obtener relaciones perfil-recompensa:', error);
+        res.status(500).json({ error: mensaje });
+    }
+};
+
+export const getCatalogoRecompensasCompleto = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const idPerfil = Number(req.params.idPerfil);
+        const catalogo = await obtenerCatalogoRecompensasConEstado(idPerfil);
+        res.json(catalogo);
+    } catch (error: unknown) {
+        const mensaje = error instanceof Error ? error.message : 'Error desconocido';
+        console.error('Error al obtener el catálogo completo de recompensas:', error);
         res.status(500).json({ error: mensaje });
     }
 };

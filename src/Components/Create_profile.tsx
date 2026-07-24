@@ -73,23 +73,48 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
             body: JSON.stringify(nuevoPerfil)
         });
 
-        // 2. Leemos la respuesta estructurada de Express (que configuramos en PerfilRoutes)
+        // 2. Leemos la respuesta estructurada de Express
         const data = await respuesta.json().catch(() => ({}));
 
         if (respuesta.ok) {
-            // 3. Éxito: Mostramos notificación, actualizamos estado global y navegamos
+            // 3. Éxito: Mostramos notificación y actualizamos estado global
             mostrarToast('exito', '¡Bienvenido a Focus!', data.mensaje || 'Tu perfil se ha creado exitosamente.');
             setPerfilGlobal(nuevoPerfil);
+
+            // --- NUEVA LÓGICA: Evaluación del logro Bienvenida ---
+            try {
+              const resEvento = await fetch('http://localhost:3000/api/recompensas/evaluar-evento', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ eventoEspecial: 'CREACION_PERFIL' })
+              });
+
+              if (resEvento.ok) {
+                const dataEvento = await resEvento.json();
+                if (dataEvento.logrosDesbloqueados && dataEvento.logrosDesbloqueados.length > 0) {
+                  dataEvento.logrosDesbloqueados.forEach((logro: any, index: number) => {
+                    setTimeout(() => {
+                      // Fíjate en los 5 parámetros para mantener la compatibilidad con el fallback visual
+                      mostrarToast('logro', logro.nombre_recompensa, logro.descripcion, '', logro);
+                    }, index * 1500 + 1000); 
+                  });
+                }
+              }
+            } catch (eventoError) {
+              console.error('Error al evaluar el logro de bienvenida:', eventoError);
+            }
+            // ----------------------------------------------------
+
             navigate('/dashboard');
         } else {
-            // 4. Error desde el Backend (ej. código 400 por campos vacíos pasados por alto)
+            // 4. Error desde el Backend
             mostrarToast('error', 'No se pudo crear el perfil', data.error || 'Hubo un problema al guardar el perfil.');
         }
     } catch {
         // 5. Error de servidor caído
         mostrarToast('error', 'Error de conexión', 'No se pudo conectar con el servidor.');
     }
-};
+  };
 
   return (
     <div className="relative w-full min-h-screen overflow-auto flex flex-col items-center justify-start py-8">

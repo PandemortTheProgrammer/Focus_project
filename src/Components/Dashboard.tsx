@@ -155,7 +155,7 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
             style={{ backgroundColor: '#2a2a2a' }}>
             {/* Usamos un color dorado/amarillo para que resalte como un premio */}
             <TrophyIcon className="w-12 h-12 text-[#fbbf24] transition group-hover:text-white" />
-            <p className="text-white text-sm font-semibold text-center">Mis recompensas</p>
+            <p className="text-white text-sm font-semibold text-center">Logros</p>
           </div>
         </div>
       </div>

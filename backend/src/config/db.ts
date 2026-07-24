@@ -171,18 +171,26 @@ export const inicializarBD = async () => {
             (7, 'Dark Lighty'),
             (8, 'Lighty'),
             (9, 'Medalla Dorada'),
-            (10, 'Lechuza Coronada');
+            (10, 'Lechuza Coronada'),
+            (11, '¿Eso es una ciudad?'),
+            (12, 'Coleccionista'),
+            (13, 'Mariposa'),
+            (14, 'Anne');
 
             INSERT OR IGNORE INTO Recompensa (Id_recompensa, nombre_recompensa, descripcion, tipo_recompensa, Id_icono) VALUES 
             (1, 'Bienvenida', 'Tu primer perfil en Focus', 'ICONO', 2),
             (2, 'Iniciador', 'Registraste tu primera actividad', 'ICONO', 3),
             (3, 'Constancia', 'Alcanzaste 10 horas de actividades', 'ICONO', 4),
             (4, 'Analista', 'Revisaste tu primer reporte semanal', 'ICONO', 5),
-            (5, 'Veterano', 'Llegaste a tu cuarta semana usando Focus', 'ICONO', 6),
+            (5, 'Y este es solo el segundo', 'Recibiste tu segundo reporte semanal', 'ICONO', 6),
             (6, 'Coleccionista', 'Exploraste todas las funciones de la aplicación', 'ICONO', 7),
             (7, 'Salvado', 'Descargaste tu perfil por primera vez', 'ICONO', 8),
             (8, 'Imparable', 'Registraste 50 actividades en la plataforma', 'ICONO', 9),
-            (9, 'Lechuza', 'Registraste una actividad después de medianoche', 'ICONO', 10);
+            (9, 'Lechuza', 'Registraste una actividad después de medianoche', 'ICONO', 10),
+            (10, 'Gestor', 'Visita tu progreso semanal por primera vez', 'ICONO', 11),
+            (11, 'Integral', 'Registra una actividad de cada tipo al menos una vez', 'ICONO', 12),
+            (12, 'Evolución', 'Edita tu perfil por primera vez', 'ICONO', 13),
+            (13, 'Constante', 'Recibe 4 reportes semanales', 'ICONO', 14);
             
         `);
         console.log("Catálogo de Íconos y Recompensas verificado/actualizado.");
