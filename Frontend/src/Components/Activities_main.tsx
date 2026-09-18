@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type Tipo_actividad from '../models/Tipo_actividad'
 import type Actividad from '../models/Actividad'
 import { useToast } from './ToastContext' // Importamos el contexto de notificaciones
+import PageHeader from './Page-head'
 
 // Función auxiliar para calcular si pasaron 24 horas desde la creación
 const esActividadBloqueada = (fechaCreacion?: string | Date | null) => {
@@ -153,14 +154,9 @@ export default function ActivitiesMain() {
       )}
       {/* --- FIN DEL MODAL --- */}
 
-      <div className="flex items-center justify-between px-8 py-4 mb-4">
-        <button onClick={() => navigate('/dashboard')} className="px-6 py-2 rounded-full bg-zinc-900 text-white transition hover:opacity-80">
-          ← Volver
-        </button>
-        <h1 className="text-4xl font-bold text-center" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
-          Actividades
-        </h1>
-        <div className="flex items-center gap-3">
+      <PageHeader titulo="Actividades" />
+
+      <div className="flex justify-end items-center gap-3 px-8 mb-4">
           <button
             onClick={() => navigate('/actividades/historial')}
             title="Ver actividades archivadas (más de 24 horas desde su registro)"
@@ -171,7 +167,6 @@ export default function ActivitiesMain() {
           <button onClick={() => navigate('/actividades/agregar')} className="px-6 py-2 rounded-full bg-zinc-900 text-white transition hover:opacity-80">
             + Agregar actividad
           </button>
-        </div>
       </div>
 
       {/* Lista de actividades Dinámica */}

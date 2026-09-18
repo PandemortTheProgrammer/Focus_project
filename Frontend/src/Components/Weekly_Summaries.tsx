@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import PageHeader from './Page-head'
 
 type SemanaResumen = {
   numero_semana: number
@@ -44,20 +45,10 @@ export default function WeeklySummaries() {
   return (
     <div className="relative min-h-screen overflow-auto flex flex-col px-6 py-6">
       <div className="relative z-10 max-w-6xl mx-auto">
-        <div className="flex items-center justify-between gap-4 mb-6">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="px-5 py-2 rounded-full text-white font-semibold transition hover:opacity-80"
-            style={{ backgroundColor: '#1a1a1a' }}>
-            ← Volver al dashboard
-          </button>
-        </div>
+        <PageHeader titulo="Historial semanal" />
 
         <div className="rounded-3xl p-6 mb-6" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
           <p className="text-xs uppercase tracking-[0.3em] text-white opacity-60">Resumen semanal</p>
-          <h1 className="text-4xl font-bold text-white mt-4" style={{ fontFamily: 'cursive' }}>
-            Historial de semanas con actividades registradas
-          </h1>
           <p className="text-sm text-white opacity-70 mt-3 leading-relaxed">
             Cada semana muestra un análisis breve generado automáticamente, horas totales y el conteo de actividades. Solo aparecen las semanas con al menos una actividad registrada.
           </p>

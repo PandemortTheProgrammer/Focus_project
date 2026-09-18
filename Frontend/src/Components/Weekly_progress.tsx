@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import type Tipo_actividad from '../models/Tipo_actividad'
 import type Actividad from '../models/Actividad'
 import {
@@ -7,6 +6,7 @@ import {
   ResponsiveContainer, Cell, PieChart, Pie, Tooltip
 } from 'recharts'
 import { useToast } from './ToastContext' // 1. Importamos el contexto de notificaciones
+import PageHeader from './Page-head'
 
 // Genera los últimos 7 días como strings "YYYY-MM-DD"
 const obtenerUltimosSieteDias = (): string[] => {
@@ -60,7 +60,6 @@ const TooltipBarras = ({ active, payload, label }: BarraTooltipProps) => {
 }
 
 export default function WeeklyProgress() {
-  const navigate = useNavigate()
   const { mostrarToast } = useToast() // 2. Extraemos la función para mostrar alertas/logros
 
   const [datosSemana, setDatosSemana] = useState<Record<string, Actividad[]>>({})
@@ -163,24 +162,10 @@ export default function WeeklyProgress() {
 
   return (
     <div className="relative w-full flex flex-col">
-      <div className="w-full px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
-          Progreso semanal
-        </h1>
-      </div>
+      <PageHeader titulo="Progreso semanal" />
 
       {/* Contenido */}
       <div className="relative z-10 flex flex-col gap-4 px-4 sm:px-6 lg:px-8 py-4">
-
-        {/* Botón volver */}
-        <div>
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="px-6 py-2 rounded-full text-white font-semibold transition hover:opacity-80"
-            style={{ backgroundColor: '#1a1a1a' }}>
-            ← Volver
-          </button>
-        </div>
 
         {/* Tarjetas resumen */}
         <div className="grid grid-cols-3 gap-4">

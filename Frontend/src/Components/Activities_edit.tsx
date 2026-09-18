@@ -114,15 +114,15 @@ export default function ActivitiesEdit() {
   return (
     <div className="relative w-full min-h-screen overflow-auto flex flex-col">
 
-      <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center mt-8" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
+        <h1 className="mt-3 sm:mt-5 text-3xl sm:text-4xl lg:text-5xl font-bold text-center" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
           Editar actividad
       </h1>
 
       {/* Contenido */}
-      <div className="relative z-10 flex gap-6 px-8 py-8 w-full max-w-4xl mx-auto flex-1 items-center">
+        <div className="relative z-10 flex flex-row flex-wrap gap-6 px-4 sm:px-8 py-4 sm:py-6 w-full max-w-5xl mx-auto items-start">
 
         {/* Columna izquierda */}
-        <div className="flex flex-col gap-4 flex-1">
+        <div className="flex flex-col gap-4 flex-[1_1_28rem] min-w-0">
 
           <p className="text-white text-sm px-2 opacity-70">Tipo de actividad</p>
           <select
@@ -149,7 +149,7 @@ export default function ActivitiesEdit() {
 
           <div className="flex flex-col gap-2">
             <p className="text-white text-sm px-2 opacity-70">Tiempo utilizado (minutos)</p>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button onClick={() => ajustarDuracion(-10)}
                 className="px-3 py-2 rounded-full text-white text-sm font-bold transition hover:opacity-80"
                 style={{ backgroundColor: '#d946ef' }}>
@@ -183,7 +183,7 @@ export default function ActivitiesEdit() {
         </div>
 
         {/* Columna derecha */}
-        <div className="flex flex-col gap-4 flex-1">
+        <div className="flex flex-col gap-4 flex-[1_1_28rem] min-w-0">
           <p className="text-white text-sm px-2 opacity-70">Descripción de la actividad</p>
           <textarea
             value={descripcion}
@@ -193,7 +193,7 @@ export default function ActivitiesEdit() {
             style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
           />
 
-          <div className="flex gap-4 justify-end mt-4">
+          <div className="flex flex-wrap gap-4 justify-end mt-4">
             <button
               onClick={handleGuardar}
               className="px-8 py-3 rounded-full text-[#1a1a1a] text-lg font-bold transition hover:scale-105"

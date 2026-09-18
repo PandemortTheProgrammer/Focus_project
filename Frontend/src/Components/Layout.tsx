@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import FocusLogo from '../assets/Images/Focus_logo.png';
+import FocusLogo from '../assets/Images/Focus_v2_logo.png';
 import type Perfil from '../models/Perfil';
 import type Enfoque from '../models/Enfoque';
 import { obtenerUrlIcono } from '../utils/icons';

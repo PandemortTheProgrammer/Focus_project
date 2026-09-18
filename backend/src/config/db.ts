@@ -230,8 +230,6 @@ export const inicializarBD = async () => {
                     SET nivel_presencia = 2 
                     WHERE Nombre_activ IN ('Socializar', 'Descanso activo', 'Series o Películas', 'Música', 'Redes sociales')
                 `);
-
-                // ... (dentro de tu bloque de migraciones V2)
                 
             }
             const columnasPerfil = await dbInstance.all("PRAGMA table_info(Perfil)");

@@ -37,7 +37,7 @@ export const uploadDatabase = async (req: Request, res: Response): Promise<void>
     }
 };
 
-// 2. NUEVA FUNCIÓN DE DESCARGA (DOWNLOAD) - Heredada de sistemaRoutes
+// 2. FUNCIÓN DE DESCARGA (DOWNLOAD) - Heredada de sistemaRoutes
 export const downloadDatabase = (req: Request, res: Response): void => {
     const dbPath = path.resolve(process.cwd(), 'focus_database.sqlite');
 

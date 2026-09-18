@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import type Perfil from '../models/Perfil';
 import { obtenerUrlIcono } from '../utils/icons';
 import { CheckBadgeIcon, LockClosedIcon } from '@heroicons/react/24/solid'; // Importamos el candado
 import { useToast } from './ToastContext';
+import PageHeader from './Page-head';
 
 interface RewardsProps {
   perfilGlobal: Perfil;
@@ -21,7 +21,6 @@ interface CatalogoRecompensa {
 }
 
 export default function RewardsMain({ perfilGlobal }: RewardsProps) {
-  const navigate = useNavigate();
   const { mostrarToast } = useToast();
   
   const [recompensas, setRecompensas] = useState<CatalogoRecompensa[]>([]);
@@ -52,12 +51,10 @@ export default function RewardsMain({ perfilGlobal }: RewardsProps) {
   }, [perfilGlobal.id_perfil, mostrarToast]);
 
   return (
-    <div className="relative w-full min-h-screen flex flex-col items-center pt-16 px-4 pb-12 overflow-y-auto">
-      <h1 className="text-4xl font-bold text-center mb-10 z-10" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
-        Vitrina de Logros
-      </h1>
+    <div className="relative w-full min-h-screen flex flex-col items-center px-4 pb-12 overflow-y-auto">
+      <PageHeader titulo="Vitrina de Logros" />
 
-      <div className="relative z-10 w-full max-w-4xl flex flex-col items-center gap-6">
+      <div className="relative z-10 w-full max-w-4xl flex flex-col items-center gap-6 mt-4">
         {cargando ? (
           <p className="text-[#5ecfb8] animate-pulse tracking-widest uppercase font-bold text-sm">
             Sincronizando base de datos...
@@ -138,14 +135,6 @@ export default function RewardsMain({ perfilGlobal }: RewardsProps) {
             })}
           </div>
         )}
-
-        <button 
-          onClick={() => navigate('/dashboard')}
-          className="mt-8 px-10 py-3 rounded-full text-white font-semibold transition hover:opacity-80 hover:scale-105 border border-zinc-700/50 shadow-lg" 
-          style={{ backgroundColor: '#5ecfb8', color: '#1a1a1a' }}
-        >
-          Volver al dashboard
-        </button>
       </div>
     </div>
   );

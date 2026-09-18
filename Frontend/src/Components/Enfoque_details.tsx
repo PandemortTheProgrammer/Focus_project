@@ -8,6 +8,7 @@ import {
     ArrowPathIcon,
     CheckBadgeIcon
 } from '@heroicons/react/24/outline';
+import PageHeader from './Page-head';
 
 interface EnfoqueDetalle {
     Id_enfoque: number;
@@ -69,19 +70,8 @@ export default function ConoceTuEnfoque({ perfilGlobal }: ConoceTuEnfoqueProps) 
     return (
         <div className="relative w-full min-h-screen overflow-auto flex flex-col items-center py-10 px-4">
 
-            {/* Botón de regreso discreto */}
-            <div className="absolute top-8 left-8">
-                <button
-                    onClick={() => navigate('/dashboard')}
-                    className="px-6 py-2 rounded-full bg-zinc-900 text-white transition hover:bg-zinc-800 border border-zinc-700">
-                    ← Dashboard
-                </button>
-            </div>
+            <PageHeader titulo="Conoce tu enfoque" />
 
-            {/* Encabezado */}
-            <h1 className="relative z-10 text-5xl font-bold text-center mb-2 mt-8" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
-                Conoce tu enfoque
-            </h1>
             <p className="text-zinc-400 text-lg mb-10 text-center max-w-xl">
                 El camino que has elegido define la estructura de tu día ideal. Conoce qué se espera de ti.
             </p>
