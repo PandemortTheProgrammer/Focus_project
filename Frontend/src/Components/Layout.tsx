@@ -6,6 +6,12 @@ import FocusLogo from '../assets/Images/Focus_logo.png';
 import type Perfil from '../models/Perfil';
 import type Enfoque from '../models/Enfoque';
 import { obtenerUrlIcono } from '../utils/icons';
+import {
+  ArrowDownTrayIcon,
+  ArrowLeftOnRectangleIcon,
+  LockClosedIcon,
+  UserCircleIcon
+} from '@heroicons/react/24/outline';
 
 interface EnfoqueApiRow {
   id_enfoque?: number;
@@ -153,17 +159,48 @@ export default function Layout({ children, perfilGlobal }: LayoutProps) {
             {/* Menú Flotante */}
             {menuAbierto && (
               <div 
-                className="absolute right-0 mt-2 w-52 rounded-2xl shadow-2xl overflow-hidden border border-zinc-700/50" 
+                className="absolute right-0 mt-2 w-48 rounded-2xl shadow-2xl overflow-hidden border border-zinc-700/50" 
                 style={{ backgroundColor: '#1a1a1a' }}
               >
                 <button
                   onClick={() => {
-                    setMenuAbierto(false); // Cerramos el menú
-                    navigate('/'); // Navegamos a MainPage
+                    setMenuAbierto(false);
+                    navigate('/editar-perfil');
                   }}
-                  className="w-full text-left px-5 py-4 text-white text-sm font-semibold hover:bg-zinc-800 transition flex items-center gap-3"
+                  className="w-full text-left px-4 py-3 text-white text-sm font-semibold hover:bg-zinc-800 transition flex items-center gap-3"
                 >
-                  <span className="text-lg">🚪</span> Salir del Perfil
+                  <UserCircleIcon className="w-5 h-5 text-[#d946ef]" />
+                  Editar Perfil
+                </button>
+                <button
+                  onClick={() => {
+                    setMenuAbierto(false);
+                    navigate('/descargar');
+                  }}
+                  className="w-full text-left px-4 py-3 text-white text-sm font-semibold hover:bg-zinc-800 transition flex items-center gap-3"
+                >
+                  <ArrowDownTrayIcon className="w-5 h-5 text-[#b8f0a0]" />
+                  Descargar Perfil
+                </button>
+                <button
+                  onClick={() => {
+                    setMenuAbierto(false);
+                    navigate('/configurar-pin');
+                  }}
+                  className="w-full text-left px-4 py-3 text-white text-sm font-semibold hover:bg-zinc-800 transition flex items-center gap-3"
+                >
+                  <LockClosedIcon className="w-5 h-5 text-[#6b7280]" />
+                  Configurar PIN
+                </button>
+                <button
+                  onClick={() => {
+                    setMenuAbierto(false);
+                    navigate('/');
+                  }}
+                  className="w-full text-left px-4 py-3 text-white text-sm font-semibold hover:bg-zinc-800 transition flex items-center gap-3"
+                >
+                  <ArrowLeftOnRectangleIcon className="w-5 h-5 text-zinc-400" />
+                  Salir del Perfil
                 </button>
               </div>
             )}

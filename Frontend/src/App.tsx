@@ -19,7 +19,9 @@ import Perfil from './models/Perfil'
 import WeeklySummaries from './Components/Weekly_Summaries'
 import WeeklySummaryDetail from './Components/Weekly_Summaries_details'
 import RewardsMain from './Components/Rewards_main';
+import Enfoque_details from './Components/Enfoque_details'
 import { ToastProvider } from './Components/ToastContext'
+import Set_pin from './Components/Set_pin'
 
 export default function App() {
   // Estado global para el perfil
@@ -81,10 +83,7 @@ export default function App() {
             }
           />
           <Route path="/subir-perfil" element={<UploadProfile />} />
-          <Route
-            path="/dashboard"
-            element={<Dashboard perfilGlobal={perfilGlobal} />}
-          />
+          <Route path="/dashboard" element={<Dashboard perfilGlobal={perfilGlobal} />} />
           <Route path="/actividades" element={<ActivitiesMain />} />
           <Route path="/actividades/agregar" element={<ActivitiesAdd />} />
           <Route path="/actividades/editar/:id" element={<ActivitiesEdit />} />
@@ -92,11 +91,10 @@ export default function App() {
           <Route path="/progreso-semanal" element={<WeeklyProgress />} />
           <Route path="/resumenes-semanales" element={<WeeklySummaries />} />
           <Route path="/resumen-semanal/:id" element={<WeeklySummaryDetail />} />
-          <Route path="/Download" element={<Download />} />
-          <Route
-            path="/recompensas"
-            element={<RewardsMain perfilGlobal={perfilGlobal} />}
-          />
+          <Route path="/descargar" element={<Download />} />
+          <Route path="/recompensas" element={<RewardsMain perfilGlobal={perfilGlobal} />} />
+          <Route path="/enfoque-detalle" element={<Enfoque_details perfilGlobal={perfilGlobal} />} />
+          <Route path="/configurar-pin" element={<Set_pin/>} />
         </Routes>
       </Layout>
     </ToastProvider>

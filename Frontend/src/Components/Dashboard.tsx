@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react' // Asegúrate de tener useState aquí
 import { useNavigate } from 'react-router-dom'
 import type Perfil from '../models/Perfil'
 import { useToast } from './ToastContext'
@@ -10,7 +10,9 @@ import {
   DocumentTextIcon, 
   UserCircleIcon, 
   ArrowDownTrayIcon,
-  TrophyIcon 
+  TrophyIcon,
+  FlagIcon,
+  LockClosedIcon
 } from '@heroicons/react/24/outline'
 
 interface DashboardProps {
@@ -20,6 +22,18 @@ interface DashboardProps {
 export default function Dashboard({ perfilGlobal }: DashboardProps) {
   const navigate = useNavigate()
   const { mostrarToast } = useToast()
+
+  // --- ESTADO PARA EL MODO SIMPLIFICADO ---
+  const [modoSimple, setModoSimple] = useState(() => {
+    // Al cargar, revisamos si el usuario ya tenía activo el modo simple
+    return localStorage.getItem('focus_modo_simple') === 'true'
+  })
+
+  const toggleModoSimple = () => {
+    const nuevoEstado = !modoSimple
+    setModoSimple(nuevoEstado)
+    localStorage.setItem('focus_modo_simple', String(nuevoEstado))
+  }
 
   // Carga de enfoques
   useEffect(() => {
@@ -104,14 +118,35 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
       <div className="relative z-10 flex flex-col items-center justify-start flex-1 pt-16 px-4 pb-8">
 
         {/* Título */}
-        <h1 className="text-4xl font-bold text-center mb-10 mt-2" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
+        <h1 className="text-4xl font-bold text-center mb-6 mt-2" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
           {obtenerSaludo(perfilGlobal?.genero)}, {perfilGlobal?.nickname || "Invitado"}; ¿Qué deseas hacer ahora?
         </h1>
 
-        {/* Tarjetas */}
-        <div className="flex flex-wrap justify-center gap-6">
+        {/* Contenedor del Interruptor Modo Simple */}
+        <div className="w-full max-w-4xl flex justify-end px-6 mb-6">
+          <label className="flex items-center cursor-pointer gap-3 group">
+            <span className="text-zinc-400 text-sm font-medium transition group-hover:text-zinc-300">
+              Modo Simplificado
+            </span>
+            <div className="relative">
+              <input 
+                type="checkbox" 
+                className="sr-only" 
+                checked={modoSimple} 
+                onChange={toggleModoSimple} 
+              />
+              {/* Fondo del interruptor */}
+              <div className={`block w-12 h-7 rounded-full transition-colors duration-300 ease-in-out ${modoSimple ? 'bg-[#5ecfb8]' : 'bg-zinc-700'}`}></div>
+              {/* Círculo deslizable */}
+              <div className={`absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform duration-300 ease-in-out ${modoSimple ? 'translate-x-5' : 'translate-x-0'}`}></div>
+            </div>
+          </label>
+        </div>
 
-          {/* Tarjeta 1: Actividades */}
+        {/* Tarjetas */}
+        <div className="flex flex-wrap justify-center gap-6 max-w-5xl">
+
+          {/* Tarjeta 1: Actividades (SIEMPRE VISIBLE) */}
           <div
             onClick={() => navigate('/actividades')}
             className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
@@ -120,7 +155,7 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
             <p className="text-white text-sm font-semibold text-center">Gestiona tus actividades</p>
           </div>
 
-          {/* Tarjeta 2: Progreso Semanal */}
+          {/* Tarjeta 2: Progreso Semanal (SIEMPRE VISIBLE) */}
           <div
             onClick={() => navigate('/progreso-semanal')}
             className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
@@ -129,7 +164,7 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
             <p className="text-white text-sm font-semibold text-center">Ver tu progreso semanal</p>
           </div>
 
-          {/* Tarjeta 3: Reportes Semanales */}
+          {/* Tarjeta 3: Reportes Semanales (SIEMPRE VISIBLE) */}
           <div
             onClick={() => navigate('/resumenes-semanales')}
             className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
@@ -138,32 +173,56 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
             <p className="text-white text-sm font-semibold text-center">Ver tus reportes semanales</p>
           </div>
 
-          {/* Tarjeta 4: Editar Perfil */}
-          <div
-            onClick={() => navigate('/editar-perfil')}
-            className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
-            style={{ backgroundColor: '#2a2a2a' }}>
-            <UserCircleIcon className="w-12 h-12 text-[#d946ef] transition group-hover:text-white" />
-            <p className="text-white text-sm font-semibold text-center">Edita tu perfil</p>
-          </div>
+          {/* --- BLOQUE SECUNDARIO: OCULTO SI 'modoSimple' ES TRUE --- */}
+          {!modoSimple && (
+            <>
+              {/* Tarjeta 4: Editar Perfil */}
+              <div
+                onClick={() => navigate('/editar-perfil')}
+                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
+                style={{ backgroundColor: '#2a2a2a' }}>
+                <UserCircleIcon className="w-12 h-12 text-[#d946ef] transition group-hover:text-white" />
+                <p className="text-white text-sm font-semibold text-center">Edita tu perfil</p>
+              </div>
 
-          {/* Tarjeta 5: Descarga */}
-          <div
-            onClick={() => navigate('/Download')}
-            className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
-            style={{ backgroundColor: '#2a2a2a' }}>
-            <ArrowDownTrayIcon className="w-12 h-12 text-[#b8f0a0] transition group-hover:text-white" />
-            <p className="text-white text-sm font-semibold text-center">Descarga tu perfil</p>
-          </div>
+              {/* Tarjeta 5: Descarga */}
+              <div
+                onClick={() => navigate('/descargar')}
+                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
+                style={{ backgroundColor: '#2a2a2a' }}>
+                <ArrowDownTrayIcon className="w-12 h-12 text-[#b8f0a0] transition group-hover:text-white" />
+                <p className="text-white text-sm font-semibold text-center">Descarga tu perfil</p>
+              </div>
 
-        {/* Tarjeta 6: Recompensas */}
-          <div
-            onClick={() => navigate('/recompensas')}
-            className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
-            style={{ backgroundColor: '#2a2a2a' }}>
-            <TrophyIcon className="w-12 h-12 text-[#fbbf24] transition group-hover:text-white" />
-            <p className="text-white text-sm font-semibold text-center">Logros</p>
-          </div>
+              {/* Tarjeta 6: Enfoque Detalle */}
+              <div
+                onClick={() => navigate('/enfoque-detalle')}
+                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
+                style={{ backgroundColor: '#2a2a2a' }}>
+                <FlagIcon className="w-12 h-12 text-[#f59e0b] transition group-hover:text-white" />
+                <p className="text-white text-sm font-semibold text-center">Conoce tu enfoque</p>
+              </div>
+              
+              {/* Tarjeta 7: Recompensas */}
+              <div
+                onClick={() => navigate('/recompensas')}
+                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
+                style={{ backgroundColor: '#2a2a2a' }}>
+                <TrophyIcon className="w-12 h-12 text-[#fbbf24] transition group-hover:text-white" />
+                <p className="text-white text-sm font-semibold text-center">Logros</p>
+              </div>
+
+              {/* Tarjeta 8: Configurar PIN */}
+              <div
+                onClick={() => navigate('/configurar-pin')}
+                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
+                style={{ backgroundColor: '#2a2a2a' }}>
+                <LockClosedIcon className="w-12 h-12 text-[#6b7280] transition group-hover:text-white" />
+                <p className="text-white text-sm font-semibold text-center">Configurar PIN</p>
+              </div>
+            </>
+          )}
+
         </div>
       </div>
     </div>

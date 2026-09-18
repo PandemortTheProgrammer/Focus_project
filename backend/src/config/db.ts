@@ -31,7 +31,8 @@ export const inicializarBD = async () => {
                 Id_tipo INTEGER PRIMARY KEY AUTOINCREMENT,
                 Nombre_activ VARCHAR(20) NOT NULL,
                 Utilidad_objet INTEGER CHECK(Utilidad_objet <= 5),
-                Codigo_color VARCHAR(7) NOT NULL
+                Codigo_color VARCHAR(7) NOT NULL,
+                nivel_presencia INTEGER DEFAULT 1
             );
 
             CREATE TABLE IF NOT EXISTS Icono (
@@ -52,6 +53,7 @@ export const inicializarBD = async () => {
                 Id_enfoque INTEGER,
                 genero VARCHAR(1) NOT NULL,
                 Id_icono INTEGER NOT NULL DEFAULT 1,
+                pin VARCHAR(4) DEFAULT NULL,
                 FOREIGN KEY (Id_enfoque) REFERENCES Enfoque(Id_enfoque) ON DELETE SET NULL,
                 FOREIGN KEY (Id_icono) REFERENCES Icono(Id_icono) ON DELETE SET NULL
             );
@@ -113,34 +115,34 @@ export const inicializarBD = async () => {
         const tiposExisten = await dbInstance.get("SELECT COUNT(*) as count FROM Tipo_actividad");
         if (tiposExisten.count === 0) {
             await dbInstance.exec(`
-                INSERT INTO Tipo_actividad (Nombre_activ, Utilidad_objet, Codigo_color) VALUES 
-                ('Comer', 5, '#eab308'), 
-                ('Expresión artística', 3, '#f97316'), 
-                ('Cuidado de mascotas', 4, '#ed75ff'), 
-                ('Realizar un trámite', 2, '#1f7b71'), 
-                ('Planificación de actividades', 4, '#4c9088'), 
-                ('Familia', 5, '#b227c7'), 
-                ('Pareja', 5, '#9624a7'), 
-                ('Higiene personal', 5, '#f5d986'), 
-                ('Meditación', 3, '#1352b8'), 
-                ('Transporte', 4, '#759692'), 
-                ('Socializar', 3, '#d233eb'), 
-                ('Tareas del hogar', 4, '#275751'), 
-                ('Ir de Compras (ocio)', 2, '#ff987a'), 
-                ('Hacer el mandado', 4, '#135850'), 
-                ('Ir al médico', 5, '#81734a'), 
-                ('Autocuidado', 4, '#d946ef'), 
-                ('Proyecto personal', 5, '#008575'), 
-                ('Descanso activo', 3, '#0062ff'), 
-                ('Estudio', 5, '#1a7a6e'), 
-                ('Dormir', 5, '#3b82f6'), 
-                ('Actividad física', 4, '#872d95'), 
-                ('Lectura', 4, '#bb570f'), 
-                ('Trabajo', 3, '#20ab9a'), 
-                ('Series o Películas', 2, '#7062ef'), 
-                ('Música', 2, '#ff987a'), 
-                ('Videojuegos', 1, '#8b7fef'), 
-                ('Redes sociales', 1, '#6d6999');
+                INSERT INTO Tipo_actividad (Nombre_activ, Utilidad_objet, Codigo_color, nivel_presencia) VALUES 
+                ('Comer', 5, '#eab308', 1), 
+                ('Expresión artística', 3, '#f97316', 1), 
+                ('Cuidado de mascotas', 4, '#ed75ff', 1), 
+                ('Realizar un trámite', 2, '#1f7b71', 1), 
+                ('Planificación de actividades', 4, '#4c9088', 1), 
+                ('Familia', 5, '#b227c7', 1), 
+                ('Pareja', 5, '#9624a7', 1), 
+                ('Higiene personal', 5, '#f5d986', 1), 
+                ('Meditación', 3, '#1352b8', 1), 
+                ('Transporte', 4, '#759692', 1), 
+                ('Socializar', 3, '#d233eb', 2), 
+                ('Tareas del hogar', 4, '#275751', 1), 
+                ('Ir de Compras (ocio)', 2, '#ff987a', 1), 
+                ('Hacer el mandado', 4, '#135850', 1), 
+                ('Ir al médico', 5, '#81734a', 1), 
+                ('Autocuidado', 4, '#d946ef', 1), 
+                ('Proyecto personal', 5, '#008575', 1), 
+                ('Descanso activo', 3, '#0062ff', 2), 
+                ('Estudio', 5, '#1a7a6e', 1), 
+                ('Dormir', 5, '#3b82f6', 0), 
+                ('Actividad física', 4, '#872d95', 1), 
+                ('Lectura', 4, '#bb570f', 1), 
+                ('Trabajo', 3, '#20ab9a', 1), 
+                ('Series o Películas', 2, '#7062ef', 2), 
+                ('Música', 2, '#ff987a', 2), 
+                ('Videojuegos', 1, '#8b7fef', 1), 
+                ('Redes sociales', 1, '#6d6999', 2);
                 
                 INSERT INTO Enfoque (nombre_enf, descrip_enf) VALUES 
                 ('Académico', 'Prioriza actividades de estudio y aprendizaje'), 
@@ -156,8 +158,6 @@ export const inicializarBD = async () => {
 
         // ==========================================
         // 4. ACTUALIZACIÓN AUTOMÁTICA DE ÍCONOS Y RECOMPENSAS
-        // Usamos INSERT OR IGNORE indicando el ID exacto. 
-        // Si el usuario ya tiene ese ID en su BD, lo ignora. Si no lo tiene, lo añade.
         // ==========================================
 
         await dbInstance.exec(`
@@ -201,9 +201,50 @@ export const inicializarBD = async () => {
             (16, 'Un nuevo comienzo', 'Recibe el primer reporte semanal bajo un nuevo enfoque', 'ICONO', 17),
             (17, 'Recordando viejos tiempos', 'Exploraste tu historial de actividades por primera vez', 'ICONO', 18),
             (18, 'Gran Maestro de los logros (de la versión 1)', 'Conseguiste todos los logros de Focus (v1)', 'ICONO', 19);
-            
         `);
         console.log("Catálogo de Íconos y Recompensas verificado/actualizado.");
+
+        // ==========================================
+        // 5. MIGRACIONES Y PARCHES (V2)
+        // ==========================================
+        try {
+            // Revisamos la estructura actual de la tabla Tipo_actividad
+            const columnasActividad = await dbInstance.all("PRAGMA table_info(Tipo_actividad)");
+            
+            // Verificamos si la columna 'nivel_presencia' ya existe
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const tieneNivelPresencia = columnasActividad.some((col: any) => col.name === 'nivel_presencia');
+
+            if (!tieneNivelPresencia) {
+                console.log("Aplicando parche V2: Agregando 'nivel_presencia' a Tipo_actividad...");
+                
+                // Inyectamos la columna con el valor por defecto 1 (Acción/Foreground)
+                await dbInstance.run("ALTER TABLE Tipo_actividad ADD COLUMN nivel_presencia INTEGER DEFAULT 1");
+
+                // Asignamos Nivel 0 (Exclusivas - Bloqueo total)
+                await dbInstance.run("UPDATE Tipo_actividad SET nivel_presencia = 0 WHERE Nombre_activ IN ('Dormir')");
+                
+                // Asignamos Nivel 2 (Fondo - Permite solapamiento)
+                await dbInstance.run(`
+                    UPDATE Tipo_actividad 
+                    SET nivel_presencia = 2 
+                    WHERE Nombre_activ IN ('Socializar', 'Descanso activo', 'Series o Películas', 'Música', 'Redes sociales')
+                `);
+
+                // ... (dentro de tu bloque de migraciones V2)
+                
+            }
+            const columnasPerfil = await dbInstance.all("PRAGMA table_info(Perfil)");
+            const tienePin = columnasPerfil.some((col: any) => col.name === 'pin');
+                
+                if (!tienePin) {
+                    console.log("Aplicando parche V2: Agregando 'pin' a Perfil...");
+                    await dbInstance.run("ALTER TABLE Perfil ADD COLUMN pin VARCHAR(4) DEFAULT NULL");
+                }
+                console.log("Migración V2 completada exitosamente.");
+        } catch (error) {
+            console.error("Error al aplicar las migraciones de la V2:", error);
+        }
 
         return dbInstance;
     } catch (error) {
@@ -229,7 +270,3 @@ export const cerrarBD = async (): Promise<void> => {
         }
     }
 };
-
-/*
-
-*/

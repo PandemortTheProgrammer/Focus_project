@@ -1,7 +1,7 @@
 // backend/src/controllers/perfilController.ts
 import { Request, Response } from 'express';
 import path from 'path';
-import { guardarPerfil, obtenerPerfil, obtenerEnfoques, reiniciarPerfilYDatos } from '../services/PerfilManager';
+import { guardarPerfil, obtenerPerfil, obtenerEnfoques, reiniciarPerfilYDatos, obtenerDetallesEnfoque, actualizarPin } from '../services/PerfilManager';
 
 export const getEnfoques = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -10,6 +10,45 @@ export const getEnfoques = async (req: Request, res: Response): Promise<void> =>
     } catch (error: unknown) {
         const mensaje = error instanceof Error ? error.message : "Error desconocido";
         res.status(500).json({ error: mensaje });
+    }
+};
+
+export const getEnfoqueDetalles = async (req: Request, res: Response) => {
+    try {
+        const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+        const idEnfoque = parseInt(idParam, 10);
+        
+        if (isNaN(idEnfoque)) {
+            return res.status(400).json({ error: "ID de enfoque no válido." });
+        }
+
+        const detalles = await obtenerDetallesEnfoque(idEnfoque);
+        
+        if (!detalles) {
+            return res.status(404).json({ error: "Enfoque no encontrado en los catálogos." });
+        }
+
+        res.json(detalles);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al recuperar los detalles del enfoque." });
+    }
+};
+
+export const configurarPin = async (req: Request, res: Response) => {
+    try {
+        const { pin } = req.body;
+        
+        // Validación de seguridad en el backend
+        if (pin !== null && (pin.length !== 4 || isNaN(Number(pin)))) {
+            return res.status(400).json({ error: "El PIN debe contener exactamente 4 números." });
+        }
+
+        await actualizarPin(pin);
+        res.status(200).json({ mensaje: pin ? "PIN configurado con éxito." : "PIN eliminado con éxito." });
+    } catch (error) {
+        console.error("Error al configurar el PIN:", error);
+        res.status(500).json({ error: "Ocurrió un error al guardar el PIN en tu perfil local." });
     }
 };
 
@@ -25,7 +64,8 @@ export const getPerfilActivo = async (req: Request, res: Response) => {
             age_rank: perfil.rango_edad,
             genero: perfil.genero,
             id_focus: perfil.Id_enfoque,
-            id_icono: perfil.Id_icono ?? 1
+            id_icono: perfil.Id_icono ?? 1,
+            pin: perfil.pin ?? null
         };
         
         res.json(perfilNormalizado);
@@ -81,3 +121,4 @@ export const resetearPerfil = async (req: Request, res: Response) => {
         res.status(500).json({ error: "No se pudo reiniciar la base de datos." });
     }
 };
+
