@@ -124,7 +124,7 @@ export default function ConoceTuEnfoque({ perfilGlobal }: ConoceTuEnfoqueProps) 
                     </div>
 
                     <button
-                        onClick={() => navigate('/editar-perfil')}
+                        onClick={() => navigate('/seleccionar-enfoque')}
                         className="flex items-center gap-2 px-8 py-3 rounded-full text-[#1a1a1a] font-bold transition hover:scale-105 shrink-0 shadow-lg"
                         style={{ backgroundColor: '#5ecfb8' }}>
                         <ArrowPathIcon className="w-5 h-5 stroke-[2.5]" />

@@ -138,20 +138,20 @@ export const evaluarNuevosLogros = async (idPerfil: number, eventoEspecial?: str
 
     // --- REGLAS 1 a 12 (Se mantienen exactamente igual) ---
     if (!idsObtenidas.has(1)) {
-        await db.run(`INSERT INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 1]);
+        await db.run(`INSERT OR IGNORE INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 1]);
         nuevosLogrosIds.push(1);
     }
     if (!idsObtenidas.has(2)) {
         const conteo = await db.get(`SELECT COUNT(*) as total FROM Actividad`);
         if ((conteo?.total ?? 0) >= 1) {
-            await db.run(`INSERT INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 2]);
+            await db.run(`INSERT OR IGNORE INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 2]);
             nuevosLogrosIds.push(2);
         }
     }
     if (!idsObtenidas.has(3)) {
         const horas = await db.get(`SELECT SUM(durac_min) as totalMinutos FROM Actividad`);
         if ((horas?.totalMinutos ?? 0) >= 600) {
-            await db.run(`INSERT INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 3]);
+            await db.run(`INSERT OR IGNORE INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 3]);
             nuevosLogrosIds.push(3);
         }
     }
@@ -160,56 +160,56 @@ export const evaluarNuevosLogros = async (idPerfil: number, eventoEspecial?: str
             const reportes = await db.get(`SELECT COUNT(*) as total FROM Reporte_semanal`);
             const totalReportes = reportes?.total ?? 0;
             if (!idsObtenidas.has(4) && totalReportes >= 1) {
-                await db.run(`INSERT INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 4]);
+                await db.run(`INSERT OR IGNORE INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 4]);
                 nuevosLogrosIds.push(4);
             }
             if (!idsObtenidas.has(5) && totalReportes >= 2) {
-                await db.run(`INSERT INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 5]);
+                await db.run(`INSERT OR IGNORE INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 5]);
                 nuevosLogrosIds.push(5);
             }
             if (!idsObtenidas.has(13) && totalReportes >= 4) {
-                await db.run(`INSERT INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 13]);
+                await db.run(`INSERT OR IGNORE INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 13]);
                 nuevosLogrosIds.push(13);
             }
         } catch (error) { console.error("Error en tabla Reporte_semanal:", error); }
     }
     if (!idsObtenidas.has(6) && eventoEspecial === 'EXPLORACION_TOTAL') {
-        await db.run(`INSERT INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 6]);
+        await db.run(`INSERT OR IGNORE INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 6]);
         nuevosLogrosIds.push(6);
     }
     if (!idsObtenidas.has(7) && eventoEspecial === 'DESCARGA_PERFIL') {
-        await db.run(`INSERT INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 7]);
+        await db.run(`INSERT OR IGNORE INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 7]);
         nuevosLogrosIds.push(7);
     }
     if (!idsObtenidas.has(8)) {
         const conteo = await db.get(`SELECT COUNT(*) as total FROM Actividad`);
         if ((conteo?.total ?? 0) >= 50) {
-            await db.run(`INSERT INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 8]);
+            await db.run(`INSERT OR IGNORE INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 8]);
             nuevosLogrosIds.push(8);
         }
     }
     if (!idsObtenidas.has(9)) {
         const nocturna = await db.get(`SELECT 1 FROM Actividad WHERE hora_inicio >= '00:00' AND hora_inicio <= '04:00' LIMIT 1`);
         if (nocturna) {
-            await db.run(`INSERT INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 9]);
+            await db.run(`INSERT OR IGNORE INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 9]);
             nuevosLogrosIds.push(9);
         }
     }
     if (!idsObtenidas.has(10) && eventoEspecial === 'VISITA_PROGRESO') {
-        await db.run(`INSERT INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 10]);
+        await db.run(`INSERT OR IGNORE INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 10]);
         nuevosLogrosIds.push(10);
     }
     if (!idsObtenidas.has(11)) {
         try {
             const cruzadoTipos = await db.get(`SELECT (SELECT COUNT(DISTINCT id_tipo) FROM Actividad) as tiposUsados, (SELECT COUNT(id_tipo) FROM Tipo_actividad) as tiposTotales`);
             if (cruzadoTipos && cruzadoTipos.tiposTotales > 0 && cruzadoTipos.tiposUsados >= cruzadoTipos.tiposTotales) {
-                await db.run(`INSERT INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 11]);
+                await db.run(`INSERT OR IGNORE INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 11]);
                 nuevosLogrosIds.push(11);
             }
         } catch (error) {}
     }
     if (!idsObtenidas.has(12) && eventoEspecial === 'EDICION_PERFIL') {
-        await db.run(`INSERT INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 12]);
+        await db.run(`INSERT OR IGNORE INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 12]);
         nuevosLogrosIds.push(12);
     }
 
@@ -229,7 +229,7 @@ export const evaluarNuevosLogros = async (idPerfil: number, eventoEspecial?: str
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                 
                 if (diffDays >= 365) {
-                    await db.run(`INSERT INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 14]);
+                    await db.run(`INSERT OR IGNORE INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 14]);
                     nuevosLogrosIds.push(14);
                 }
             }
@@ -246,20 +246,20 @@ export const evaluarNuevosLogros = async (idPerfil: number, eventoEspecial?: str
             LIMIT 1
         `);
         if (madrugador) {
-            await db.run(`INSERT INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 15]);
+            await db.run(`INSERT OR IGNORE INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 15]);
             nuevosLogrosIds.push(15);
         }
     }
 
     // REGLA 16: Un nuevo comienzo
     if (!idsObtenidas.has(16) && eventoEspecial === 'REPORTE_NUEVO_ENFOQUE') {
-        await db.run(`INSERT INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 16]);
+        await db.run(`INSERT OR IGNORE INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 16]);
         nuevosLogrosIds.push(16);
     }
 
     // REGLA 17: Recordando viejos tiempos
     if (!idsObtenidas.has(17) && eventoEspecial === 'VISITA_HISTORIAL') {
-        await db.run(`INSERT INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 17]);
+        await db.run(`INSERT OR IGNORE INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 17]);
         nuevosLogrosIds.push(17);
     }
 
@@ -277,7 +277,7 @@ export const evaluarNuevosLogros = async (idPerfil: number, eventoEspecial?: str
         }
 
         if (tieneTodos) {
-            await db.run(`INSERT INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 18]);
+            await db.run(`INSERT OR IGNORE INTO Perfil_Recompensa (Id_perfil, Id_recompensa) VALUES (?, ?)`, [idPerfil, 18]);
             nuevosLogrosIds.push(18);
         }
     }

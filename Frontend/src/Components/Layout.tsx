@@ -1,7 +1,7 @@
 // frontend/src/components/Layout.tsx
 
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import FocusLogo from '../assets/Images/Focus_v2_logo.png';
 import type Perfil from '../models/Perfil';
 import type Enfoque from '../models/Enfoque';
@@ -30,19 +30,22 @@ interface LayoutProps {
 export default function Layout({ children, perfilGlobal }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // ESTADO PARA EL MENÚ DESPLEGABLE DEL PERFIL
   const [menuAbierto, setMenuAbierto] = useState(false);
-
+  const esOnboarding = searchParams.get('onboarding') === 'true';
   // 1. EL RADAR: Definimos en qué rutas exactas NO queremos que aparezca el Header
   const rutasSinHeader = [
     '/',                 // MainPage
     '/crear-perfil',     // Creación
     '/subir-perfil'      // Subir perfil
   ];
-
-  const mostrarHeader = !rutasSinHeader.includes(location.pathname);
-
+  
+  const mostrarHeader = 
+    !rutasSinHeader.includes(location.pathname) && 
+    !(location.pathname === '/seleccionar-enfoque' && esOnboarding);
+    
   const [enfoques, setEnfoques] = useState<Enfoque[]>([]);
   const nickname = perfilGlobal?.nickname || 'Desconocido';
   const urlIcono = obtenerUrlIcono(perfilGlobal?.id_icono);

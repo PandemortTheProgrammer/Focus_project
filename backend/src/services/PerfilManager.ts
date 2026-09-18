@@ -148,3 +148,8 @@ export const reiniciarPerfilYDatos = async (): Promise<void> => {
         throw error;
     }
 };
+
+export const actualizarEnfoque = async (idEnfoque: number): Promise<void> => {
+    const db = getDB();
+    await db.run("UPDATE Perfil SET Id_enfoque = ? WHERE Id_perfil = 1", [idEnfoque]);
+};

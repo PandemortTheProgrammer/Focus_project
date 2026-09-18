@@ -1,14 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Perfil from '../models/Perfil'
 import IconPicker from './IconPicker'
-import { useToast } from './ToastContext' // Importamos el sistema de notificaciones
-
-interface EnfoqueCatalogoRow {
-  Id_enfoque: number;
-  nombre_enf: string;
-  descrip_enf?: string;
-}
+import { useToast } from './ToastContext'
+import { LightBulbIcon } from '@heroicons/react/24/outline' // Agregamos el ícono para el modal
 
 interface EditProfileProps {
   perfilGlobal: Perfil;
@@ -17,41 +12,18 @@ interface EditProfileProps {
 
 export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfileProps) {
   const navigate = useNavigate()
-  const { mostrarToast } = useToast() // Extraemos la función global
+  const { mostrarToast } = useToast()
 
   const [nickname, setNickname] = useState(perfilGlobal?.nickname || '')
   const [ageRank, setAgeRank] = useState(perfilGlobal?.age_rank || '')
-  const [focus, setFocus] = useState(perfilGlobal?.id_focus ? String(perfilGlobal.id_focus) : '')
   const [genero, setGenero] = useState(perfilGlobal?.genero || '')
   const [idIcono, setIdIcono] = useState<number>(Number(perfilGlobal?.id_icono ?? 1))
-  const [enfoquesCatalogo, setEnfoquesCatalogo] = useState<EnfoqueCatalogoRow[]>([])
-  const descripcionSeleccionada = focus
-    ? (enfoquesCatalogo.find((enfoque) => enfoque.Id_enfoque === Number(focus))?.descrip_enf ?? '')
-    : ''
-
-  // Carga los enfoques desde la BD
-  useEffect(() => {
-    const cargarEnfoques = async () => {
-      try {
-        const res = await fetch('http://localhost:3000/api/perfil/enfoques')
-        if (res.ok) {
-          const datos = await res.json() as EnfoqueCatalogoRow[]
-          setEnfoquesCatalogo(datos)
-        } else {
-          mostrarToast('error', 'Error de carga', 'No se pudieron cargar los enfoques disponibles.')
-        }
-      } catch (error: unknown) {
-        const mensaje = error instanceof Error ? error.message : "Error desconocido"
-        console.error('Error al cargar enfoques:', mensaje)
-        mostrarToast('error', 'Error de conexión', 'No se pudo conectar con el servidor.')
-      }
-    }
-    cargarEnfoques()
-  }, [mostrarToast])
+  
+  // NUEVO: Estado para controlar el modal flotante
+  const [mostrarModalEnfoque, setMostrarModalEnfoque] = useState(false)
 
   const handleSave = async () => {
-    // 1. Validación de campos vacíos con Toast de advertencia
-    if (!nickname || !ageRank || !focus || !genero) {
+    if (!nickname || !ageRank || !genero) {
       mostrarToast('advertencia', 'Datos incompletos', 'Por favor, completa todos los campos.')
       return
     }
@@ -60,7 +32,7 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
       perfilGlobal?.id_perfil ?? 1,
       nickname,
       ageRank,
-      parseInt(focus),
+      perfilGlobal?.id_focus ?? 7, 
       genero,
       idIcono
     )
@@ -78,14 +50,13 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
         })
       })
 
-      // 2. Extraemos el mensaje de Express
       const data = await res.json().catch(() => ({}))
 
       if (res.ok) {
         mostrarToast('exito', '¡Perfil actualizado!', data.mensaje || 'Tus cambios se han guardado correctamente.')
         setPerfilGlobal(perfilActualizado)
 
-        // --- NUEVA LÓGICA: Evaluación del logro Evolución ---
+        // Evaluación del logro Evolución
         try {
           const resEvento = await fetch('http://localhost:3000/api/recompensas/evaluar-evento', {
             method: 'POST',
@@ -99,33 +70,30 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
               dataEvento.logrosDesbloqueados.forEach((logro: any, index: number) => {
                 setTimeout(() => {
                   mostrarToast('logro', logro.nombre_recompensa, logro.descripcion, '', logro)
-                }, index * 1500 + 1000) // +1000ms para que aparezca después del toast de éxito
+                }, index * 1500 + 1000)
               })
             }
           }
         } catch (eventoError) {
           console.error('Error al evaluar el logro de edición:', eventoError)
         }
-        // ----------------------------------------------------
 
-        navigate('/dashboard')
+        // EN LUGAR DE REDIRIGIR AL DASHBOARD, ABRIMOS EL MODAL
+        setMostrarModalEnfoque(true)
+        
       } else {
         mostrarToast('error', 'No se guardaron los cambios', data.error || 'Hubo un problema al guardar tu perfil.')
       }
     } catch (error: unknown) {
-      const mensaje = error instanceof Error ? error.message : "Error desconocido"
-      console.error(mensaje)
+      console.error(error)
       mostrarToast('error', 'Error de conexión', 'No se pudo conectar con el servidor.')
     }
   }
 
   return (
     <div className="relative w-full min-h-screen overflow-auto flex flex-col">
-
-      {/* Formulario */}
       <div className="relative z-10 flex flex-col items-center justify-center flex-1">
         <div className="flex flex-col gap-4 w-72">
-
           <IconPicker nickname={nickname} iconoSeleccionado={idIcono} onSeleccionar={setIdIcono} />
           
           <div className="flex flex-col gap-1">
@@ -139,7 +107,6 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
               style={{ backgroundColor: '#2a2a2a' }}
             />
           </div>
-
 
           <div className="flex flex-col gap-1">
             <label className="text-white text-sm px-2">¿Cómo prefieres que te llamemos ahora?</label>
@@ -169,62 +136,62 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
             </select>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-white text-sm px-2">Re-enfócate:</label>
-            <select
-              value={focus}
-              onChange={(e) => setFocus(e.target.value)}
-              className="w-full px-5 py-3 rounded-full text-white text-lg outline-none cursor-pointer transition-all duration-300 focus:ring-4 focus:ring-blue-500/30"
-              style={{ backgroundColor: '#2a2a2a' }}>
-              <option value="">Selecciona tu nuevo enfoque</option>
-              {enfoquesCatalogo.map((enf) => (
-                <option key={enf.Id_enfoque} value={enf.Id_enfoque}>
-                  {enf.nombre_enf}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div
-            style={{
-              overflow: 'hidden',
-              maxHeight: descripcionSeleccionada ? '120px' : '0px',
-              opacity: descripcionSeleccionada ? 1 : 0,
-              transition: 'max-height 450ms ease, opacity 400ms ease',
-              marginTop: descripcionSeleccionada ? '0' : '0',
-            }}
-          >
-            <p
-              style={{
-                fontSize: '0.78rem',
-                color: 'rgba(255,255,255,0.55)',
-                lineHeight: '1.6',
-                paddingLeft: '0.75rem',
-                paddingRight: '0.25rem',
-              }}
-            >
-              {descripcionSeleccionada}
-            </p>
-          </div>
-
-          {/* Botones */}
-          <div className="flex gap-4 mt-2 justify-center">
+          <div className="flex gap-4 mt-6 justify-center">
             <button
               onClick={() => navigate('/dashboard')}
-              className="px-10 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80 border border-zinc-600"
+              className="px-8 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80 border border-zinc-600"
               style={{ backgroundColor: '#1a1a1a' }}>
               Cancelar
             </button>
             <button
               onClick={handleSave}
-              className="px-10 py-3 rounded-full text-[#1a1a1a] text-lg font-bold shadow-lg transition hover:scale-105"
+              className="px-8 py-3 rounded-full text-[#1a1a1a] text-lg font-bold shadow-lg transition hover:scale-105"
               style={{ backgroundColor: '#5ecfb8' }}>
-              Guardar cambios
+              Guardar
             </button>
           </div>
-
         </div>
       </div>
+
+      {/* ========================================================= */}
+      {/* MODAL DE DECISIÓN SOBRE EL ENFOQUE */}
+      {/* ========================================================= */}
+      {mostrarModalEnfoque && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 animate-fade-in">
+          <div 
+            className="w-full max-w-sm p-6 rounded-3xl shadow-2xl border border-zinc-700/50 flex flex-col items-center text-center"
+            style={{ backgroundColor: '#1a1a1a' }}
+          >
+            <div className="w-14 h-14 bg-[#5ecfb8]/10 rounded-full flex items-center justify-center mb-4">
+              <LightBulbIcon className="w-7 h-7 text-[#5ecfb8]" />
+            </div>
+            
+            <h2 className="text-xl font-bold text-white mb-2">¿Actualizar enfoque?</h2>
+            
+            <p className="text-zinc-400 text-sm mb-8 leading-relaxed">
+              Tus datos han sido guardados. ¿Deseas mantener tu enfoque actual o elegir un nuevo camino para tus métricas?
+            </p>
+
+            <div className="flex gap-3 w-full">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="flex-1 py-3 rounded-full text-white font-semibold transition hover:bg-zinc-800 border border-zinc-600"
+                style={{ backgroundColor: 'transparent' }}
+              >
+                Conservar
+              </button>
+
+              <button
+                onClick={() => navigate('/seleccionar-enfoque')}
+                className="flex-1 py-3 rounded-full text-[#1a1a1a] font-bold transition hover:opacity-90"
+                style={{ backgroundColor: '#5ecfb8' }}
+              >
+                Cambiar enfoque
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

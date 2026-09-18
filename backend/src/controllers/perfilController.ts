@@ -1,7 +1,7 @@
 // backend/src/controllers/perfilController.ts
 import { Request, Response } from 'express';
 import path from 'path';
-import { guardarPerfil, obtenerPerfil, obtenerEnfoques, reiniciarPerfilYDatos, obtenerDetallesEnfoque, actualizarPin } from '../services/PerfilManager';
+import { guardarPerfil, obtenerPerfil, obtenerEnfoques, reiniciarPerfilYDatos, obtenerDetallesEnfoque, actualizarPin, actualizarEnfoque } from '../services/PerfilManager';
 
 export const getEnfoques = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -82,16 +82,22 @@ export const crearOEditarPerfil = async (req: Request, res: Response) => {
         if (!nickname || nickname.trim() === '') {
             return res.status(400).json({ error: "El apodo (nickname) no puede estar vacío." });
         }
-        if (!age_rank || !genero || !id_focus) {
-            return res.status(400).json({ error: "Faltan campos por seleccionar para completar el perfil." });
+        // Eliminamos '!id_focus' de la validación
+        if (!age_rank || !genero) { 
+            return res.status(400).json({ error: "Faltan campos por seleccionar." });
         }
 
-        await guardarPerfil(req.body);
-        
-        res.status(201).json({ mensaje: "Tu perfil ha sido guardado exitosamente." });
+        // Si no viene id_focus (porque es creación nueva), le asignamos null 
+        // o un valor por defecto como 7 (Equilibrado)
+        const datosParaGuardar = {
+            ...req.body,
+            id_focus: id_focus || null 
+        };
+
+        await guardarPerfil(datosParaGuardar);
+        res.status(201).json({ mensaje: "Perfil guardado." });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Ocurrió un error al escribir en tu archivo local." });
+        // ...
     }
 };
 
@@ -122,3 +128,15 @@ export const resetearPerfil = async (req: Request, res: Response) => {
     }
 };
 
+export const cambiarEnfoque = async (req: Request, res: Response) => {
+    try {
+        const { id_focus } = req.body;
+        if (!id_focus) return res.status(400).json({ error: "Falta el ID del enfoque." });
+        
+        await actualizarEnfoque(id_focus);
+        res.status(200).json({ mensaje: "Enfoque actualizado con éxito." });
+    } catch (error) {
+        console.error("Error al cambiar enfoque:", error);
+        res.status(500).json({ error: "No se pudo actualizar tu enfoque." });
+    }
+};

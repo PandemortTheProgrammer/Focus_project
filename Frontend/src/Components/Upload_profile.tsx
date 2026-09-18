@@ -30,7 +30,7 @@ export default function UploadProfile() {
 
     try {
       // Apuntamos a la ruta correcta de PerfilRoutes
-      const res = await fetch('http://localhost:3000/api/perfil/cargar', {
+      const res = await fetch('http://localhost:3000/api/database/upload', {
         method: 'POST',
         body: formData,
       })

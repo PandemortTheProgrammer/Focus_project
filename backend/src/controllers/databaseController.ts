@@ -12,13 +12,41 @@ export const uploadDatabase = async (req: Request, res: Response): Promise<void>
             return;
         }
 
-        const tempFilePath = req.file.path; 
-        const targetDbPath = path.resolve(process.cwd(), 'focus_database.sqlite'); 
+        const tempFilePath = req.file.path;
+        const targetDbPath = path.resolve(process.cwd(), 'focus_database.sqlite');
+        const backupDbPath = `${targetDbPath}.backup`;
+
+        if (fs.existsSync(targetDbPath)) {
+            fs.copyFileSync(targetDbPath, backupDbPath);
+        }
 
         await cerrarBD();
-        fs.copyFileSync(tempFilePath, targetDbPath);
-        fs.unlinkSync(tempFilePath);
-        await inicializarBD();
+
+        try {
+            fs.copyFileSync(tempFilePath, targetDbPath);
+            await inicializarBD();
+
+            if (fs.existsSync(backupDbPath)) {
+                fs.unlinkSync(backupDbPath);
+            }
+        } catch (restoreError) {
+            try {
+                await cerrarBD();
+            } catch (closeError) {
+                console.error('No se pudo cerrar la conexión fallida antes de restaurar:', closeError);
+            }
+            if (fs.existsSync(targetDbPath)) {
+                fs.unlinkSync(targetDbPath);
+            }
+            if (fs.existsSync(backupDbPath)) {
+                fs.renameSync(backupDbPath, targetDbPath);
+            }
+            throw restoreError;
+        } finally {
+            if (fs.existsSync(tempFilePath)) {
+                fs.unlinkSync(tempFilePath);
+            }
+        }
 
         console.log("✅ Base de datos reemplazada y sistema reconectado con éxito.");
         res.json({ success: true, message: 'Perfil cargado y conectado correctamente.' });

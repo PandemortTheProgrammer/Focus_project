@@ -11,7 +11,7 @@ interface PageHeaderProps {
 export default function PageHeader({
     titulo,
     rutaVolver = '/dashboard',
-    textoVolver = 'Volver',
+    textoVolver = 'Ir a Dashboard',
     ocultarBoton = false
 }: PageHeaderProps) {
     const navigate = useNavigate();

@@ -22,6 +22,7 @@ import RewardsMain from './Components/Rewards_main';
 import Enfoque_details from './Components/Enfoque_details'
 import { ToastProvider } from './Components/ToastContext'
 import Set_pin from './Components/Set_pin'
+import SeleccionarEnfoque from './Components/Focus_select'
 
 export default function App() {
   // Estado global para el perfil
@@ -95,6 +96,7 @@ export default function App() {
           <Route path="/recompensas" element={<RewardsMain perfilGlobal={perfilGlobal} />} />
           <Route path="/enfoque-detalle" element={<Enfoque_details perfilGlobal={perfilGlobal} />} />
           <Route path="/configurar-pin" element={<Set_pin/>} />
+          <Route path="/seleccionar-enfoque" element={<SeleccionarEnfoque />} />
         </Routes>
       </Layout>
     </ToastProvider>
