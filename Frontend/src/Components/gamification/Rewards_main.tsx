@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import type Perfil from '../models/Perfil';
-import { obtenerUrlIcono } from '../utils/icons';
+import type Perfil from '../../models/Perfil';
+import { obtenerUrlIcono } from '../../utils/icons';
 import { CheckBadgeIcon, LockClosedIcon } from '@heroicons/react/24/solid'; // Importamos el candado
-import { useToast } from './ToastContext';
-import PageHeader from './Page-head';
+import { useToast } from '../essentials/ToastContext';
+import PageHeader from '../essentials/Page-head';
 
 interface RewardsProps {
   perfilGlobal: Perfil;

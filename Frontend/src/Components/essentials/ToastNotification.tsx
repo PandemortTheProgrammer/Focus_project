@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { obtenerUrlIcono } from '../utils/icons'; // Asegúrate de tener esta importación
+import { obtenerUrlIcono } from '../../utils/icons'; // Asegúrate de tener esta importación
 
 interface ToastProps {
     visible: boolean;

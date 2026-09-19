@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import FocusLogo from '../assets/Images/Focus_logo.png'
-import { useToast } from './ToastContext' // Asegúrate de tener la ruta correcta
+import { useToast } from '../essentials/ToastContext' // Asegúrate de tener la ruta correcta
 import { LockClosedIcon } from '@heroicons/react/24/outline'
 
 export default function Mainpage() {

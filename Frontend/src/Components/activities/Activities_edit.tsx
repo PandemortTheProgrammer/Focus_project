@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import type Actividad from '../models/Actividad'
-import type Tipo_actividad from '../models/Tipo_actividad'
-import { useToast } from './ToastContext' // Importamos el contexto global
+import type Actividad from '../../models/Actividad'
+import type Tipo_actividad from '../../models/Tipo_actividad'
+import { useToast } from '../essentials/ToastContext' // Importamos el contexto global
 
 export default function ActivitiesEdit() {
   const navigate = useNavigate()

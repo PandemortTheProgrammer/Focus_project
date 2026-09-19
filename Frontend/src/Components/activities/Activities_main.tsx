@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type Tipo_actividad from '../models/Tipo_actividad'
-import type Actividad from '../models/Actividad'
-import { useToast } from './ToastContext' // Importamos el contexto de notificaciones
-import PageHeader from './Page-head'
+import type Tipo_actividad from '../../models/Tipo_actividad'
+import type Actividad from '../../models/Actividad'
+import { useToast } from '../essentials/ToastContext' // Importamos el contexto de notificaciones
+import PageHeader from '../essentials/Page-head'
 
 // Función auxiliar para calcular si pasaron 24 horas desde la creación
 const esActividadBloqueada = (fechaCreacion?: string | Date | null) => {

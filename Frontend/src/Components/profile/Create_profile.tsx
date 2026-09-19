@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import IconPicker from './IconPicker'
-import { useToast } from './ToastContext'
+import IconPicker from '../essentials/IconPicker'
+import { useToast } from '../essentials/ToastContext'
 
 interface CreateProfileProps {
   setPerfilGlobal: (perfil: { nickname: string; age_rank: string; genero: string; id_focus: number; id_icono?: number }) => void;

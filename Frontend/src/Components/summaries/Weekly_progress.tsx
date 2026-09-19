@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
-import type Tipo_actividad from '../models/Tipo_actividad'
-import type Actividad from '../models/Actividad'
+import type Tipo_actividad from '../../models/Tipo_actividad'
+import type Actividad from '../../models/Actividad'
 import {
   BarChart, Bar, XAxis, YAxis,
   ResponsiveContainer, Cell, PieChart, Pie, Tooltip
 } from 'recharts'
-import { useToast } from './ToastContext' // 1. Importamos el contexto de notificaciones
-import PageHeader from './Page-head'
+import { useToast } from '../essentials/ToastContext' // 1. Importamos el contexto de notificaciones
+import PageHeader from '../essentials/Page-head'
 
 // Genera los últimos 7 días como strings "YYYY-MM-DD"
 const obtenerUltimosSieteDias = (): string[] => {

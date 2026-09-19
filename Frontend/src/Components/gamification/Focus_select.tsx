@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PageHeader from './Page-head';
-import { useToast } from './ToastContext';
+import PageHeader from '../essentials/Page-head';
+import { useToast } from '../essentials/ToastContext';
 import { 
   CheckCircleIcon,
   AcademicCapIcon, 

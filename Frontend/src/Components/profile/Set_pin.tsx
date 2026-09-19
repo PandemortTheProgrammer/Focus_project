@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from './ToastContext';
+import { useToast } from '../essentials/ToastContext';
 import { ShieldCheckIcon, KeyIcon } from '@heroicons/react/24/outline';
-import PageHeader from './Page-head';
+import PageHeader from '../essentials/Page-head';
 
 export default function ConfigurarPin() {
     const navigate = useNavigate();

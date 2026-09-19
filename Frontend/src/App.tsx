@@ -1,28 +1,29 @@
 import { useEffect, useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
+import { ToastProvider } from './Components/essentials/ToastContext'
 
-// NUEVO: Importamos el Layout
-import Layout from './Components/Layout'
-
-import Mainpage from './Components/Mainpage'
-import CreateProfile from './Components/Create_profile'
-import EditProfile from './Components/Edit_profile'
-import UploadProfile from './Components/Upload_profile'
+import Layout from './Components/essentials/Layout'
+import Mainpage from './Components/profile/Mainpage'
+import CreateProfile from './Components/profile/Create_profile'
+import EditProfile from './Components/profile/Edit_profile'
+import UploadProfile from './Components/profile/Upload_profile'
 import Dashboard from './Components/Dashboard'
-import ActivitiesMain from './Components/Activities_main'
-import ActivitiesAdd from './Components/Activities_add'
-import ActivitiesEdit from './Components/Activities_edit'
-import ActivitiesHistory from './Components/Activities_history'
-import WeeklyProgress from './Components/Weekly_progress'
-import Download from './Components/download'
+import ActivitiesMain from './Components/activities/Activities_main'
+import ActivitiesAdd from './Components/activities/Activities_add'
+import ActivitiesEdit from './Components/activities/Activities_edit'
+import ActivitiesHistory from './Components/activities/Activities_history'
+import WeeklyProgress from './Components/summaries/Weekly_progress'
+import Download from './Components/profile/Download'
+import WeeklySummaries from './Components/summaries/Weekly_Summaries'
+import WeeklySummaryDetail from './Components/summaries/Weekly_Summaries_details'
+import RewardsMain from './Components/gamification/Rewards_main';
+import Enfoque_details from './Components/gamification/Enfoque_details'
+import Set_pin from './Components/profile/Set_pin'
+import SeleccionarEnfoque from './Components/gamification/Focus_select'
+import DiaIdeal from './Components/gamification/Ideal_day'
+
 import Perfil from './models/Perfil'
-import WeeklySummaries from './Components/Weekly_Summaries'
-import WeeklySummaryDetail from './Components/Weekly_Summaries_details'
-import RewardsMain from './Components/Rewards_main';
-import Enfoque_details from './Components/Enfoque_details'
-import { ToastProvider } from './Components/ToastContext'
-import Set_pin from './Components/Set_pin'
-import SeleccionarEnfoque from './Components/Focus_select'
+
 
 export default function App() {
   // Estado global para el perfil
@@ -97,6 +98,7 @@ export default function App() {
           <Route path="/enfoque-detalle" element={<Enfoque_details perfilGlobal={perfilGlobal} />} />
           <Route path="/configurar-pin" element={<Set_pin/>} />
           <Route path="/seleccionar-enfoque" element={<SeleccionarEnfoque />} />
+          <Route path="/dia-ideal" element={<DiaIdeal />} />
         </Routes>
       </Layout>
     </ToastProvider>

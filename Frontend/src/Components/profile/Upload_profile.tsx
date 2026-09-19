@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useToast } from './ToastContext' // Importamos el sistema de notificaciones global
+import { useToast } from '../essentials/ToastContext' // Importamos el sistema de notificaciones global
 
 export default function UploadProfile() {
   const navigate = useNavigate()

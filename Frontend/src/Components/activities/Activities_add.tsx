@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type Tipo_actividad from '../models/Tipo_actividad'
-import { useToast } from './ToastContext' // Importado desde la misma carpeta components
+import type Tipo_actividad from '../../models/Tipo_actividad'
+import { useToast } from '../essentials/ToastContext' // Importado desde la misma carpeta components
 
 export default function ActivitiesAdd() {
   const navigate = useNavigate()

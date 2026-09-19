@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type Tipo_actividad from '../models/Tipo_actividad'
 import type Actividad from '../models/Actividad'
-import { useToast } from './ToastContext' // 1. Importamos el sistema de notificaciones
+import { useToast } from './core/ToastContext' // 1. Importamos el sistema de notificaciones
 
 const formatearFecha = (fecha?: string | Date | null) => {
   if (!fecha) return { dia: '—', mes: '', anio: '' }

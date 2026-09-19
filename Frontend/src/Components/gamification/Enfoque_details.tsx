@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type Perfil from '../models/Perfil';
-import { useToast } from './ToastContext';
+import type Perfil from '../../models/Perfil';
+import { useToast } from '../essentials/ToastContext';
 import {
     LightBulbIcon,
     SparklesIcon,
     ArrowPathIcon,
     CheckBadgeIcon
 } from '@heroicons/react/24/outline';
-import PageHeader from './Page-head';
+import PageHeader from '../essentials/Page-head';
 
 interface EnfoqueDetalle {
     Id_enfoque: number;

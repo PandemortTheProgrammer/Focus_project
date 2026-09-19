@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Perfil from '../models/Perfil'
-import IconPicker from './IconPicker'
-import { useToast } from './ToastContext'
+import Perfil from '../../models/Perfil'
+import IconPicker from '../essentials/IconPicker'
+import { useToast } from '../essentials/ToastContext'
 import { LightBulbIcon } from '@heroicons/react/24/outline' // Agregamos el ícono para el modal
 
 interface EditProfileProps {

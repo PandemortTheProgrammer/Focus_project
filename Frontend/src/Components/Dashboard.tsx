@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react' // Asegúrate de tener useState aquí
 import { useNavigate } from 'react-router-dom'
 import type Perfil from '../models/Perfil'
-import { useToast } from './ToastContext'
+import { useToast } from './essentials/ToastContext'
 
 // Importamos los íconos de HeroIcons 
 import { 
@@ -12,7 +12,8 @@ import {
   ArrowDownTrayIcon,
   TrophyIcon,
   FlagIcon,
-  LockClosedIcon
+  LockClosedIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline'
 
 interface DashboardProps {
@@ -215,10 +216,19 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
               {/* Tarjeta 8: Configurar PIN */}
               <div
                 onClick={() => navigate('/configurar-pin')}
-                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
+                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-400 hover:scale-105 shadow-lg group"
                 style={{ backgroundColor: '#2a2a2a' }}>
                 <LockClosedIcon className="w-12 h-12 text-[#6b7280] transition group-hover:text-white" />
                 <p className="text-white text-sm font-semibold text-center">Configurar PIN</p>
+              </div>
+
+              {/* Tarjeta 9: Día Ideal */}
+              <div
+                onClick={() => navigate('/dia-ideal')}
+                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-200 hover:scale-105 shadow-lg group"
+                style={{ backgroundColor: '#2a2a2a' }}>
+                <SparklesIcon className="w-12 h-12 text-[#fbbf24] transition group-hover:text-white" />
+                <p className="text-white text-sm font-semibold text-center">Mi día ideal</p>
               </div>
             </>
           )}

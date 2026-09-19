@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import PageHeader from './Page-head'
+import PageHeader from '../essentials/Page-head'
 
 type SemanaResumen = {
   numero_semana: number
