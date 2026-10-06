@@ -4,6 +4,7 @@ import type Tipo_actividad from '../../models/Tipo_actividad'
 import type Actividad from '../../models/Actividad'
 import { useToast } from '../essentials/ToastContext' // Importamos el contexto de notificaciones
 import PageHeader from '../essentials/Page-head'
+import ActivitiesDetails from './Activities_details'
 
 // Función auxiliar para calcular si pasaron 24 horas desde la creación
 const esActividadBloqueada = (fechaCreacion?: string | Date | null) => {
@@ -41,13 +42,13 @@ const formatearFechaCreacion = (fechaCreacion?: string | Date | null) => {
 
 export default function ActivitiesMain() {
   const navigate = useNavigate()
-  const { mostrarToast } = useToast() 
-  
+  const { mostrarToast } = useToast()
+
   // 1. Estados para guardar lo que viene de Express
   const [actividades, setActividades] = useState<Actividad[]>([])
   const [tipos, setTipos] = useState<Tipo_actividad[]>([])
   const [cargando, setCargando] = useState(true)
-
+  const [actividadSeleccionada, setActividadSeleccionada] = useState<Actividad | null>(null);
   // ESTADO PARA EL MODAL DE CONFIRMACIÓN
   const [modalEliminar, setModalEliminar] = useState<{ visible: boolean; id_actividad: number | null }>({
     visible: false,
@@ -118,32 +119,32 @@ export default function ActivitiesMain() {
 
   return (
     <div className="relative w-full flex flex-col min-h-screen">
-      
+
       {/* --- INICIO DEL MODAL PERSONALIZADO --- */}
       {modalEliminar.visible && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in-down">
           <div className="bg-zinc-900 border border-zinc-700 rounded-3xl p-8 max-w-sm w-full mx-4 shadow-2xl text-center transform transition-all">
-            
+
             <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center bg-red-500/20 text-red-500 text-3xl">
               🗑️
             </div>
-            
+
             <h3 className="text-2xl font-bold mb-2" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
               ¿Eliminar actividad?
             </h3>
-            
+
             <p className="text-white opacity-70 text-sm mb-8 leading-relaxed">
               Esta acción es irreversible y los minutos registrados se restarán de tus métricas semanales.
             </p>
-            
+
             <div className="flex items-center justify-center gap-4">
-              <button 
-                onClick={cancelarEliminacion} 
+              <button
+                onClick={cancelarEliminacion}
                 className="px-6 py-2.5 rounded-full text-white text-sm font-semibold border border-zinc-600 transition hover:bg-zinc-800">
                 Cancelar
               </button>
-              <button 
-                onClick={confirmarEliminacion} 
+              <button
+                onClick={confirmarEliminacion}
                 className="px-6 py-2.5 rounded-full text-white text-sm font-bold shadow-lg transition hover:scale-105"
                 style={{ backgroundColor: '#7a1a1a' }}>
                 Sí, eliminar
@@ -157,22 +158,29 @@ export default function ActivitiesMain() {
       <PageHeader titulo="Actividades" />
 
       <div className="flex justify-end items-center gap-3 px-8 mb-4">
-          <button
-            onClick={() => navigate('/actividades/historial')}
-            title="Ver actividades archivadas (más de 24 horas desde su registro)"
-            className="px-6 py-2 rounded-full text-white transition hover:opacity-80"
-            style={{ backgroundColor: '#1a7a6e' }}>
-            Historial
-          </button>
-          <button onClick={() => navigate('/actividades/agregar')} className="px-6 py-2 rounded-full bg-zinc-900 text-white transition hover:opacity-80">
-            + Agregar actividad
-          </button>
+        <button
+          onClick={() => navigate('/actividades/historial')}
+          title="Ver actividades archivadas (más de 24 horas desde su registro)"
+          className="px-6 py-2 rounded-full text-white transition hover:opacity-80"
+          style={{ backgroundColor: '#1a7a6e' }}>
+          Historial
+        </button>
+        <button
+          onClick={() => navigate('/actividades/plantillas')}
+          title="Ver y gestionar tus plantillas de actividades"
+          className="px-6 py-2 rounded-full text-white transition hover:opacity-80"
+          style={{ backgroundColor: '#1a7a6e' }}>
+          Plantillas
+        </button>
+        <button onClick={() => navigate('/actividades/agregar')} className="px-6 py-2 rounded-full bg-zinc-900 text-white transition hover:opacity-80">
+          + Agregar actividad
+        </button>
       </div>
 
       {/* Lista de actividades Dinámica */}
       <div className="relative z-10 flex flex-col gap-4 px-8 py-4">
         {cargando ? (
-           <p className="text-white text-center opacity-60 mt-10 animate-pulse">Cargando actividades...</p>
+          <p className="text-white text-center opacity-60 mt-10 animate-pulse">Cargando actividades...</p>
         ) : actividades.length === 0 ? (
           <p className="text-white text-center opacity-60 mt-10">
             No hay actividades registradas aún.
@@ -190,7 +198,8 @@ export default function ActivitiesMain() {
             return (
               <div
                 key={actividad.id_actividad}
-                className="flex items-center justify-between px-6 py-4 rounded-2xl"
+                className="flex items-center justify-between px-6 py-4 rounded-2xl transition-all duration-200 ease-out hover:scale-[1.02] hover:shadow-lg cursor-pointer"
+                onClick={() => setActividadSeleccionada(actividad)}
                 style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
 
                 {/* Tag con color e ícono de candado */}
@@ -207,20 +216,9 @@ export default function ActivitiesMain() {
                     <div className="w-3 h-12 rounded-full"
                       style={{ backgroundColor: colorTipo }} />
                   </div>
-                  
-                  {/* Candado visual */}
-                  {bloqueada && (
-                    <div 
-                      className="flex items-center justify-center p-1.5 rounded-full bg-zinc-800/60 transition-all"
-                      title="Actividad consolidada. Ha superado las 24 horas desde su registro y ya no puede ser modificada.">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-zinc-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  )}
 
                   <div>
-                    <p className="text-white font-bold text-lg">{nombreTipo}</p>
+                    <p className="text-white font-bold text-lg cursor-text">{nombreTipo}</p>
                     <p className="text-white opacity-60 text-sm">{actividad.descripcion_actividad}</p>
                   </div>
                 </div>
@@ -240,25 +238,30 @@ export default function ActivitiesMain() {
                   <div className="flex gap-2">
                     <button
                       disabled={bloqueada}
-                      onClick={() => navigate(`/actividades/editar/${actividad.id_actividad}`)}
+
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/actividades/editar/${actividad.id_actividad}`);
+                      }}
                       title={bloqueada ? "Edición deshabilitada (Se superó el límite de 24 horas)" : "Editar actividad"}
-                      className={`px-4 py-2 rounded-full text-white text-xs font-semibold transition-all ${
-                        bloqueada 
-                          ? 'opacity-30 cursor-not-allowed grayscale pointer-events-none' 
-                          : 'hover:opacity-80'
-                      }`}
+                      className={`px-4 py-2 rounded-full text-white text-xs font-semibold transition-all ${bloqueada
+                        ? 'opacity-30 cursor-not-allowed grayscale pointer-events-none'
+                        : 'hover:opacity-80'
+                        }`}
                       style={{ backgroundColor: '#1a7a6e' }}>
                       Editar
                     </button>
                     <button
                       disabled={bloqueada}
-                      onClick={() => solicitarEliminacion(actividad.id_actividad)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        solicitarEliminacion(actividad.id_actividad);
+                      }}
                       title={bloqueada ? "Eliminación deshabilitada (Se superó el límite de 24 horas)" : "Eliminar actividad"}
-                      className={`px-4 py-2 rounded-full text-white text-xs font-semibold transition-all ${
-                        bloqueada 
-                          ? 'opacity-30 cursor-not-allowed grayscale pointer-events-none' 
-                          : 'hover:opacity-80'
-                      }`}
+                      className={`px-4 py-2 rounded-full text-white text-xs font-semibold transition-all ${bloqueada
+                        ? 'opacity-30 cursor-not-allowed grayscale pointer-events-none'
+                        : 'hover:opacity-80'
+                        }`}
                       style={{ backgroundColor: '#7a1a1a' }}>
                       Eliminar
                     </button>
@@ -269,7 +272,16 @@ export default function ActivitiesMain() {
             )
           })
         )}
-        </div>
       </div>
+      {/* Componente Flotante de Detalles */}
+      <ActivitiesDetails
+        actividad={actividadSeleccionada}
+        tipo={tipos.find((t) => Number(t.id_tipo) === Number(actividadSeleccionada?.id_tipo))}
+        bloqueada={esActividadBloqueada(actividadSeleccionada?.hora_creacion ?? actividadSeleccionada?.fecha)}
+        onClose={() => setActividadSeleccionada(null)}
+        onEdit={(id) => navigate(`/actividades/editar/${id}`)}
+        onDelete={(id) => solicitarEliminacion(id)}
+      />
+    </div>
   )
 }

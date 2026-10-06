@@ -195,16 +195,16 @@ export default function ActivitiesEdit() {
 
           <div className="flex flex-wrap gap-4 justify-end mt-4">
             <button
-              onClick={handleGuardar}
-              className="px-8 py-3 rounded-full text-[#1a1a1a] text-lg font-bold transition hover:scale-105"
-              style={{ backgroundColor: '#5ecfb8' }}>
-              Guardar cambios
-            </button>
-            <button
               onClick={() => navigate('/actividades')}
               className="px-8 py-3 rounded-full text-white text-lg font-semibold transition hover:opacity-80 border border-zinc-600"
               style={{ backgroundColor: '#1a1a1a' }}>
               Cancelar
+            </button>
+            <button
+              onClick={handleGuardar}
+              className="px-8 py-3 rounded-full text-[#1a1a1a] text-lg font-bold transition hover:scale-105"
+              style={{ backgroundColor: '#5ecfb8' }}>
+              Guardar cambios
             </button>
           </div>
         </div>

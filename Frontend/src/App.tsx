@@ -23,6 +23,7 @@ import SeleccionarEnfoque from './Components/gamification/Focus_select'
 import DiaIdeal from './Components/gamification/Ideal_day'
 
 import Perfil from './models/Perfil'
+import ActivitiesTemplates from './Components/activities/Activities_templates'
 
 
 export default function App() {
@@ -90,6 +91,7 @@ export default function App() {
           <Route path="/actividades/agregar" element={<ActivitiesAdd />} />
           <Route path="/actividades/editar/:id" element={<ActivitiesEdit />} />
           <Route path="/actividades/historial" element={<ActivitiesHistory />} />
+          <Route path="/actividades/plantillas" element={<ActivitiesTemplates />} />
           <Route path="/progreso-semanal" element={<WeeklyProgress />} />
           <Route path="/resumenes-semanales" element={<WeeklySummaries />} />
           <Route path="/resumen-semanal/:id" element={<WeeklySummaryDetail />} />

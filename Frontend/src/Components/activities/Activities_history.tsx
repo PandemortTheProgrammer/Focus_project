@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type Tipo_actividad from '../models/Tipo_actividad'
-import type Actividad from '../models/Actividad'
-import { useToast } from './core/ToastContext' // 1. Importamos el sistema de notificaciones
+import type Tipo_actividad from '../../models/Tipo_actividad'
+import type Actividad from '../../models/Actividad'
+import { useToast } from '../essentials/ToastContext' // 1. Importamos el sistema de notificaciones
+import ActivitiesDetails from './Activities_details'
 
 const formatearFecha = (fecha?: string | Date | null) => {
   if (!fecha) return { dia: '—', mes: '', anio: '' }
@@ -24,6 +25,7 @@ export default function ActivitiesHistory() {
   const [historial, setHistorial] = useState<Actividad[]>([])
   const [tipos, setTipos] = useState<Tipo_actividad[]>([])
   const [cargando, setCargando] = useState(true)
+  const [actividadSeleccionada, setActividadSeleccionada] = useState<Actividad | null>(null);
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -107,7 +109,11 @@ export default function ActivitiesHistory() {
             return (
               <div
                 key={actividad.id_actividad}
-                className="flex items-center justify-between px-6 py-4 rounded-2xl opacity-90"
+                className="flex items-center justify-between px-6 py-4 rounded-2xl opacity-90 transition-all duration-200 ease-out hover:scale-[1.02] hover:shadow-lg cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActividadSeleccionada(actividad);
+                }}
                 style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
 
                 <div className="flex items-center gap-4">
@@ -130,7 +136,7 @@ export default function ActivitiesHistory() {
                   </div>
 
                   <div>
-                    <p className="text-white font-bold text-lg">{nombreTipo}</p>
+                    <p className="text-white font-bold text-lg cursor-text">{nombreTipo}</p>
                     <p className="text-white opacity-60 text-sm">{actividad.descripcion_actividad}</p>
                   </div>
                 </div>
@@ -151,6 +157,18 @@ export default function ActivitiesHistory() {
           })
         )}
       </div>
+      {/* Componente Flotante de Detalles */}
+      <ActivitiesDetails
+        actividad={actividadSeleccionada}
+        tipo={tipos.find((t) => Number(t.id_tipo) === Number(actividadSeleccionada?.id_tipo))}
+        bloqueada={true}
+        onClose={() => setActividadSeleccionada(null)}
+        onEdit={(id) => navigate(`/actividades/editar/${id}`)}
+        onDelete={() => {
+          // No se permite eliminar actividades del historial, pero si quieres manejarlo, puedes hacerlo aquí.
+          mostrarToast('error', 'No permitido', 'No puedes eliminar actividades del historial.')
+        }}
+      />
     </div>
   )
 }

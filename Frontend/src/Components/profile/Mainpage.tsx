@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import FocusLogo from '../assets/Images/Focus_logo.png'
-import { useToast } from '../essentials/ToastContext' // Asegúrate de tener la ruta correcta
-import { LockClosedIcon } from '@heroicons/react/24/outline'
+import FocusLogo from '../../assets/Images/Focus_logo.png'
+import { useToast } from '../essentials/ToastContext' 
+import { LockClosedIcon, LightBulbIcon } from '@heroicons/react/24/outline'
 
 export default function Mainpage() {
   const navigate = useNavigate()
@@ -11,26 +11,29 @@ export default function Mainpage() {
   // Estados para controlar lo que ve el usuario
   const [tienePerfil, setTienePerfil] = useState(false)
   const [nicknameGuardado, setNicknameGuardado] = useState('')
-  const [pinGuardado, setPinGuardado] = useState<string | null>(null) // NUEVO: Guardamos el PIN si existe
+  const [pinGuardado, setPinGuardado] = useState<string | null>(null)
+  const [pistaGuardada, setPistaGuardada] = useState<string | null>(null) // NUEVO: Guardamos la pista
   const [verificando, setVerificando] = useState(true)
   
   // Estado para controlar la ventana de advertencia
   const [mostrarAdvertencia, setMostrarAdvertencia] = useState(false)
 
-  // NUEVOS: Estados para controlar la intercepción del PIN
+  // Estados para controlar la intercepción del PIN
   const [pidiendoPin, setPidiendoPin] = useState(false)
   const [pinIngresado, setPinIngresado] = useState('')
+  const [intentosFallidos, setIntentosFallidos] = useState(0) // NUEVO: Contador de intentos
 
   useEffect(() => {
     const revisarPerfilLocal = async () => {
       try {
-        const res = await fetch('http://localhost:3000/api/perfil')
+        const res = await fetch('http://localhost:3000/api/perfil', { cache: 'no-store' });
         
         if (res.ok) {
           const data = await res.json()
           setTienePerfil(true)
           setNicknameGuardado(data.nickname)
-          setPinGuardado(data.pin || null) // Rescatamos el PIN si el backend lo envía
+          setPinGuardado(data.pin || null)
+          setPistaGuardada(data.pista_pin || null) // Extraemos la pista de la BD
         } else {
           setTienePerfil(false)
         }
@@ -45,7 +48,6 @@ export default function Mainpage() {
     revisarPerfilLocal()
   }, [])
 
-  // Función que intercepta el clic de "Crear perfil"
   const handleCrearPerfilClick = () => {
     if (tienePerfil) {
       setMostrarAdvertencia(true)
@@ -54,26 +56,34 @@ export default function Mainpage() {
     }
   }
 
-  // NUEVO: Función que intercepta el clic de "Continuar al Dashboard"
   const manejarContinuar = () => {
     if (pinGuardado) {
       setPidiendoPin(true)
+      setIntentosFallidos(0) // Reiniciamos contador al abrir
     } else {
       navigate('/dashboard')
     }
   }
 
-  // NUEVO: Función para validar el PIN ingresado
+  // MODIFICADO: Lógica de validación con límite de intentos
   const validarPin = (e: React.FormEvent) => {
     e.preventDefault()
     if (pinIngresado === pinGuardado) {
+      setIntentosFallidos(0)
       navigate('/dashboard')
     } else {
-      mostrarToast('error', 'PIN incorrecto', 'Inténtalo de nuevo.')
-      setPinIngresado('')
+      const nuevosIntentos = intentosFallidos + 1
+      setIntentosFallidos(nuevosIntentos)
+      
+      if (nuevosIntentos >= 3 && pistaGuardada) {
+        mostrarToast('advertencia', 'Demasiados intentos', 'Hemos revelado tu pista para ayudarte a recordar.')
+      } else {
+        mostrarToast('error', 'PIN incorrecto', 'Inténtalo de nuevo.')
+      }
+      setPinIngresado('') // Limpiamos el input
     }
   }
-
+  console.log("Estado actual -> Intentos:", intentosFallidos, "| Pista guardada:", pistaGuardada);
   return (
     <div className="relative w-full min-h-screen overflow-auto flex flex-col items-center justify-center px-4 py-8">
 
@@ -98,7 +108,6 @@ export default function Mainpage() {
               ¡Hola de nuevo, {nicknameGuardado}! 👋
             </p>
             
-            {/* MODIFICACIÓN: Interceptor de PIN vs Botón normal */}
             {!pidiendoPin ? (
               <button
                 onClick={manejarContinuar}
@@ -120,12 +129,25 @@ export default function Mainpage() {
                     className="w-full py-3 pl-12 pr-4 rounded-full bg-zinc-800 text-white text-center tracking-widest border border-zinc-600 focus:outline-none focus:border-[#5ecfb8]"
                   />
                 </div>
-                <div className="flex gap-2 w-full">
+                
+                {/* NUEVO: Contenedor de la pista visual (solo aparece al fallar 3 veces) */}
+                {intentosFallidos >= 3 && pistaGuardada && (
+                  <div className="w-full p-4 rounded-2xl bg-[#5ecfb8]/10 border border-[#5ecfb8]/30 animate-fade-in flex flex-col gap-1">
+                    <div className="flex items-center gap-2 text-[#5ecfb8]">
+                      <LightBulbIcon className="w-4 h-4" />
+                      <span className="text-sm font-bold">Pista de recuperación:</span>
+                    </div>
+                    <p className="text-zinc-300 text-sm italic pl-6">"{pistaGuardada}"</p>
+                  </div>
+                )}
+
+                <div className="flex gap-2 w-full mt-1">
                   <button 
                     type="button"
                     onClick={() => {
                       setPidiendoPin(false)
                       setPinIngresado('')
+                      setIntentosFallidos(0) // Limpiamos intentos al cancelar
                     }}
                     className="flex-1 py-2 rounded-full bg-zinc-700 text-white font-medium hover:bg-zinc-600 transition">
                     Cancelar
@@ -164,9 +186,7 @@ export default function Mainpage() {
         
       </div>
 
-      {/* ========================================================= */}
-      {/* MODAL DE ADVERTENCIA PARA EVITAR PÉRDIDA DE DATOS */}
-      {/* ========================================================= */}
+      {/* MODAL DE ADVERTENCIA */}
       {mostrarAdvertencia && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 animate-fade-in">
           <div 

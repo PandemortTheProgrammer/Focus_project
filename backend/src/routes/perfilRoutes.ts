@@ -8,7 +8,7 @@ const router = Router();
 router.get('/enfoques', PerfilController.getEnfoques);
 router.get('/descargar', PerfilController.descargarPerfil);
 router.delete('/reset', PerfilController.resetearPerfil);
-router.put('/pin', PerfilController.configurarPin);
+router.put('/pin', PerfilController.actualizarPinPerfil);
 router.get('/enfoque-detalles/:id', PerfilController.getEnfoqueDetalles);
 router.patch('/enfoque', PerfilController.cambiarEnfoque);
 

@@ -19,7 +19,7 @@ export const inicializarBD = async () => {
         // ==========================================
         // 1. CREACIÓN DE TABLAS INDEPENDIENTES
         // ==========================================
-        
+
         await dbInstance.exec(`
             CREATE TABLE IF NOT EXISTS Enfoque (
                 Id_enfoque INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -96,6 +96,23 @@ export const inicializarBD = async () => {
                 FOREIGN KEY (Id_perfil) REFERENCES Perfil(Id_perfil) ON DELETE CASCADE,
                 FOREIGN KEY (Id_recompensa) REFERENCES Recompensa(Id_recompensa) ON DELETE CASCADE
             );
+
+            CREATE TABLE IF NOT EXISTS Dia_Ideal_Bloques (
+                id_bloque INTEGER PRIMARY KEY AUTOINCREMENT,
+                id_tipo INTEGER NOT NULL,
+                duracion_minutos INTEGER NOT NULL,
+                hora_inicio TEXT, -- Formato "HH:MM" (ej. "08:30"). Si es NULL, está en el Banco.
+                FOREIGN KEY (id_tipo) REFERENCES Tipo_actividad(id_tipo)
+            );
+
+            CREATE TABLE IF NOT EXISTS Plantilla_Actividad (
+                id_plantilla INTEGER PRIMARY KEY AUTOINCREMENT,
+                id_tipo INTEGER NOT NULL,
+                titulo_plantilla VARCHAR(50) NOT NULL,
+                desc_activ_default VARCHAR(255),
+                durac_min_default INTEGER,
+                FOREIGN KEY (id_tipo) REFERENCES Tipo_actividad(Id_tipo) ON DELETE CASCADE
+            );
         `);
 
         try {
@@ -111,7 +128,7 @@ export const inicializarBD = async () => {
         // ==========================================
         // 3. POBLAR CATÁLOGOS (Tipos y Enfoques)
         // ==========================================
-        
+
         const tiposExisten = await dbInstance.get("SELECT COUNT(*) as count FROM Tipo_actividad");
         if (tiposExisten.count === 0) {
             await dbInstance.exec(`
@@ -210,36 +227,80 @@ export const inicializarBD = async () => {
         try {
             // Revisamos la estructura actual de la tabla Tipo_actividad
             const columnasActividad = await dbInstance.all("PRAGMA table_info(Tipo_actividad)");
-            
+            // A) Parche: Nivel de Presencia en Tipo_Actividad
             // Verificamos si la columna 'nivel_presencia' ya existe
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const tieneNivelPresencia = columnasActividad.some((col: any) => col.name === 'nivel_presencia');
 
             if (!tieneNivelPresencia) {
                 console.log("Aplicando parche V2: Agregando 'nivel_presencia' a Tipo_actividad...");
-                
+
                 // Inyectamos la columna con el valor por defecto 1 (Acción/Foreground)
                 await dbInstance.run("ALTER TABLE Tipo_actividad ADD COLUMN nivel_presencia INTEGER DEFAULT 1");
 
                 // Asignamos Nivel 0 (Exclusivas - Bloqueo total)
                 await dbInstance.run("UPDATE Tipo_actividad SET nivel_presencia = 0 WHERE Nombre_activ IN ('Dormir')");
-                
+
                 // Asignamos Nivel 2 (Fondo - Permite solapamiento)
                 await dbInstance.run(`
                     UPDATE Tipo_actividad 
                     SET nivel_presencia = 2 
                     WHERE Nombre_activ IN ('Socializar', 'Descanso activo', 'Series o Películas', 'Música', 'Redes sociales')
                 `);
-                
+
             }
+
+            // B) Parche: PIN y pista en Perfil
             const columnasPerfil = await dbInstance.all("PRAGMA table_info(Perfil)");
             const tienePin = columnasPerfil.some((col: any) => col.name === 'pin');
-                
-                if (!tienePin) {
-                    console.log("Aplicando parche V2: Agregando 'pin' a Perfil...");
-                    await dbInstance.run("ALTER TABLE Perfil ADD COLUMN pin VARCHAR(4) DEFAULT NULL");
-                }
-                console.log("Migración V2 completada exitosamente.");
+            const tienePista = columnasPerfil.some((col: any) => col.name === 'pista_pin');
+
+            if (!tienePin) {
+                console.log("Aplicando parche V2: Agregando 'pin' a Perfil...");
+                await dbInstance.run("ALTER TABLE Perfil ADD COLUMN pin VARCHAR(4) DEFAULT NULL");
+            }
+
+            if (!tienePista) {
+                console.log("Aplicando parche V2: Agregando 'pista_pin' a Perfil...");
+                await dbInstance.run("ALTER TABLE Perfil ADD COLUMN pista_pin VARCHAR(60) DEFAULT NULL");
+            }
+
+            // C) Parche de Seguridad: Tabla del Día Ideal
+            // Aunque se declara arriba, esto garantiza que se intente crear si SQLite saltó el bloque principal
+            // por un error previo o un archivo de BD existente de la V1.
+            const tablas = await dbInstance.all("SELECT name FROM sqlite_master WHERE type='table' AND name='Dia_Ideal_Bloques'");
+            if (tablas.length === 0) {
+                console.log("Aplicando parche V2: Creando tabla 'Dia_Ideal_Bloques'...");
+                await dbInstance.exec(`
+                    CREATE TABLE Dia_Ideal_Bloques (
+                        id_bloque INTEGER PRIMARY KEY AUTOINCREMENT,
+                        id_tipo INTEGER NOT NULL,
+                        duracion_minutos INTEGER NOT NULL,
+                        hora_inicio TEXT,
+                        FOREIGN KEY (id_tipo) REFERENCES Tipo_actividad(Id_tipo) ON DELETE CASCADE
+                    );
+                `);
+            } else {
+                // Pequeño parche adicional: Asegurar que el ON DELETE CASCADE exista si la tabla ya había sido creada sin él.
+                // SQLite no soporta ALTER TABLE ADD CONSTRAINT, pero en este punto la persistencia básica ya existe.
+            }
+
+            const tablasPlantilla = await dbInstance.all("SELECT name FROM sqlite_master WHERE type='table' AND name='Plantilla_Actividad'");
+            if (tablasPlantilla.length === 0) {
+                console.log("Aplicando parche V2: Creando tabla 'Plantilla_Actividad'...");
+                await dbInstance.exec(`
+                    CREATE TABLE Plantilla_Actividad (
+                        id_plantilla INTEGER PRIMARY KEY AUTOINCREMENT,
+                        id_tipo INTEGER NOT NULL,
+                        titulo_plantilla VARCHAR(50) NOT NULL,
+                        desc_activ_default VARCHAR(255),
+                        durac_min_default INTEGER,
+                        FOREIGN KEY (id_tipo) REFERENCES Tipo_actividad(Id_tipo) ON DELETE CASCADE
+                    );
+                `);
+            }
+
+            console.log("Migración V2 completada exitosamente.");
         } catch (error) {
             console.error("Error al aplicar las migraciones de la V2:", error);
         }

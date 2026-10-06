@@ -174,28 +174,18 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
             <p className="text-white text-sm font-semibold text-center">Ver tus reportes semanales</p>
           </div>
 
+          {/* Tarjeta 4: Día Ideal */}
+              <div
+                onClick={() => navigate('/dia-ideal')}
+                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-200 hover:scale-105 shadow-lg group"
+                style={{ backgroundColor: '#2a2a2a' }}>
+                <SparklesIcon className="w-12 h-12 text-[#fbbf24] transition group-hover:text-white" />
+                <p className="text-white text-sm font-semibold text-center">Mi día ideal</p>
+              </div>
           {/* --- BLOQUE SECUNDARIO: OCULTO SI 'modoSimple' ES TRUE --- */}
           {!modoSimple && (
             <>
-              {/* Tarjeta 4: Editar Perfil */}
-              <div
-                onClick={() => navigate('/editar-perfil')}
-                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
-                style={{ backgroundColor: '#2a2a2a' }}>
-                <UserCircleIcon className="w-12 h-12 text-[#d946ef] transition group-hover:text-white" />
-                <p className="text-white text-sm font-semibold text-center">Edita tu perfil</p>
-              </div>
-
-              {/* Tarjeta 5: Descarga */}
-              <div
-                onClick={() => navigate('/descargar')}
-                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
-                style={{ backgroundColor: '#2a2a2a' }}>
-                <ArrowDownTrayIcon className="w-12 h-12 text-[#b8f0a0] transition group-hover:text-white" />
-                <p className="text-white text-sm font-semibold text-center">Descarga tu perfil</p>
-              </div>
-
-              {/* Tarjeta 6: Enfoque Detalle */}
+              {/* Tarjeta 5: Enfoque Detalle */}
               <div
                 onClick={() => navigate('/enfoque-detalle')}
                 className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
@@ -204,7 +194,7 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
                 <p className="text-white text-sm font-semibold text-center">Conoce tu enfoque</p>
               </div>
               
-              {/* Tarjeta 7: Recompensas */}
+              {/* Tarjeta 6: Recompensas */}
               <div
                 onClick={() => navigate('/recompensas')}
                 className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
@@ -213,7 +203,26 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
                 <p className="text-white text-sm font-semibold text-center">Logros</p>
               </div>
 
-              {/* Tarjeta 8: Configurar PIN */}
+              {/* Tarjeta 7: Editar Perfil */}
+              <div
+                onClick={() => navigate('/editar-perfil')}
+                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
+                style={{ backgroundColor: '#2a2a2a' }}>
+                <UserCircleIcon className="w-12 h-12 text-[#d946ef] transition group-hover:text-white" />
+                <p className="text-white text-sm font-semibold text-center">Edita tu perfil</p>
+              </div>
+
+              {/* Tarjeta 8: Descarga */}
+              <div
+                onClick={() => navigate('/descargar')}
+                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
+                style={{ backgroundColor: '#2a2a2a' }}>
+                <ArrowDownTrayIcon className="w-12 h-12 text-[#b8f0a0] transition group-hover:text-white" />
+                <p className="text-white text-sm font-semibold text-center">Descarga tu perfil</p>
+              </div>
+
+
+              {/* Tarjeta 9: Configurar PIN */}
               <div
                 onClick={() => navigate('/configurar-pin')}
                 className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-400 hover:scale-105 shadow-lg group"
@@ -222,14 +231,6 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
                 <p className="text-white text-sm font-semibold text-center">Configurar PIN</p>
               </div>
 
-              {/* Tarjeta 9: Día Ideal */}
-              <div
-                onClick={() => navigate('/dia-ideal')}
-                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-200 hover:scale-105 shadow-lg group"
-                style={{ backgroundColor: '#2a2a2a' }}>
-                <SparklesIcon className="w-12 h-12 text-[#fbbf24] transition group-hover:text-white" />
-                <p className="text-white text-sm font-semibold text-center">Mi día ideal</p>
-              </div>
             </>
           )}
 

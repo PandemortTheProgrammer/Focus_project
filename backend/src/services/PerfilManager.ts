@@ -1,6 +1,17 @@
 // backend/src/services/PerfilManager.ts
 import { getDB } from '../config/db';
 
+export interface PerfilRow {
+    Id_perfil: number;
+    nickname: string;
+    rango_edad: string;
+    Id_enfoque: number | null;
+    genero: string;
+    Id_icono: number | null;
+    pin: string | null;
+    pista_pin?: string | null;
+}
+
 export const obtenerEnfoques = async (): Promise<{ id: number; nombre: string }[]> => {
     const db = getDB();
     return await db.all("SELECT * FROM Enfoque");
@@ -63,10 +74,19 @@ export const obtenerDetallesEnfoque = async (idEnfoque: number) => {
 };
 
 // backend/src/services/PerfilManager.ts
-export const actualizarPin = async (nuevoPin: string | null): Promise<void> => {
+export const actualizarPin = async (pin: string | null, pista_pin: string | null) => {
     const db = getDB();
-    // Guardamos el PIN (o NULL si el usuario decide quitarlo)
-    await db.run("UPDATE Perfil SET pin = ? WHERE Id_perfil = 1", [nuevoPin]);
+    // Actualizamos ambas columnas. Si el usuario elimina el PIN (pin = null), 
+    // la pista también se vuelve null desde el frontend.
+    const query = `UPDATE Perfil SET pin = ?, pista_pin = ? WHERE Id_perfil = 1`;
+    
+    const result = await db.run(query, [pin, pista_pin]);
+    
+    if (result.changes === 0) {
+        throw new Error("No se encontró el perfil para actualizar el PIN.");
+    }
+    
+    return true;
 };
 
 // POST/PUT: Registrar o actualizar el perfil único
@@ -116,11 +136,11 @@ export const guardarPerfil = async (datos: { nickname: string; age_rank: string;
 };
 
 // GET: Recuperar el perfil activo para el Dashboard
-export const obtenerPerfil = async (): Promise<{ id: number; nickname: string; rango_edad: string; Id_enfoque: number; genero: string; Id_icono: number | null; pin: string | null } | null> => {
+export const obtenerPerfil = async (): Promise<PerfilRow | null> => {
     const db = getDB();
     const query = `SELECT * FROM Perfil LIMIT 1`;
-    const perfil = await db.get(query);
-    return perfil;
+    const perfil = await db.get<PerfilRow>(query);
+    return perfil ?? null;
 };
 
 export const reiniciarPerfilYDatos = async (): Promise<void> => {

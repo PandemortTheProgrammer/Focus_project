@@ -35,20 +35,27 @@ export const getEnfoqueDetalles = async (req: Request, res: Response) => {
     }
 };
 
-export const configurarPin = async (req: Request, res: Response) => {
+export const actualizarPinPerfil = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { pin } = req.body;
-        
-        // Validación de seguridad en el backend
-        if (pin !== null && (pin.length !== 4 || isNaN(Number(pin)))) {
-            return res.status(400).json({ error: "El PIN debe contener exactamente 4 números." });
+        const { pin, pista_pin } = req.body;
+
+        // Validación básica de seguridad en el backend
+        if (pin !== null && pin !== undefined) {
+            if (typeof pin !== 'string' || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+                res.status(400).json({ error: "El PIN debe ser un código numérico exacto de 4 dígitos." });
+                return;
+            }
         }
 
-        await actualizarPin(pin);
-        res.status(200).json({ mensaje: pin ? "PIN configurado con éxito." : "PIN eliminado con éxito." });
+        // Llamamos al manager pasando el PIN y la Pista (o null si se está desactivando)
+        await actualizarPin(pin || null, pista_pin || null);
+
+        res.status(200).json({ 
+            mensaje: pin ? "PIN y pista de recuperación configurados exitosamente." : "PIN de seguridad desactivado." 
+        });
     } catch (error) {
-        console.error("Error al configurar el PIN:", error);
-        res.status(500).json({ error: "Ocurrió un error al guardar el PIN en tu perfil local." });
+        console.error("Error al actualizar el PIN del perfil:", error);
+        res.status(500).json({ error: "Ocurrió un error al intentar actualizar la seguridad del perfil." });
     }
 };
 
@@ -65,7 +72,8 @@ export const getPerfilActivo = async (req: Request, res: Response) => {
             genero: perfil.genero,
             id_focus: perfil.Id_enfoque,
             id_icono: perfil.Id_icono ?? 1,
-            pin: perfil.pin ?? null
+            pin: perfil.pin ?? null,
+            pista_pin: perfil.pista_pin ?? null
         };
         
         res.json(perfilNormalizado);

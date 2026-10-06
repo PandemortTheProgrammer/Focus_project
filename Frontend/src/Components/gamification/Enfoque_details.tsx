@@ -72,7 +72,7 @@ export default function ConoceTuEnfoque({ perfilGlobal }: ConoceTuEnfoqueProps) 
 
             <PageHeader titulo="Conoce tu enfoque" />
 
-            <p className="text-zinc-400 text-lg mb-10 text-center max-w-xl">
+            <p className="text-zinc-200 text-center max-w-2xl mx-auto mb-8 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] font-medium">
                 El camino que has elegido define la estructura de tu día ideal. Conoce qué se espera de ti.
             </p>
 
