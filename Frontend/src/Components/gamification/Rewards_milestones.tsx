@@ -85,7 +85,7 @@ export default function RewardsMilestones({ recompensas }: Props) {
                                     Recompensa:
                                 </span>
                                 <span className="text-white text-[10px] font-bold uppercase tracking-wider">
-                                    {hito.tipo_recompensa} - {hito.nombre_icono}
+                                    {hito.tipo_recompensa == 'CARD' ? 'Tarjeta' : 'N/A'} - {hito.nombre_icono}
                                 </span>
                             </div>
                         )}
