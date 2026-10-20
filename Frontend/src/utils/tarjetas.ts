@@ -9,7 +9,7 @@
 const PREFIJOS = ['tarjeta_', 'card_'];
 
 // Apuntamos a la nueva carpeta dedicada a los fondos/tarjetas
-const modulos = import.meta.glob('../assets/images/Cards/*.{png,jpg,jpeg,svg,webp}', {
+const modulos = import.meta.glob('../assets/Images/Cards/*.{png,jpg,jpeg,svg,webp}', {
     eager: true,
     import: 'default',
 }) as Record<string, string>;
