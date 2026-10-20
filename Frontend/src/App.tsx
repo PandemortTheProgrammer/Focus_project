@@ -18,16 +18,16 @@ import Download from './Components/profile/Download'
 import WeeklySummaries from './Components/summaries/Weekly_Summaries'
 import WeeklySummaryDetail from './Components/summaries/Weekly_Summaries_details'
 import RewardsMain from './Components/gamification/Rewards_main';
-import Enfoque_details from './Components/gamification/Enfoque_details'
+import Enfoque_details from './Components/functionalities/Enfoque_details'
 import Set_pin from './Components/profile/Set_pin'
-import SeleccionarEnfoque from './Components/gamification/Focus_select'
-import DiaIdeal from './Components/gamification/Ideal_day'
+import SeleccionarEnfoque from './Components/functionalities/Focus_select'
+import DiaIdeal from './Components/functionalities/Ideal_day'
 
 import Perfil from './models/Perfil'
 import ActivitiesTemplates from './Components/activities/Activities_templates'
-import MiProgreso from './Components/gamification/Your_progress'
+import MiProgreso from './Components/functionalities/Your_progress'
 import ProfileLevel from './Components/gamification/Profile_level'
-import ChangeLog from './Components/essentials/ChangeLog'
+import ChangeLog from './Components/viewables/ChangeLog'
 
 
 export default function App() {
