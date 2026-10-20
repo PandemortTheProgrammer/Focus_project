@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react' // Asegúrate de tener useState aquí
+import { useState, useEffect } from 'react' 
 import { useNavigate } from 'react-router-dom'
 import type Perfil from '../models/Perfil'
 import { useToast } from './essentials/ToastContext'
 
-// Importamos los íconos de HeroIcons 
 import { 
   ClipboardDocumentListIcon, 
   ChartBarIcon, 
@@ -13,7 +12,10 @@ import {
   TrophyIcon,
   FlagIcon,
   LockClosedIcon,
-  SparklesIcon
+  SparklesIcon,
+  ChartPieIcon,
+  FireIcon,
+  NewspaperIcon
 } from '@heroicons/react/24/outline'
 
 interface DashboardProps {
@@ -22,11 +24,9 @@ interface DashboardProps {
 
 export default function Dashboard({ perfilGlobal }: DashboardProps) {
   const navigate = useNavigate()
-  const { mostrarToast } = useToast()
+  const { mostrarToast, notificarGamificacion } = useToast()
 
-  // --- ESTADO PARA EL MODO SIMPLIFICADO ---
   const [modoSimple, setModoSimple] = useState(() => {
-    // Al cargar, revisamos si el usuario ya tenía activo el modo simple
     return localStorage.getItem('focus_modo_simple') === 'true'
   })
 
@@ -36,7 +36,6 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
     localStorage.setItem('focus_modo_simple', String(nuevoEstado))
   }
 
-  // Carga de enfoques
   useEffect(() => {
     const cargarEnfoques = async () => {
       try {
@@ -57,7 +56,6 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
     return 'Saludos'; 
   };
 
-  // --- EFECTO DE NOTIFICACIÓN DE REPORTES SEMANALES Y LOGROS ---
   useEffect(() => {
     const verificarNuevosReportes = async () => {
       try {
@@ -66,20 +64,19 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
 
         const data = await res.json()
         
-        // Hacemos que sea compatible tanto si el backend devuelve un Array directo 
-        // como si devuelve un Objeto con { reportes: [], logrosDesbloqueados: [] }
         const reportes = Array.isArray(data) ? data : (data.reportes || [])
         const logrosReporte = data.logrosDesbloqueados || []
+        if (logrosReporte.length > 0 || data.resultadoXP) {
+          notificarGamificacion(logrosReporte, data.resultadoXP)
+        }
         
         if (reportes.length > 0) {
           const ultimoReporte = reportes[reportes.length - 1]
           const fechaInicioReciente = String(ultimoReporte.fecha_inicio)
           const reporteNotificado = localStorage.getItem('ultimo_reporte_visto')
 
-          // Si es un reporte nuevo que no hemos notificado aún
           if (fechaInicioReciente !== reporteNotificado) {
             
-            // 1. Lanzamos el Toast del reporte semanal (Retrasado 1 segundo)
             setTimeout(() => {
               mostrarToast(
                 'exito', 
@@ -88,17 +85,6 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
               )
             }, 1000)
 
-            // 2. Lanzamos los Toasts de los logros obtenidos por este reporte en cascada
-            if (logrosReporte.length > 0) {
-              logrosReporte.forEach((logro: any, index: number) => {
-                setTimeout(() => {
-                  // Respetamos los 5 parámetros para que el ícono (r.Id_icono) se procese perfectamente
-                  mostrarToast('logro', logro.nombre_recompensa, logro.descripcion, '', logro)
-                }, index * 1500 + 2500) // Se muestran DESPUÉS del toast del reporte
-              })
-            }
-
-            // Guardamos la fecha para no repetir la animación
             localStorage.setItem('ultimo_reporte_visto', fechaInicioReciente)
           }
         }
@@ -110,22 +96,19 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
     if (perfilGlobal) {
         verificarNuevosReportes()
     }
-  }, [mostrarToast, perfilGlobal])
+  }, [mostrarToast, notificarGamificacion, perfilGlobal])
 
   return (
     <div className="relative w-full min-h-screen overflow-auto flex flex-col">
 
-      {/* Contenido principal */}
       <div className="relative z-10 flex flex-col items-center justify-start flex-1 pt-16 px-4 pb-8">
 
-        {/* Título */}
         <h1 className="text-4xl font-bold text-center mb-6 mt-2" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
           {obtenerSaludo(perfilGlobal?.genero)}, {perfilGlobal?.nickname || "Invitado"}; ¿Qué deseas hacer ahora?
         </h1>
 
-        {/* Contenedor del Interruptor Modo Simple */}
         <div className="w-full max-w-4xl flex justify-end px-6 mb-6">
-          <label className="flex items-center cursor-pointer gap-3 group">
+          <label className="flex items-center cursor-pointer gap-3 group" title="Reduce las funciones de Focus a lo más esencial para una experiencia más simple">
             <span className="text-zinc-400 text-sm font-medium transition group-hover:text-zinc-300">
               Modo Simplificado
             </span>
@@ -136,101 +119,110 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
                 checked={modoSimple} 
                 onChange={toggleModoSimple} 
               />
-              {/* Fondo del interruptor */}
               <div className={`block w-12 h-7 rounded-full transition-colors duration-300 ease-in-out ${modoSimple ? 'bg-[#5ecfb8]' : 'bg-zinc-700'}`}></div>
-              {/* Círculo deslizable */}
               <div className={`absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform duration-300 ease-in-out ${modoSimple ? 'translate-x-5' : 'translate-x-0'}`}></div>
             </div>
           </label>
         </div>
 
-        {/* Tarjetas */}
         <div className="flex flex-wrap justify-center gap-6 max-w-5xl">
 
-          {/* Tarjeta 1: Actividades (SIEMPRE VISIBLE) */}
+          {/* Tarjeta 1: Actividades */}
           <div
             onClick={() => navigate('/actividades')}
-            className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
-            style={{ backgroundColor: '#2a2a2a' }}>
+            className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-[#5ecfb8] hover:scale-105 shadow-lg group">
             <ClipboardDocumentListIcon className="w-12 h-12 text-[#5ecfb8] transition group-hover:text-white" />
-            <p className="text-white text-sm font-semibold text-center">Gestiona tus actividades</p>
+            <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Gestiona tus actividades</p>
           </div>
 
-          {/* Tarjeta 2: Progreso Semanal (SIEMPRE VISIBLE) */}
+          {/* Tarjeta 2: Progreso Semanal */}
           <div
             onClick={() => navigate('/progreso-semanal')}
-            className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
-            style={{ backgroundColor: '#2a2a2a' }}>
+            className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-[#f97316] hover:scale-105 shadow-lg group">
             <ChartBarIcon className="w-12 h-12 text-[#f97316] transition group-hover:text-white" />
-            <p className="text-white text-sm font-semibold text-center">Ver tu progreso semanal</p>
+            <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Ver tu progreso semanal</p>
           </div>
 
-          {/* Tarjeta 3: Reportes Semanales (SIEMPRE VISIBLE) */}
+          {/* Tarjeta 3: Reportes Semanales */}
           <div
             onClick={() => navigate('/resumenes-semanales')}
-            className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
-            style={{ backgroundColor: '#2a2a2a' }}>
+            className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-[#3b82f6] hover:scale-105 shadow-lg group">
             <DocumentTextIcon className="w-12 h-12 text-[#3b82f6] transition group-hover:text-white" />
-            <p className="text-white text-sm font-semibold text-center">Ver tus reportes semanales</p>
+            <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Ver tus reportes semanales</p>
           </div>
 
           {/* Tarjeta 4: Día Ideal */}
-              <div
-                onClick={() => navigate('/dia-ideal')}
-                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-200 hover:scale-105 shadow-lg group"
-                style={{ backgroundColor: '#2a2a2a' }}>
-                <SparklesIcon className="w-12 h-12 text-[#fbbf24] transition group-hover:text-white" />
-                <p className="text-white text-sm font-semibold text-center">Mi día ideal</p>
-              </div>
-          {/* --- BLOQUE SECUNDARIO: OCULTO SI 'modoSimple' ES TRUE --- */}
+          <div
+            onClick={() => navigate('/dia-ideal')}
+            className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-[#fbbf24] hover:scale-105 shadow-lg group">
+            <SparklesIcon className="w-12 h-12 text-[#fbbf24] transition group-hover:text-white" />
+            <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Mi día ideal</p>
+          </div>
+
+          {/* Tarjeta 5: Mi Progreso */}
+          <div
+            onClick={() => navigate('/mi-progreso')}
+            className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-[#c084fc] hover:scale-105 shadow-lg group">
+            <ChartPieIcon className="w-12 h-12 text-[#c084fc] transition group-hover:text-white" />
+            <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Progreso General</p>
+          </div>
+
+          <div
+            onClick={() => navigate('/novedades')}
+            className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-[#ffb777] hover:scale-105 shadow-lg group">
+            <NewspaperIcon className="w-12 h-12 text-[#ffb777] transition group-hover:text-white" />
+            <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Novedades</p>
+          </div>
+
           {!modoSimple && (
             <>
-              {/* Tarjeta 5: Enfoque Detalle */}
+              {/* Tarjeta 6: Enfoque Detalle */}
               <div
                 onClick={() => navigate('/enfoque-detalle')}
-                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
-                style={{ backgroundColor: '#2a2a2a' }}>
+                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-[#f59e0b] hover:scale-105 shadow-lg group">
                 <FlagIcon className="w-12 h-12 text-[#f59e0b] transition group-hover:text-white" />
-                <p className="text-white text-sm font-semibold text-center">Conoce tu enfoque</p>
+                <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Conoce tu enfoque</p>
               </div>
               
-              {/* Tarjeta 6: Recompensas */}
+              {/* Tarjeta 7: Recompensas */}
               <div
                 onClick={() => navigate('/recompensas')}
-                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
-                style={{ backgroundColor: '#2a2a2a' }}>
+                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-[#fbbf24] hover:scale-105 shadow-lg group">
                 <TrophyIcon className="w-12 h-12 text-[#fbbf24] transition group-hover:text-white" />
-                <p className="text-white text-sm font-semibold text-center">Logros</p>
+                <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Hitos y Logros</p>
               </div>
 
-              {/* Tarjeta 7: Editar Perfil */}
+              {/* Tarjeta 8: Editar Perfil */}
               <div
                 onClick={() => navigate('/editar-perfil')}
-                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
-                style={{ backgroundColor: '#2a2a2a' }}>
+                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-[#d946ef] hover:scale-105 shadow-lg group">
                 <UserCircleIcon className="w-12 h-12 text-[#d946ef] transition group-hover:text-white" />
-                <p className="text-white text-sm font-semibold text-center">Edita tu perfil</p>
+                <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Edita tu perfil</p>
               </div>
 
-              {/* Tarjeta 8: Descarga */}
+              {/* Tarjeta 9: Descarga */}
               <div
                 onClick={() => navigate('/descargar')}
-                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-700 hover:scale-105 shadow-lg group"
-                style={{ backgroundColor: '#2a2a2a' }}>
+                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-[#b8f0a0] hover:scale-105 shadow-lg group">
                 <ArrowDownTrayIcon className="w-12 h-12 text-[#b8f0a0] transition group-hover:text-white" />
-                <p className="text-white text-sm font-semibold text-center">Descarga tu perfil</p>
+                <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Descarga tu perfil</p>
               </div>
 
-
-              {/* Tarjeta 9: Configurar PIN */}
+              {/* Tarjeta 10: Configurar PIN */}
               <div
                 onClick={() => navigate('/configurar-pin')}
-                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition duration-200 hover:bg-zinc-400 hover:scale-105 shadow-lg group"
-                style={{ backgroundColor: '#2a2a2a' }}>
+                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-[#6b7280] hover:scale-105 shadow-lg group">
                 <LockClosedIcon className="w-12 h-12 text-[#6b7280] transition group-hover:text-white" />
-                <p className="text-white text-sm font-semibold text-center">Configurar PIN</p>
+                <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Configurar PIN</p>
               </div>
 
+              {/* Tarjeta 11: Nivel de Perfil */}
+              <div
+                onClick={() => navigate('/nivel-perfil')}
+                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-purple-400 hover:scale-105 shadow-lg group">
+                <FireIcon className="w-12 h-12 text-purple-400 transition group-hover:text-white" />
+                <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Nivel de Perfil</p>
+              </div>
             </>
           )}
 

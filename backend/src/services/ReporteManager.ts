@@ -1,6 +1,7 @@
 // backend/src/services/ReporteManager.ts
-import { getDB } from '../config/db';
+import { ejecutarTransaccion, getDB } from '../config/db';
 import { evaluarNuevosLogros } from './RecompensasManager';
+import { procesarObtencionXPEnTransaccion, type ResultadoXP } from './xpManager';
 
 export interface ActividadConTipoRow {
     id_actividad: number;
@@ -270,7 +271,11 @@ const resumirTiposPorSemana = (
         .sort((a, b) => b.horas - a.horas);
 };
 
-export const obtenerResumenesSemanales = async (): Promise<SemanaResumen[]> => {
+export const obtenerResumenesSemanales = async (): Promise<{
+    reportes: SemanaResumen[];
+    logrosDesbloqueados: any[];
+    resultadoXP: ResultadoXP | null;
+}> => {
     const db = getDB();
 
     // 1. Obtenemos el enfoque del perfil actual para ligar el reporte
@@ -337,6 +342,12 @@ export const obtenerResumenesSemanales = async (): Promise<SemanaResumen[]> => {
         : null;
 
     const resultadoFinal: SemanaResumen[] = [];
+    const logrosDesbloqueados: any[] = [];
+    let resultadoXP: ResultadoXP | null = null;
+    let xpOtorgadaAcumulada = 0;
+    let huboSubidaDeNivel = false;
+    let nivelesEscalados = 0;
+    let hitosAlcanzados: number[] = [];
 
     // 5. Evaluar, Guardar y Construir respuesta
     for (let i = 0; i < semanasCerradas.length; i++) {
@@ -347,28 +358,68 @@ export const obtenerResumenesSemanales = async (): Promise<SemanaResumen[]> => {
             conclusionDB = reportesMap.get(semana.fecha_inicio).Conclusion;
             ultimoEnfoqueReportado = reportesMap.get(semana.fecha_inicio).Id_enfoque;
         } else {
-            // Generamos e insertamos en BD el nuevo reporte
-            conclusionDB = generarDescripcionGeneralPorSemana(semana.actividades);
-            const progOptimizac = 85; 
-            
-            await db.run(
-                `INSERT INTO Reporte_semanal (Id_enfoque, Fecha_i_semana, Fecha_f_semana, Conclusion, Prog_optimizac)
-                VALUES (?, ?, ?, ?, ?)`,
-                [idEnfoque, semana.fecha_inicio, semana.fecha_fin, conclusionDB, progOptimizac]
-            );
-            console.log(`✅ Reporte automático generado para la semana del ${semana.fecha_inicio}`);
+            const registro = await ejecutarTransaccion(async (dbTransaccion) => {
+                const reporteConcurrente = await dbTransaccion.get(
+                    'SELECT Id_enfoque, Conclusion FROM Reporte_semanal WHERE Fecha_i_semana = ?',
+                    [semana.fecha_inicio]
+                );
+                if (reporteConcurrente) {
+                    return {
+                        conclusion: reporteConcurrente.Conclusion,
+                        idEnfoque: reporteConcurrente.Id_enfoque,
+                        reporteCreado: false
+                    };
+                }
 
-            // --- EVALUACIÓN ESPECIAL DE LOGROS ---
-            let eventoEspecial: string | undefined = undefined;
-
-            if (ultimoEnfoqueReportado !== null && ultimoEnfoqueReportado !== idEnfoque) {
-                eventoEspecial = 'REPORTE_NUEVO_ENFOQUE';
+                const conclusion = generarDescripcionGeneralPorSemana(semana.actividades);
+                await dbTransaccion.run(
+                    `INSERT INTO Reporte_semanal (Id_enfoque, Fecha_i_semana, Fecha_f_semana, Conclusion, Prog_optimizac)
+                    VALUES (?, ?, ?, ?, ?)`,
+                    [idEnfoque, semana.fecha_inicio, semana.fecha_fin, conclusion, 85]
+                );
+                return { conclusion, idEnfoque, reporteCreado: true };
+            });
+            conclusionDB = registro.conclusion;
+            ultimoEnfoqueReportado = registro.idEnfoque;
+            if (!registro.reporteCreado) {
+                reportesMap.set(semana.fecha_inicio, {
+                    Id_enfoque: registro.idEnfoque,
+                    Conclusion: registro.conclusion
+                });
             }
 
-            ultimoEnfoqueReportado = idEnfoque;
+            if (registro.reporteCreado) {
+                console.log(`✅ Reporte automático generado para la semana del ${semana.fecha_inicio}`);
 
-            // Evaluamos logros de forma silenciosa en segundo plano
-            await evaluarNuevosLogros(idPerfil, eventoEspecial);
+                let eventoEspecial: string | undefined;
+                if (ultimoEnfoqueReportado !== null && ultimoEnfoqueReportado !== idEnfoque) {
+                    eventoEspecial = 'REPORTE_NUEVO_ENFOQUE';
+                }
+
+                ultimoEnfoqueReportado = idEnfoque;
+
+                const resultadoLogros = await evaluarNuevosLogros(
+                    idPerfil,
+                    eventoEspecial,
+                    400,
+                    'Recepción de resumen semanal'
+                );
+                logrosDesbloqueados.push(...resultadoLogros.logrosDesbloqueados);
+
+                if (resultadoLogros.resultadoXP) {
+                    xpOtorgadaAcumulada += resultadoLogros.resultadoXP.xpOtorgada;
+                    huboSubidaDeNivel ||= resultadoLogros.resultadoXP.subioNivel;
+                    nivelesEscalados += resultadoLogros.resultadoXP.nivelesEscalados;
+                    hitosAlcanzados = [...hitosAlcanzados, ...resultadoLogros.resultadoXP.hitos];
+                    resultadoXP = {
+                        ...resultadoLogros.resultadoXP,
+                        xpOtorgada: xpOtorgadaAcumulada,
+                        subioNivel: huboSubidaDeNivel,
+                        nivelesEscalados,
+                        hitos: hitosAlcanzados
+                    };
+                }
+            }
         }
 
         const totalMinutos = semana.actividades.reduce((sum, actividad) => sum + actividad.durac_min, 0);
@@ -391,6 +442,63 @@ export const obtenerResumenesSemanales = async (): Promise<SemanaResumen[]> => {
         });
     }
 
-    // Devolvemos el array plano que tus vistas de frontend esperan
-    return resultadoFinal;
+    return { reportes: resultadoFinal, logrosDesbloqueados, resultadoXP };
+};
+
+export const registrarLecturaResumen = async (
+    idPerfil: number,
+    fechaInicio: string
+): Promise<{ resultadoXP: ResultadoXP; primeraLectura: boolean } | null> => {
+    return ejecutarTransaccion(async (db) => {
+        const reporte = await db.get<{ Id_reporte: number }>(
+            'SELECT Id_reporte FROM Reporte_semanal WHERE Fecha_i_semana = ?',
+            [fechaInicio]
+        );
+        if (!reporte) return null;
+
+        const validacion = await db.get<{ acumulador: number; datos_json: string }>(`
+            SELECT acumulador, datos_json
+            FROM Perfil_Validacion
+            WHERE Id_perfil = ? AND evento = 'LECTURA_REPORTE'
+        `, [idPerfil]);
+        let datos: Record<string, unknown> = {};
+        try {
+            const datosParseados: unknown = JSON.parse(validacion?.datos_json ?? '{}');
+            if (typeof datosParseados === 'object' && datosParseados !== null && !Array.isArray(datosParseados)) {
+                datos = datosParseados as Record<string, unknown>;
+            }
+        } catch {
+            datos = {};
+        }
+        const idsLeidos = Array.isArray(datos.ids)
+            ? datos.ids.map(Number).filter((id) => Number.isSafeInteger(id) && id > 0)
+            : [];
+        const primeraLectura = !idsLeidos.includes(reporte.Id_reporte);
+        const cantidadXP = primeraLectura ? 200 : 50;
+
+        if (primeraLectura) {
+            idsLeidos.push(reporte.Id_reporte);
+        }
+        const idsUnicos = [...new Set(idsLeidos)];
+        await db.run(`
+            INSERT INTO Perfil_Validacion
+                (Id_perfil, evento, acumulador, ultimo_registro, datos_json)
+            VALUES (?, 'LECTURA_REPORTE', 1, CURRENT_TIMESTAMP, ?)
+            ON CONFLICT(Id_perfil, evento) DO UPDATE SET
+                acumulador = Perfil_Validacion.acumulador + 1,
+                ultimo_registro = CURRENT_TIMESTAMP,
+                datos_json = excluded.datos_json
+        `, [
+            idPerfil,
+            JSON.stringify({ ...datos, ids: idsUnicos })
+        ]);
+
+        const resultadoXP = await procesarObtencionXPEnTransaccion(
+            db,
+            idPerfil,
+            cantidadXP,
+            primeraLectura ? 'Primera lectura de resumen semanal' : 'Lectura de resumen semanal anterior'
+        );
+        return { resultadoXP, primeraLectura };
+    });
 };

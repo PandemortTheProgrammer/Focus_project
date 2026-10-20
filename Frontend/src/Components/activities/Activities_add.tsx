@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import type Tipo_actividad from '../../models/Tipo_actividad'
 import { useToast } from '../essentials/ToastContext'
 import { BoltIcon, BookmarkIcon } from '@heroicons/react/24/outline'
 
-// Reutilizamos la interfaz (puedes importarla si la exportaste en Activities_templates)
 export interface Plantilla {
   id_plantilla: number;
   id_tipo: number;
@@ -18,19 +17,27 @@ export interface Plantilla {
 export default function ActivitiesAdd() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { mostrarToast } = useToast() 
+  const { mostrarToast, notificarGamificacion } = useToast()
+  const plantillaAutofill = location.state?.plantillaAutofill as Plantilla | undefined
 
   const [tipos, setTipos] = useState<Tipo_actividad[]>([])
-  const [tag, setTag] = useState(0)
+  const [tag, setTag] = useState(() => plantillaAutofill?.id_tipo ?? 0)
   const [hora, setHora] = useState('')
-  const [duracion, setDuracion] = useState(0)
-  const [descripcion, setDescripcion] = useState('')
+  const [duracion, setDuracion] = useState(() => plantillaAutofill?.durac_min_default ?? 0)
+  const [descripcion, setDescripcion] = useState(() => plantillaAutofill?.desc_activ_default ?? '')
 
-  // NUEVOS ESTADOS PARA PLANTILLAS
   const [plantillasRapidas, setPlantillasRapidas] = useState<Plantilla[]>([])
   const [guardarComoPlantilla, setGuardarComoPlantilla] = useState(false)
   const [tituloPlantilla, setTituloPlantilla] = useState('')
   const [guardando, setGuardando] = useState(false)
+  const actividadesEnFormulario = useRef(0)
+
+  const aplicarPlantilla = useCallback((p: Plantilla) => {
+    setTag(p.id_tipo)
+    setDescripcion(p.desc_activ_default || '')
+    if (p.durac_min_default) setDuracion(p.durac_min_default)
+    mostrarToast('exito', 'Plantilla aplicada', `Configuración "${p.titulo_plantilla}" lista.`)
+  }, [mostrarToast])
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -48,19 +55,11 @@ export default function ActivitiesAdd() {
     cargarDatos()
   }, [])
 
-  // Efecto Interceptor: Aplica la plantilla si venimos de la pantalla de plantillas
   useEffect(() => {
-    if (location.state?.plantillaAutofill) {
-      aplicarPlantilla(location.state.plantillaAutofill)
+    if (plantillaAutofill) {
+      mostrarToast('exito', 'Plantilla aplicada', `Configuración "${plantillaAutofill.titulo_plantilla}" lista.`)
     }
-  }, [location.state])
-
-  const aplicarPlantilla = (p: Plantilla) => {
-    setTag(p.id_tipo)
-    setDescripcion(p.desc_activ_default || '')
-    if (p.durac_min_default) setDuracion(p.durac_min_default)
-    mostrarToast('exito', 'Plantilla aplicada', `Configuración "${p.titulo_plantilla}" lista.`)
-  }
+  }, [mostrarToast, plantillaAutofill])
 
   const ajustarDuracion = (minutos: number) => {
     setDuracion(prev => Math.max(0, prev + minutos))
@@ -72,7 +71,6 @@ export default function ActivitiesAdd() {
     return `${h}:${m.toString().padStart(2, '0')}`
   }
 
-  // Modificamos handleSave para aceptar el flujo continuo
   const handleSave = async (registrarOtra = false) => {
     if (!tag || !hora || duracion === 0) {
       mostrarToast('advertencia', 'Datos incompletos', 'Por favor completa todos los campos (incluyendo el tiempo).')
@@ -91,38 +89,59 @@ export default function ActivitiesAdd() {
       const res = await fetch('http://localhost:3000/api/actividades', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(nuevaActividad)
+        body: JSON.stringify({
+          ...nuevaActividad,
+          ...(actividadesEnFormulario.current === 9
+            ? { eventoEspecial: 'DIEZ_ACTIVIDADES_EN_FORMULARIO' }
+            : {})
+        })
       })
 
       const data = await res.json()
 
       if (res.ok) {
-        // Lógica de Plantilla en Segundo Plano
+        actividadesEnFormulario.current += 1
+        // 1. Lógica de Plantilla en Segundo Plano
         if (guardarComoPlantilla && tituloPlantilla.trim()) {
-          await fetch('http://localhost:3000/api/plantillas', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              id_tipo: tag,
-              titulo_plantilla: tituloPlantilla.trim(),
-              desc_activ_default: descripcion.trim() || null,
-              durac_min_default: duracion
+          try {
+            const resPlantilla = await fetch('http://localhost:3000/api/plantillas', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id_tipo: tag,
+                titulo_plantilla: tituloPlantilla.trim(),
+                desc_activ_default: descripcion.trim() || null,
+                durac_min_default: duracion
+              })
             })
-          }).catch(err => console.error("Error guardando plantilla silenciosa", err))
+            const dataPlantilla = await resPlantilla.json()
+            if (resPlantilla.ok) {
+              notificarGamificacion(
+                dataPlantilla.logrosDesbloqueados ?? [],
+                dataPlantilla.resultadoXP
+              )
+            } else {
+              mostrarToast('error', 'No se pudo guardar la plantilla', dataPlantilla.error || 'Inténtalo de nuevo.')
+            }
+          } catch (error) {
+            console.error('Error guardando plantilla:', error)
+            mostrarToast('error', 'No se pudo guardar la plantilla', 'Comprueba la conexión e inténtalo de nuevo.')
+          }
         }
 
         mostrarToast('exito', '¡Actividad Registrada!', data.mensaje || 'Tu actividad se ha guardado correctamente.')
 
-        if (data.logrosDesbloqueados && data.logrosDesbloqueados.length > 0) {
-          data.logrosDesbloqueados.forEach((logroNuevo: any, index: number) => {
-            setTimeout(() => {
-              mostrarToast('logro', '', '', '', logroNuevo)
-            }, index * 1500 + 1000) 
-          })
+        notificarGamificacion(data.logrosDesbloqueados ?? [], data.resultadoXP)
+        if (data.errorXP) {
+          mostrarToast('error', 'No se pudo procesar la experiencia', data.errorXP)
+        }
+
+        if (data.reporteGenerado) {
+          mostrarToast('reporte', 'Reporte Semanal Generado', 'Tienes un nuevo análisis disponible.')
         }
 
         if (registrarOtra) {
-          // Limpiamos solo duración y descripción para permitir un registro en ráfaga ágil
+          // Ráfaga ágil
           setDuracion(0)
           setDescripcion('')
           setGuardarComoPlantilla(false)

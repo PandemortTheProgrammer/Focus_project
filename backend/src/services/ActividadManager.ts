@@ -1,5 +1,5 @@
 // backend/src/services/ActividadManager.ts
-import { getDB } from '../config/db';
+import { ejecutarTransaccion, getDB } from '../config/db';
 import Actividad from '../models/Actividad';
 import Tipo_actividad from '../models/Tipo_actividad';
 import { evaluarNuevosLogros } from './RecompensasManager';
@@ -33,7 +33,6 @@ function mapRowToActividad(row: ActividadRow): Actividad {
   return actividad;
 }
 
-// Una actividad se archiva (pasa de "activa" a "historial") 24 horas después de registrada.
 const VENTANA_EDICION_MS = 24 * 60 * 60 * 1000;
 
 function estaArchivada(horaCreacion?: string | null): boolean {
@@ -45,42 +44,88 @@ function estaArchivada(horaCreacion?: string | null): boolean {
 
 export const obtenerTiposActividad = async (): Promise<Tipo_actividad[]> => {
   const db = getDB();
-  const filas: Array<{Id_tipo?: number; Nombre_activ?: string; Utilidad_objet?: number; Codigo_color?: string;}> = await db.all("SELECT * FROM Tipo_actividad ORDER BY Id_tipo ASC");
-  return filas.map((f) => new Tipo_actividad(Number(f.Id_tipo ?? 0), String(f.Nombre_activ ?? ''), Number(f.Utilidad_objet ?? 0), String(f.Codigo_color ?? '#6b7280')));
+  const filas: Array<{ id_tipo: number; nombre_tipo: string; utilidad_objetiva: number; codigo_color: string }> = await db.all(`
+    SELECT
+      Id_tipo AS id_tipo,
+      Nombre_activ AS nombre_tipo,
+      Utilidad_objet AS utilidad_objetiva,
+      Codigo_color AS codigo_color
+    FROM Tipo_actividad
+    ORDER BY Id_tipo ASC
+  `);
+  return filas.map((fila) => new Tipo_actividad(
+    Number(fila.id_tipo),
+    fila.nombre_tipo,
+    Number(fila.utilidad_objetiva),
+    fila.codigo_color
+  ));
 };
 
-export const registrarActividad = async (datos: Actividad): Promise<void> => {
+// Modificamos el retorno para devolver los datos de la subida de XP
+export const registrarActividad = async (
+  datos: Actividad,
+  eventoEspecial?: string
+): Promise<any> => {
   const db = getDB();
   const query = `INSERT INTO Actividad (Id_tipo, hora_inicio, durac_min, desc_activ, fecha, hora_creac) VALUES (?, ?, ?, ?, ?, ?)`;
+
   const horaCreacion = datos.hora_creacion ? datos.hora_creacion.toISOString() : new Date().toISOString();
   const now = new Date();
-  // Ajuste de 5 horas: 5 * 60 * 60 * 1000 ms
+  
   const utcMinus5 = new Date(now.getTime() - (5 * 60 * 60 * 1000));
-  const fechaLocal = utcMinus5.toISOString().split('T')[0]; // YYYY-MM-DD local
+  const fechaLocal = utcMinus5.toISOString().split('T')[0];
 
-  await db.run(query, [
-    datos.id_tipo,
-    datos.hora_inicio,
-    datos.duracion_minutos,
-    datos.descripcion_actividad,
-    fechaLocal,
-    horaCreacion
-  ]);
+  const primeraActividadDelDia = await ejecutarTransaccion(async (dbTransaccion) => {
+    const actividadesPrevias = await dbTransaccion.get<{ total: number }>(
+      'SELECT COUNT(*) AS total FROM Actividad WHERE fecha = ?',
+      [fechaLocal]
+    );
+    const esPrimeraActividad = Number(actividadesPrevias?.total ?? 0) === 0;
+    await dbTransaccion.run(query, [
+      datos.id_tipo,
+      datos.hora_inicio,
+      datos.duracion_minutos,
+      datos.descripcion_actividad,
+      fechaLocal,
+      horaCreacion
+    ]);
+    return esPrimeraActividad;
+  });
+
+  let logrosDesbloqueados: any[] = [];
+  let datosXP = null;
+  let errorXP: string | null = null;
 
   try {
     const perfilActivo = await db.get("SELECT Id_perfil FROM Perfil LIMIT 1");
     if (perfilActivo && perfilActivo.Id_perfil) {
-      await evaluarNuevosLogros(perfilActivo.Id_perfil);
+      const resultado = await evaluarNuevosLogros(
+        perfilActivo.Id_perfil,
+        eventoEspecial,
+        primeraActividadDelDia ? 600 : 100,
+        primeraActividadDelDia ? 'Primera actividad del día' : 'Registro de actividad'
+      );
+      logrosDesbloqueados = resultado.logrosDesbloqueados;
+      datosXP = resultado.resultadoXP;
     }
   } catch (error) {
-    console.error("🔴 Error al evaluar recompensas tras registrar actividad:", error);
+    console.error("🔴 Error al evaluar recompensas o XP tras registrar actividad:", error);
+    errorXP = error instanceof Error ? error.message : 'No se pudo procesar XP o logros.';
   }
+  
   console.log("Actividad guardada en SQLite");
+  
+  // Devolvemos el formato exacto que tu controlador "createActividad" estaba esperando
+  return { 
+      logrosDesbloqueados: logrosDesbloqueados.length > 0 ? logrosDesbloqueados : [], 
+      reporteGenerado: false, // La generación de reportes se maneja en su propio flujo
+      resultadoXP: datosXP,
+      errorXP
+  };
 };
 
 export const obtenerActividades = async (): Promise<Actividad[]> => {
   const db = getDB();
-  // Solo actividades aún activas (menos de 24h desde su registro). Pasadas las 24h se archivan al historial.
   const query = `SELECT * FROM Actividad
                   WHERE hora_creac IS NULL OR datetime(hora_creac) > datetime('now', '-1 day')
                   ORDER BY id_actividad DESC`;
@@ -107,6 +152,7 @@ export const eliminarActividad = async (id: number): Promise<ResultadoEliminacio
   return 'eliminada';
 };
 
+// La edición NO otorga XP para evitar farming artificial, se queda intacta.
 export const editarActividad = async (id: number, datos: Partial<Actividad>): Promise<Actividad | null | 'bloqueada'> => {
   const db = getDB();
   const actual: ActividadRow | undefined = await db.get(`SELECT * FROM Actividad WHERE id_actividad = ?`, [id]);
@@ -153,7 +199,6 @@ export const actividadesSemana = async (): Promise<Record<string, Actividad[]>> 
 
 export const obtenerHistorialActividades = async (): Promise<Actividad[]> => {
   const db = getDB();
-  // Historial = actividades ya archivadas (24h o más desde su registro).
   const filas: ActividadRow[] = await db.all(
     `SELECT * FROM Actividad
       WHERE hora_creac IS NOT NULL AND datetime(hora_creac) <= datetime('now', '-1 day')

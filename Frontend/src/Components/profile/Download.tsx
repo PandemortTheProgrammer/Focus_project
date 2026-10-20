@@ -3,7 +3,7 @@ import { useToast } from '../essentials/ToastContext';
 
 export default function Download() {
   const navigate = useNavigate();
-  const { mostrarToast } = useToast();
+  const { mostrarToast, notificarGamificacion } = useToast();
 
   const handleDescargar = async () => {
     try {
@@ -43,16 +43,7 @@ export default function Download() {
         if (resLogro.ok) {
           const dataLogro = await resLogro.json();
           
-          // Si el backend nos confirma que ganó recompensas, disparamos el Toast
-          if (dataLogro.logrosDesbloqueados && dataLogro.logrosDesbloqueados.length > 0) {
-            dataLogro.logrosDesbloqueados.forEach((logroNuevo: any, index: number) => {
-              // Le damos 1.5 segundos de margen para que el usuario termine de leer 
-              // el mensaje de "Descarga completada" antes de mostrar el trofeo
-              setTimeout(() => {
-                mostrarToast('logro', '', '', '', logroNuevo);
-              }, 1500 + (index * 1500));
-            });
-          }
+          notificarGamificacion(dataLogro.logrosDesbloqueados ?? [], dataLogro.resultadoXP);
         }
       } catch (errorLogro) {
         // Fallo silencioso: Si falla la validación del logro, no arruinamos la experiencia

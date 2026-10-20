@@ -1,5 +1,5 @@
 // src/utils/icons.ts
-// Carga automáticamente todas las imágenes disponibles en src/assets/Images/Icons
+// Carga automáticamente todas las imágenes disponibles en src/assets/images/Icons
 // para ofrecerlas como íconos seleccionables de perfil (ver IconPicker.tsx).
 //
 // Convención de nombres: cada archivo debe llamarse "icon_{id}.ext" o "icono_{id}.ext"
@@ -9,7 +9,7 @@
 
 const PREFIJOS = ['icon_', 'icono_'];
 
-const modulos = import.meta.glob('../assets/Images/Icons/*.{png,jpg,jpeg,svg,webp}', {
+const modulos = import.meta.glob('../assets/images/Icons/*.{png,jpg,jpeg,svg,webp}', {
   eager: true,
   import: 'default',
 }) as Record<string, string>;

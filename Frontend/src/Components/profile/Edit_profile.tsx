@@ -12,7 +12,7 @@ interface EditProfileProps {
 
 export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfileProps) {
   const navigate = useNavigate()
-  const { mostrarToast } = useToast()
+  const { mostrarToast, notificarGamificacion } = useToast()
 
   const [nickname, setNickname] = useState(perfilGlobal?.nickname || '')
   const [ageRank, setAgeRank] = useState(perfilGlobal?.age_rank || '')
@@ -55,6 +55,7 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
       if (res.ok) {
         mostrarToast('exito', '¡Perfil actualizado!', data.mensaje || 'Tus cambios se han guardado correctamente.')
         setPerfilGlobal(perfilActualizado)
+        notificarGamificacion([], data.resultadoXP)
 
         // Evaluación del logro Evolución
         try {
@@ -66,13 +67,7 @@ export default function EditProfile({ perfilGlobal, setPerfilGlobal }: EditProfi
 
           if (resEvento.ok) {
             const dataEvento = await resEvento.json()
-            if (dataEvento.logrosDesbloqueados && dataEvento.logrosDesbloqueados.length > 0) {
-              dataEvento.logrosDesbloqueados.forEach((logro: any, index: number) => {
-                setTimeout(() => {
-                  mostrarToast('logro', logro.nombre_recompensa, logro.descripcion, '', logro)
-                }, index * 1500 + 1000)
-              })
-            }
+            notificarGamificacion(dataEvento.logrosDesbloqueados ?? [], dataEvento.resultadoXP)
           }
         } catch (eventoError) {
           console.error('Error al evaluar el logro de edición:', eventoError)

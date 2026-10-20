@@ -1,4 +1,5 @@
 import { getDB } from '../config/db'; 
+import { evaluarNuevosLogros } from './RecompensasManager';
 
 // Tipado para la inserción
 export interface DatosPlantilla {
@@ -11,7 +12,14 @@ export interface DatosPlantilla {
 /**
  * Guarda una nueva plantilla (o un clon de una actividad existente)
  */
-export const crearPlantillaManager = async (datos: DatosPlantilla): Promise<number> => {
+export const crearPlantillaManager = async (
+    datos: DatosPlantilla,
+    idActividadOrigen?: number
+): Promise<{
+    id_plantilla: number;
+    logrosDesbloqueados: unknown[];
+    resultadoXP: unknown;
+}> => {
     const db = getDB();
     const query = `
         INSERT INTO Plantilla_Actividad (id_tipo, titulo_plantilla, desc_activ_default, durac_min_default)
@@ -25,11 +33,26 @@ export const crearPlantillaManager = async (datos: DatosPlantilla): Promise<numb
         datos.durac_min_default || null
     ]);
 
-    // Retornamos el ID recién creado por si el frontend lo necesita
     if (result.lastID === undefined) {
         throw new Error('No se pudo obtener el ID de la plantilla creada');
     }
-    return result.lastID;
+
+    const actividadAntigua = idActividadOrigen
+        ? await db.get(
+            "SELECT 1 FROM Actividad WHERE Id_actividad = ? AND date(fecha) <= date('now', '-14 days')",
+            [idActividadOrigen]
+        )
+        : null;
+    const recompensa = await evaluarNuevosLogros(
+        1,
+        actividadAntigua ? 'PLANTILLA_ACTIVIDAD_ANTIGUA' : undefined
+    );
+
+    return {
+        id_plantilla: result.lastID,
+        logrosDesbloqueados: recompensa.logrosDesbloqueados,
+        resultadoXP: recompensa.resultadoXP
+    };
 };
 
 /**

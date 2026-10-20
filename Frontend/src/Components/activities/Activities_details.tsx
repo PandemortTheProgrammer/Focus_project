@@ -20,7 +20,7 @@ export default function ActivitiesDetails({
     onEdit,
     onDelete
 }: ActivitiesDetailsProps) {
-    const { mostrarToast } = useToast();
+    const { mostrarToast, notificarGamificacion } = useToast();
 
     // Estado para manejar el micro-formulario de "Clonar Plantilla"
     const [mostrandoClonacion, setMostrandoClonacion] = useState(false);
@@ -48,11 +48,17 @@ export default function ActivitiesDetails({
                     id_tipo: actividad.id_tipo,
                     titulo_plantilla: tituloPlantilla,
                     desc_activ_default: actividad.descripcion_actividad,
-                    durac_min_default: actividad.duracion_minutos
+                    durac_min_default: actividad.duracion_minutos,
+                    id_actividad_origen: actividad.id_actividad
                 })
             });
 
             if (res.ok) {
+                const data = await res.json();
+                notificarGamificacion(
+                    data.logrosDesbloqueados ?? [],
+                    data.resultadoXP
+                );
                 mostrarToast('exito', 'Plantilla guardada', 'Ya puedes usarla para registros rápidos.');
                 setMostrandoClonacion(false);
                 setTituloPlantilla('');

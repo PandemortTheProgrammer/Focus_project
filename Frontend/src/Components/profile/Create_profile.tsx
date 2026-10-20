@@ -9,7 +9,7 @@ interface CreateProfileProps {
 
 export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
   const navigate = useNavigate();
-  const { mostrarToast } = useToast();
+  const { mostrarToast, notificarGamificacion } = useToast();
 
   const [nickname, setNickname] = useState('');
   const [ageRank, setAgeRank] = useState('');
@@ -43,6 +43,7 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
 
         if (respuesta.ok) {
             setPerfilGlobal(nuevoPerfil);
+            notificarGamificacion([], data.resultadoXP);
 
             // --- Evaluación del logro Bienvenida ---
             try {
@@ -54,13 +55,7 @@ export default function CreateProfile({ setPerfilGlobal }: CreateProfileProps) {
 
               if (resEvento.ok) {
                 const dataEvento = await resEvento.json();
-                if (dataEvento.logrosDesbloqueados && dataEvento.logrosDesbloqueados.length > 0) {
-                  dataEvento.logrosDesbloqueados.forEach((logro: any, index: number) => {
-                    setTimeout(() => {
-                      mostrarToast('logro', logro.nombre_recompensa, logro.descripcion, '', logro);
-                    }, index * 1500 + 1000); 
-                  });
-                }
+                notificarGamificacion(dataEvento.logrosDesbloqueados ?? [], dataEvento.resultadoXP);
               }
             } catch (eventoError) {
               console.error('Error al evaluar el logro de bienvenida:', eventoError);

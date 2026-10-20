@@ -2,6 +2,7 @@
 import { Request, Response } from 'express';
 import path from 'path';
 import { guardarPerfil, obtenerPerfil, obtenerEnfoques, reiniciarPerfilYDatos, obtenerDetallesEnfoque, actualizarPin, actualizarEnfoque } from '../services/PerfilManager';
+import { evaluarNuevosLogros } from '../services/RecompensasManager';
 
 export const getEnfoques = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -28,7 +29,12 @@ export const getEnfoqueDetalles = async (req: Request, res: Response) => {
             return res.status(404).json({ error: "Enfoque no encontrado en los catálogos." });
         }
 
-        res.json(detalles);
+        const gamificacion = await evaluarNuevosLogros(1, 'VISITA_DETALLES_ENFOQUE');
+        res.json({
+            ...detalles,
+            logrosDesbloqueados: gamificacion.logrosDesbloqueados,
+            resultadoXP: gamificacion.resultadoXP
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Error al recuperar los detalles del enfoque." });
@@ -47,11 +53,11 @@ export const actualizarPinPerfil = async (req: Request, res: Response): Promise<
             }
         }
 
-        // Llamamos al manager pasando el PIN y la Pista (o null si se está desactivando)
-        await actualizarPin(pin || null, pista_pin || null);
+        const resultado = await actualizarPin(pin || null, pista_pin || null);
 
         res.status(200).json({ 
-            mensaje: pin ? "PIN y pista de recuperación configurados exitosamente." : "PIN de seguridad desactivado." 
+            mensaje: pin ? "PIN y pista de recuperación configurados exitosamente." : "PIN de seguridad desactivado.",
+            ...resultado
         });
     } catch (error) {
         console.error("Error al actualizar el PIN del perfil:", error);
@@ -73,7 +79,9 @@ export const getPerfilActivo = async (req: Request, res: Response) => {
             id_focus: perfil.Id_enfoque,
             id_icono: perfil.Id_icono ?? 1,
             pin: perfil.pin ?? null,
-            pista_pin: perfil.pista_pin ?? null
+            pista_pin: perfil.pista_pin ?? null,
+            nivel: perfil.nivel, // <-- Útil si el frontend quiere mostrar el nivel actual aquí
+            xp_acumulada: perfil.xp_acumulada
         };
         
         res.json(perfilNormalizado);
@@ -90,22 +98,25 @@ export const crearOEditarPerfil = async (req: Request, res: Response) => {
         if (!nickname || nickname.trim() === '') {
             return res.status(400).json({ error: "El apodo (nickname) no puede estar vacío." });
         }
-        // Eliminamos '!id_focus' de la validación
         if (!age_rank || !genero) { 
             return res.status(400).json({ error: "Faltan campos por seleccionar." });
         }
 
-        // Si no viene id_focus (porque es creación nueva), le asignamos null 
-        // o un valor por defecto como 7 (Equilibrado)
         const datosParaGuardar = {
             ...req.body,
             id_focus: id_focus || null 
         };
 
-        await guardarPerfil(datosParaGuardar);
-        res.status(201).json({ mensaje: "Perfil guardado." });
+        // Capturamos el resultado de XP (25 XP si fue edición, 0 si fue creación)
+        const resultadoXP = await guardarPerfil(datosParaGuardar);
+        
+        res.status(201).json({ 
+            mensaje: "Perfil guardado.",
+            resultadoXP // <-- Inyectado para el frontend
+        });
     } catch (error) {
-        // ...
+        console.error("Error al crear o editar el perfil:", error);
+        res.status(500).json({ error: "Error interno al guardar los datos del perfil." });
     }
 };
 
@@ -141,8 +152,13 @@ export const cambiarEnfoque = async (req: Request, res: Response) => {
         const { id_focus } = req.body;
         if (!id_focus) return res.status(400).json({ error: "Falta el ID del enfoque." });
         
-        await actualizarEnfoque(id_focus);
-        res.status(200).json({ mensaje: "Enfoque actualizado con éxito." });
+        // Capturamos el resultado de XP (2000 si es el primero, 100 si son posteriores)
+        const resultado = await actualizarEnfoque(id_focus);
+        
+        res.status(200).json({ 
+            mensaje: "Enfoque actualizado con éxito.",
+            ...resultado
+        });
     } catch (error) {
         console.error("Error al cambiar enfoque:", error);
         res.status(500).json({ error: "No se pudo actualizar tu enfoque." });

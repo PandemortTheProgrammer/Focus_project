@@ -25,6 +25,15 @@ const obtenerNombreDia = (fecha: string): string => {
   return nombres[new Date(fecha + 'T12:00:00').getDay()]
 }
 
+const formatearDuracion = (minutosTotales: number): string => {
+  const horas = Math.floor(minutosTotales / 60)
+  const minutos = minutosTotales % 60
+  return [
+    horas > 0 ? `${horas} h` : '',
+    minutos > 0 ? `${minutos} min` : ''
+  ].filter(Boolean).join(' ') || '0 min'
+}
+
 // Tooltip personalizado para la gráfica de barras
 interface BarraTooltipPayloadItem {
   dataKey: string
@@ -38,34 +47,34 @@ interface BarraTooltipProps {
 }
 const TooltipBarras = ({ active, payload, label }: BarraTooltipProps) => {
   if (!active || !payload || payload.length === 0) return null
-  const items = payload.filter(item => item.value > 0)
-  if (items.length === 0) return null
+  const item = payload.find(entry => entry.value > 0)
+  if (!item) return null
+
   return (
     <div className="rounded-xl px-3 py-2 shadow-lg" style={{ backgroundColor: 'rgba(20,20,20,0.95)', border: '1px solid rgba(255,255,255,0.1)' }}>
       <p className="text-white text-xs font-semibold mb-1">{label}</p>
-      <div className="flex flex-col gap-0.5">
-        {items.map(item => (
-          <div key={item.dataKey} className="flex items-center gap-2 text-xs" style={{ color: 'rgba(255,255,255,0.75)' }}>
-            <span
-              className="w-2 h-2 rounded-sm inline-block"
-              style={{ backgroundColor: item.color ?? '#888' }}
-            />
-            <span>{item.dataKey}:</span>
-            <span className="font-semibold">{item.value} min ({(item.value / 60).toFixed(1)}h)</span>
-          </div>
-        ))}
+      <div className="flex items-center gap-2 text-xs" style={{ color: 'rgba(255,255,255,0.75)' }}>
+        <span
+          className="w-2 h-2 rounded-sm inline-block"
+          style={{ backgroundColor: item.color ?? '#888' }}
+        />
+        <span>{item.dataKey}:</span>
+        <span className="font-semibold">{item.value} min ({formatearDuracion(item.value)})</span>
       </div>
     </div>
   )
 }
 
 export default function WeeklyProgress() {
-  const { mostrarToast } = useToast() // 2. Extraemos la función para mostrar alertas/logros
+  const { notificarGamificacion } = useToast()
 
   const [datosSemana, setDatosSemana] = useState<Record<string, Actividad[]>>({})
   const [catalogoTipos, setCatalogoTipos] = useState<Tipo_actividad[]>([])
   const [cargando, setCargando] = useState(true)
   const [mostrarTodaLaLeyenda, setMostrarTodaLaLeyenda] = useState(false)
+  const [tipoActividadHover, setTipoActividadHover] = useState<string | null>(null)
+  const [tipoActividadFijado, setTipoActividadFijado] = useState<string | null>(null)
+  const tipoActividadActivo = tipoActividadHover ?? tipoActividadFijado
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -95,14 +104,7 @@ export default function WeeklyProgress() {
         })
         if (res.ok) {
           const data = await res.json()
-          // Si el backend nos devuelve logros, los mostramos en cascada
-          if (data.logrosDesbloqueados && data.logrosDesbloqueados.length > 0) {
-            data.logrosDesbloqueados.forEach((logro: any, index: number) => {
-              setTimeout(() => {
-                mostrarToast('logro', logro.nombre_recompensa, logro.descripcion, '', logro)
-              }, index * 1500) // Desfase de 1.5s entre cada logro para evitar superposiciones
-            })
-          }
+          notificarGamificacion(data.logrosDesbloqueados ?? [], data.resultadoXP)
         }
       } catch (error) {
         console.error('Error evaluando el logro por visita:', error)
@@ -111,7 +113,7 @@ export default function WeeklyProgress() {
 
     cargarDatos()
     evaluarVisita() // Ejecutamos la evaluación en segundo plano
-  }, [mostrarToast]) // Añadimos mostrarToast al arreglo de dependencias por buenas prácticas de React
+  }, [notificarGamificacion])
 
   // Construye los datos para la gráfica de barras
   const datosBarras = obtenerUltimosSieteDias().map(fecha => {
@@ -125,6 +127,13 @@ export default function WeeklyProgress() {
     })
     return entrada
   })
+
+  const minutosSemanaPorTipo = new Map(
+    catalogoTipos.map(tipo => [
+      tipo.nombre_tipo,
+      datosBarras.reduce((total, dia) => total + Number(dia[tipo.nombre_tipo] ?? 0), 0)
+    ])
+  )
 
   // Construye los datos para la gráfica de dona
   const datosDona = catalogoTipos.map(tipo => {
@@ -195,12 +204,15 @@ export default function WeeklyProgress() {
             <BarChart data={datosBarras}>
               <XAxis dataKey="dia" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} axisLine={false} tickLine={false} />
-              <Tooltip content={<TooltipBarras />} cursor={{ fill: 'rgba(255,255,255,0.06)' }} />
+              <Tooltip shared={false} content={<TooltipBarras />} cursor={{ fill: 'rgba(255,255,255,0.06)' }} />
               {catalogoTipos.map(tipo => (
                 <Bar key={tipo.id_tipo} dataKey={tipo.nombre_tipo}
                   stackId="a"
                   fill={tipo.codigo_color ?? '#888'}
                   radius={[4, 4, 0, 0]}
+                  fillOpacity={tipoActividadActivo === null || tipoActividadActivo === tipo.nombre_tipo ? 1 : 0.16}
+                  onMouseEnter={() => setTipoActividadHover(tipo.nombre_tipo)}
+                  onMouseLeave={() => setTipoActividadHover(null)}
                 />
               ))}
             </BarChart>
@@ -209,11 +221,69 @@ export default function WeeklyProgress() {
           {/* Leyenda */}
           <div className="flex flex-wrap gap-3 mt-2">
             {tiposLeyendaVisibles.map(tipo => (
-              <span key={tipo.id_tipo} className="flex items-center gap-1 text-xs"
-                style={{ color: 'rgba(255,255,255,0.6)' }}>
-                <span className="w-3 h-3 rounded-sm inline-block"
-                  style={{ backgroundColor: tipo.codigo_color ?? '#888' }} />
-                {tipo.nombre_tipo}
+              <span
+                key={tipo.id_tipo}
+                className="relative inline-flex"
+                style={{
+                  color: tipoActividadActivo === null || tipoActividadActivo === tipo.nombre_tipo
+                    ? 'rgba(255,255,255,0.85)'
+                    : 'rgba(255,255,255,0.3)',
+                  filter: tipoActividadActivo !== null && tipoActividadActivo !== tipo.nombre_tipo
+                    ? 'grayscale(1)'
+                    : undefined,
+                  opacity: tipoActividadActivo !== null && tipoActividadActivo !== tipo.nombre_tipo ? 0.55 : 1
+                }}
+              >
+                <button
+                  type="button"
+                  className="flex items-center gap-1 text-xs transition-colors duration-150 cursor-pointer"
+                  aria-pressed={tipoActividadFijado === tipo.nombre_tipo}
+                  title={tipoActividadFijado === tipo.nombre_tipo ? 'Haz clic para quitar el resaltado' : 'Haz clic para fijar este tipo de actividad'}
+                  onMouseEnter={() => setTipoActividadHover(tipo.nombre_tipo)}
+                  onMouseLeave={() => setTipoActividadHover(null)}
+                  onFocus={() => setTipoActividadHover(tipo.nombre_tipo)}
+                  onBlur={() => setTipoActividadHover(null)}
+                  onClick={() => setTipoActividadFijado(actual =>
+                    actual === tipo.nombre_tipo ? null : tipo.nombre_tipo
+                  )}
+                >
+                  <span className="w-3 h-3 rounded-sm inline-block"
+                    style={{ backgroundColor: tipo.codigo_color ?? '#888' }} />
+                  {tipo.nombre_tipo}
+                  {(minutosSemanaPorTipo.get(tipo.nombre_tipo) ?? 0) > 0 && (
+                    <span
+                      aria-label="Tiene actividad en la gráfica"
+                      title="Este tipo tiene actividad en la gráfica"
+                      className="ml-0.5 font-bold text-[#5ecfb8]"
+                    >
+                      !
+                    </span>
+                  )}
+                </button>
+                {tipoActividadActivo === tipo.nombre_tipo && (
+                  <div
+                    role="status"
+                    className="absolute left-0 top-full z-20 mt-2 inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-xs shadow-lg"
+                    style={{
+                      backgroundColor: 'rgba(20,20,20,0.96)',
+                      border: `1px solid ${tipo.codigo_color ?? '#888'}`,
+                      color: 'rgba(255,255,255,0.85)',
+                      filter: 'none',
+                      opacity: 1,
+                      pointerEvents: 'none'
+                    }}
+                  >
+                    <span
+                      className="w-2.5 h-2.5 rounded-sm inline-block"
+                      style={{ backgroundColor: tipo.codigo_color ?? '#888' }}
+                    />
+                    <span className="font-semibold">{tipo.nombre_tipo}</span>
+                    <span className="text-zinc-300">
+                      {minutosSemanaPorTipo.get(tipo.nombre_tipo) ?? 0} min
+                      {' '}({formatearDuracion(minutosSemanaPorTipo.get(tipo.nombre_tipo) ?? 0)})
+                    </span>
+                  </div>
+                )}
               </span>
             ))}
             {hayLeyendaOculta && (

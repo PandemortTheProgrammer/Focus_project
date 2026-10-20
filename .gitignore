@@ -26,3 +26,4 @@ backend/focus_database.sqlite
 backend/src/sql-terminal.ts
 uploads/
 temp/
+Frontend/public/novedades.json

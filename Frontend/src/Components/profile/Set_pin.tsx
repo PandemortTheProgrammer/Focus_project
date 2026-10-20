@@ -6,7 +6,7 @@ import PageHeader from '../essentials/Page-head';
 
 export default function ConfigurarPin() {
     const navigate = useNavigate();
-    const { mostrarToast } = useToast();
+    const { mostrarToast, notificarGamificacion } = useToast();
 
     const [paso, setPaso] = useState<1 | 2>(1);
     const [pinInicial, setPinInicial] = useState('');
@@ -52,7 +52,9 @@ export default function ConfigurarPin() {
             });
 
             if (res.ok) {
+                const data = await res.json();
                 mostrarToast('exito', 'Privacidad activada', 'Tu perfil ahora está protegido.');
+                notificarGamificacion(data.logrosDesbloqueados ?? [], data.resultadoXP);
                 navigate('/dashboard');
             } else {
                 const errorData = await res.json();
@@ -68,15 +70,19 @@ export default function ConfigurarPin() {
 
     const eliminarPin = async () => {
         try {
-            await fetch('http://localhost:3000/api/perfil/pin', {
+            const res = await fetch('http://localhost:3000/api/perfil/pin', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ pin: null, pista_pin: null }) // Limpiamos ambos campos
             });
+            if (!res.ok) throw new Error('No se pudo eliminar el PIN.');
+            const data = await res.json();
             mostrarToast('advertencia', 'PIN eliminado', 'Tu perfil ya no requiere código de acceso.');
+            notificarGamificacion(data.logrosDesbloqueados ?? [], data.resultadoXP);
             navigate('/dashboard');
         } catch (error) {
-            mostrarToast('error', 'Error', 'No se pudo eliminar el PIN.');
+            const mensaje = error instanceof Error ? error.message : 'No se pudo eliminar el PIN.';
+            mostrarToast('error', 'Error', mensaje);
         }
     };
 

@@ -36,7 +36,7 @@ const fallbackRecurso = { icono: SparklesIcon, color: '#f5e6c8' };
 
 export default function SeleccionarEnfoque() {
   const navigate = useNavigate();
-  const { mostrarToast } = useToast();
+  const { mostrarToast, notificarGamificacion } = useToast();
   
   const [enfoques, setEnfoques] = useState<Enfoque[]>([]);
   const [enfoqueActualId, setEnfoqueActualId] = useState<number | null>(null);
@@ -60,7 +60,7 @@ export default function SeleccionarEnfoque() {
           setEnfoqueActualId(dataPerfil.id_focus);
           setSeleccionadoId(dataPerfil.id_focus);
         }
-      } catch (error) {
+      } catch {
         mostrarToast('error', 'Error de conexión', 'No pudimos cargar los enfoques.');
       } finally {
         setCargando(false);
@@ -81,12 +81,14 @@ export default function SeleccionarEnfoque() {
       });
 
       if (res.ok) {
+        const data = await res.json();
         mostrarToast('exito', 'Nuevo rumbo fijado', 'Tu enfoque ha sido actualizado.');
+        notificarGamificacion(data.logrosDesbloqueados ?? [], data.resultadoXP);
         navigate('/enfoque-detalle'); 
       } else {
         throw new Error('Error al guardar');
       }
-    } catch (error) {
+    } catch {
       mostrarToast('error', 'Error', 'No se pudo guardar el cambio.');
     } finally {
       setGuardando(false);

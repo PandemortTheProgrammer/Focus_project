@@ -22,45 +22,64 @@ export default function IconPicker({ nickname, iconoSeleccionado, onSeleccionar,
   const [idsDesbloqueados, setIdsDesbloqueados] = useState<number[]>([]);
 
   useEffect(() => {
+    const catalogoLocal = iconosDisponibles
+      .filter((item) => item.id > 1)
+      .map((item) => new Icono(item.id, `Icono ${item.id}`));
+
+    // Los archivos locales determinan qué íconos existen en el frontend.
+    // El backend solo determina cuáles ya fueron desbloqueados.
+    setIconosCatalogo(catalogoLocal);
+
     const cargarDatos = async () => {
       try {
-        // Ejecutamos ambas peticiones al mismo tiempo para mayor velocidad
-        const [resCatalogo, resDesbloqueados] = await Promise.all([
+        const [resultadoCatalogo, resultadoDesbloqueados] = await Promise.allSettled([
           fetch('http://localhost:3000/api/recompensas/iconos'),
           fetch(`http://localhost:3000/api/recompensas/iconos/${idPerfil}`)
         ]);
 
-        if (!resCatalogo.ok || !resDesbloqueados.ok) {
-          throw new Error('Error al cargar datos de iconos');
+        if (resultadoDesbloqueados.status === 'rejected') {
+          throw resultadoDesbloqueados.reason;
         }
 
-        // 1. Procesar el catálogo completo
-        const datosCatalogo = await resCatalogo.json() as Array<{ id_icono?: number; Id_icono?: number; nombre_icono?: string; nombre?: string }>;
-        const normalizadoCatalogo = datosCatalogo
-          .map((item) => new Icono(
-            Number(item.id_icono ?? item.Id_icono ?? 0),
-            String(item.nombre_icono ?? item.nombre ?? '')
-          ))
-          .filter((icono) => icono.id_icono > 1)
-          .sort((a, b) => a.id_icono - b.id_icono);
+        const resDesbloqueados = resultadoDesbloqueados.value;
+        if (!resDesbloqueados.ok) {
+          throw new Error('Error al cargar los íconos desbloqueados');
+        }
 
-        // 2. Procesar los desbloqueados
         const datosDesbloqueados = await resDesbloqueados.json() as Array<{ id_icono?: number; Id_icono?: number }>;
         const desbloqueadosArray = datosDesbloqueados.map(item => Number(item.id_icono ?? item.Id_icono ?? 0));
-
-        setIconosCatalogo(normalizadoCatalogo);
         setIdsDesbloqueados(desbloqueadosArray);
+
+        if (resultadoCatalogo.status === 'fulfilled' && resultadoCatalogo.value.ok) {
+          const datosCatalogo = await resultadoCatalogo.value.json() as Array<{
+            id_icono?: number;
+            Id_icono?: number;
+            nombre_icono?: string;
+            nombre?: string;
+          }>;
+          const nombresPorId = new Map(
+            datosCatalogo.map((item) => [
+              Number(item.id_icono ?? item.Id_icono ?? 0),
+              String(item.nombre_icono ?? item.nombre ?? '')
+            ])
+          );
+          setIconosCatalogo(catalogoLocal.map((icono) => new Icono(
+            icono.id_icono,
+            nombresPorId.get(icono.id_icono) || icono.nombre_icono
+          )));
+        } else {
+          console.error(
+            'No se pudieron cargar los nombres del catálogo de íconos:',
+            resultadoCatalogo.status === 'rejected'
+              ? resultadoCatalogo.reason
+              : `HTTP ${resultadoCatalogo.value.status}`
+          );
+        }
 
       } catch (error: unknown) {
         const mensaje = error instanceof Error ? error.message : 'Error desconocido';
-        console.error('Error al cargar datos de iconos:', mensaje);
-        
-        // Fallback en caso de error (mostrar el catálogo por defecto, pero bloqueado)
-        setIconosCatalogo(
-          iconosDisponibles
-            .filter((item) => item.id > 1)
-            .map((item) => new Icono(item.id, `Icono ${item.id}`))
-        );
+        console.error('Error al cargar los íconos desbloqueados:', mensaje);
+
         setIdsDesbloqueados([]); // Asumimos que no tiene nada desbloqueado si hay error
       }
     };

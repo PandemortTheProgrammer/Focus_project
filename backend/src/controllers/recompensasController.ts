@@ -76,9 +76,8 @@ export const evaluarEventoEspecial = async (req: Request, res: Response): Promis
         const idPerfil = 1; 
 
         // Pasamos la bandera al motor que acabamos de actualizar
-        const logrosNuevos = await evaluarNuevosLogros(idPerfil, eventoEspecial);
-
-        res.json({ logrosDesbloqueados: logrosNuevos });
+        const resultado = await evaluarNuevosLogros(idPerfil, eventoEspecial);
+        res.json(resultado);
     } catch (error) {
         console.error("Error al evaluar evento especial:", error);
         res.status(500).json({ error: "Error interno del servidor" });

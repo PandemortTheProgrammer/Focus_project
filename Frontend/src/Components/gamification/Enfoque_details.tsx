@@ -23,7 +23,7 @@ interface ConoceTuEnfoqueProps {
 
 export default function ConoceTuEnfoque({ perfilGlobal }: ConoceTuEnfoqueProps) {
     const navigate = useNavigate();
-    const { mostrarToast } = useToast();
+    const { mostrarToast, notificarGamificacion } = useToast();
 
     const [enfoqueInfo, setEnfoqueInfo] = useState<EnfoqueDetalle | null>(null);
     const [cargando, setCargando] = useState(true);
@@ -39,6 +39,10 @@ export default function ConoceTuEnfoque({ perfilGlobal }: ConoceTuEnfoqueProps) 
                 if (res.ok) {
                     const data = await res.json();
                     setEnfoqueInfo(data);
+                    notificarGamificacion(
+                        data.logrosDesbloqueados ?? [],
+                        data.resultadoXP
+                    );
                 } else {
                     // FALLBACK TEMPORAL PARA PRUEBAS (Mientras actualizamos la BD local-first)
                     setEnfoqueInfo({
@@ -61,7 +65,7 @@ export default function ConoceTuEnfoque({ perfilGlobal }: ConoceTuEnfoqueProps) 
         };
 
         cargarDetallesEnfoque();
-    }, [perfilGlobal, mostrarToast]);
+    }, [perfilGlobal, mostrarToast, notificarGamificacion]);
 
     if (cargando) {
         return <div className="min-h-screen flex items-center justify-center text-white">Cargando tu manifiesto...</div>;

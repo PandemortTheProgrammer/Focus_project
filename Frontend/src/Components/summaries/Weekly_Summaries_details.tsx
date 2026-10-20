@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useToast } from '../essentials/ToastContext'
 import {
   BarChart, Bar, XAxis, YAxis,
   ResponsiveContainer, Cell, PieChart, Pie, Tooltip
@@ -97,10 +98,12 @@ const TooltipBarras = ({ active, payload, label }: BarraTooltipProps) => {
 export default function WeeklySummaryDetail() {
   const navigate = useNavigate()
   const { id } = useParams<{ id?: string }>()
+  const { mostrarToast, notificarGamificacion } = useToast()
   const [semanas, setSemanas] = useState<SemanaResumen[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [mostrarTodaLaLeyenda, setMostrarTodaLaLeyenda] = useState(false)
+  const lecturaRegistrada = useRef<string | null>(null)
 
   useEffect(() => {
     const cargarResumenes = async () => {
@@ -110,7 +113,8 @@ export default function WeeklySummaryDetail() {
           throw new Error('No se pudo cargar el resumen semanal')
         }
         const data = await res.json()
-        setSemanas(data)
+        setSemanas(Array.isArray(data) ? data : data.reportes ?? [])
+        notificarGamificacion(data.logrosDesbloqueados ?? [], data.resultadoXP)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error desconocido')
       } finally {
@@ -119,12 +123,41 @@ export default function WeeklySummaryDetail() {
     }
 
     cargarResumenes()
-  }, [])
+  }, [notificarGamificacion])
 
   const semanaSeleccionada = useMemo(() => {
     const numero = Number(id)
     return semanas.find((semana) => semana.numero_semana === numero) ?? null
   }, [id, semanas])
+
+  useEffect(() => {
+    const fechaInicio = semanaSeleccionada?.fecha_inicio
+    if (!fechaInicio || lecturaRegistrada.current === fechaInicio) return
+    lecturaRegistrada.current = fechaInicio
+
+    const registrarLectura = async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:3000/api/reportes/semanas/${encodeURIComponent(fechaInicio)}/leer`,
+          { method: 'POST' }
+        )
+        if (!res.ok) {
+          const data = await res.json()
+          throw new Error(data.error || 'No se pudo registrar la lectura del resumen semanal.')
+        }
+        const data = await res.json()
+        notificarGamificacion([], data.resultadoXP)
+      } catch (err) {
+        mostrarToast(
+          'error',
+          'No se pudo registrar la lectura',
+          err instanceof Error ? err.message : 'Error desconocido'
+        )
+      }
+    }
+
+    registrarLectura()
+  }, [mostrarToast, notificarGamificacion, semanaSeleccionada])
 
   // Transformación de datos para Recharts basados en la semana histórica
   const graficasData = useMemo(() => {

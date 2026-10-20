@@ -1,5 +1,92 @@
 // backend/src/services/PerfilManager.ts
-import { getDB } from '../config/db';
+import { ejecutarTransaccion, getDB } from '../config/db';
+import * as xpManager from './xpManager'; // Importamos el motor de XP
+import { evaluarNuevosLogros } from './RecompensasManager';
+import type { ResultadoXP } from './xpManager';
+import type { Database } from 'sqlite';
+
+interface ValidacionRow {
+    acumulador: number;
+    datos_json: string;
+}
+
+const leerDatosValidacion = (datosJson: string | undefined): Record<string, unknown> => {
+    if (!datosJson) return {};
+    try {
+        const datos: unknown = JSON.parse(datosJson);
+        return typeof datos === 'object' && datos !== null && !Array.isArray(datos)
+            ? datos as Record<string, unknown>
+            : {};
+    } catch {
+        return {};
+    }
+};
+
+const registrarEnfoqueProbado = async (
+    db: Database,
+    idPerfil: number,
+    idEnfoque: number
+): Promise<void> => {
+    if (!Number.isSafeInteger(idEnfoque) || idEnfoque <= 0) {
+        throw new Error('El ID del enfoque debe ser un entero positivo.');
+    }
+
+    const validacion = await db.get<ValidacionRow>(`
+        SELECT acumulador, datos_json
+        FROM Perfil_Validacion
+        WHERE Id_perfil = ? AND evento = 'ENFOQUES_PROBADOS'
+    `, [idPerfil]);
+    const datos = leerDatosValidacion(validacion?.datos_json);
+    const idsActuales = Array.isArray(datos.ids)
+        ? datos.ids.map(Number).filter((id) => Number.isSafeInteger(id) && id > 0)
+        : [];
+    const enfoqueNuevo = !idsActuales.includes(idEnfoque);
+    const ids = [...new Set([...idsActuales, idEnfoque])];
+
+    await db.run(`
+        INSERT INTO Perfil_Validacion
+            (Id_perfil, evento, acumulador, ultimo_registro, datos_json)
+        VALUES (?, 'ENFOQUES_PROBADOS', ?, CURRENT_TIMESTAMP, ?)
+        ON CONFLICT(Id_perfil, evento) DO UPDATE SET
+            acumulador = excluded.acumulador,
+            ultimo_registro = CASE WHEN ? = 1
+                THEN CURRENT_TIMESTAMP
+                ELSE Perfil_Validacion.ultimo_registro
+            END,
+            datos_json = excluded.datos_json
+    `, [idPerfil, ids.length, JSON.stringify({ ...datos, ids }), Number(enfoqueNuevo)]);
+};
+
+const registrarCambioEnfoque = async (
+    db: Database,
+    idPerfil: number
+): Promise<void> => {
+    await db.run(`
+        INSERT INTO Perfil_Validacion
+            (Id_perfil, evento, acumulador, ultimo_registro, datos_json)
+        VALUES (?, 'CAMBIO_ENFOQUE', 1, CURRENT_TIMESTAMP, '{}')
+        ON CONFLICT(Id_perfil, evento) DO UPDATE SET
+            acumulador = Perfil_Validacion.acumulador + 1,
+            ultimo_registro = CURRENT_TIMESTAMP
+    `, [idPerfil]);
+};
+
+const combinarResultadoXP = (
+    resultadoBase: ResultadoXP,
+    resultadoLogros: ResultadoXP | null
+): ResultadoXP => resultadoLogros
+    ? {
+        ...resultadoLogros,
+        xpOtorgada: resultadoBase.xpOtorgada + resultadoLogros.xpOtorgada,
+        subioNivel: resultadoBase.subioNivel || resultadoLogros.subioNivel,
+        nivelesEscalados: resultadoBase.nivelesEscalados + resultadoLogros.nivelesEscalados,
+        hitos: [...resultadoBase.hitos, ...resultadoLogros.hitos],
+        logrosDesbloqueados: [
+            ...resultadoBase.logrosDesbloqueados,
+            ...resultadoLogros.logrosDesbloqueados
+        ]
+    }
+    : resultadoBase;
 
 export interface PerfilRow {
     Id_perfil: number;
@@ -10,12 +97,15 @@ export interface PerfilRow {
     Id_icono: number | null;
     pin: string | null;
     pista_pin?: string | null;
+    nivel: number; // <-- Útil si el frontend quiere mostrar el nivel actual aquí
+    xp_acumulada: number;
 }
 
 export const obtenerEnfoques = async (): Promise<{ id: number; nombre: string }[]> => {
     const db = getDB();
     return await db.all("SELECT * FROM Enfoque");
 };
+
 // --- NUEVO: Diccionario de recomendaciones estáticas para la V2 ---
 const recomendacionesPorEnfoque: Record<number, string[]> = {
     1: [ // Académico
@@ -64,78 +154,126 @@ export const obtenerDetallesEnfoque = async (idEnfoque: number) => {
     return {
         Id_enfoque: enfoqueDB.Id_enfoque,
         nombre_enf: enfoqueDB.nombre_enf,
-        // Usamos la descripción de la BD como descripción larga
         descripcion_larga: enfoqueDB.descrip_enf, 
-        // Acoplamos las recomendaciones del diccionario (o un array vacío si no existe el ID)
         recomendaciones: recomendacionesPorEnfoque[idEnfoque] || [
             "Registra tus actividades constantemente para que el sistema te conozca mejor."
         ]
     };
 };
 
-// backend/src/services/PerfilManager.ts
 export const actualizarPin = async (pin: string | null, pista_pin: string | null) => {
-    const db = getDB();
-    // Actualizamos ambas columnas. Si el usuario elimina el PIN (pin = null), 
-    // la pista también se vuelve null desde el frontend.
-    const query = `UPDATE Perfil SET pin = ?, pista_pin = ? WHERE Id_perfil = 1`;
-    
-    const result = await db.run(query, [pin, pista_pin]);
-    
-    if (result.changes === 0) {
-        throw new Error("No se encontró el perfil para actualizar el PIN.");
-    }
-    
-    return true;
+    const resultado = await ejecutarTransaccion(async (db) => {
+        const perfilActual = await db.get("SELECT pin, pista_pin FROM Perfil WHERE Id_perfil = 1");
+        if (!perfilActual) throw new Error("No se encontró el perfil para actualizar el PIN.");
+        if (perfilActual.pin === pin && perfilActual.pista_pin === pista_pin) {
+            return xpManager.procesarObtencionXPEnTransaccion(
+                db,
+                1,
+                0,
+                "Sin cambios en la configuración de seguridad"
+            );
+        }
+
+        const primerPin = perfilActual.pin === null && pin !== null;
+        const validacionPin = primerPin
+            ? await db.get<{ acumulador: number }>(`
+                SELECT acumulador
+                FROM Perfil_Validacion
+                WHERE Id_perfil = 1 AND evento = 'PIN_PRIMERA_VEZ'
+            `)
+            : null;
+        const primeraConfiguracion = primerPin && Number(validacionPin?.acumulador ?? 0) === 0;
+        const xpAOtorgar = primeraConfiguracion
+            ? await xpManager.obtenerXpFaltanteParaNivel(1)
+            : 70;
+
+        await db.run(
+            'UPDATE Perfil SET pin = ?, pista_pin = ? WHERE Id_perfil = 1',
+            [pin, pista_pin]
+        );
+
+        if (primeraConfiguracion) {
+            await db.run(`
+                INSERT INTO Perfil_Validacion
+                    (Id_perfil, evento, acumulador, ultimo_registro, datos_json)
+                VALUES (1, 'PIN_PRIMERA_VEZ', 1, CURRENT_TIMESTAMP, '{}')
+                ON CONFLICT(Id_perfil, evento) DO UPDATE SET
+                    acumulador = MAX(1, Perfil_Validacion.acumulador),
+                    ultimo_registro = CURRENT_TIMESTAMP
+            `);
+        }
+
+        const resultado = await xpManager.procesarObtencionXPEnTransaccion(
+            db,
+            1,
+            xpAOtorgar,
+            primeraConfiguracion ? "Configuración inicial de PIN" : "Modificación de PIN o palabra clave"
+        );
+        return resultado;
+    });
+    const resultadoLogros = await evaluarNuevosLogros(1);
+    return {
+        resultadoXP: combinarResultadoXP(resultado, resultadoLogros.resultadoXP),
+        logrosDesbloqueados: resultadoLogros.logrosDesbloqueados
+    };
 };
 
-// POST/PUT: Registrar o actualizar el perfil único
-export const guardarPerfil = async (datos: { nickname: string; age_rank: string; genero: string; id_focus: string | number; id_icono?: number | null }): Promise<void> => {
+export const guardarPerfil = async (datos: { nickname: string; age_rank: string; genero: string; id_focus: string | number; id_icono?: number | null }) => {
     const db = getDB();
-
     const idIcono = typeof datos.id_icono === 'number' && datos.id_icono > 0 ? datos.id_icono : 1;
-
-    // 1. Verificamos si el perfil 1 ya existe en la base de datos
-    const perfilExistente = await db.get("SELECT Id_perfil FROM Perfil WHERE Id_perfil = 1");
+    const idEnfoque = Number(datos.id_focus);
+    if (!Number.isSafeInteger(idEnfoque) || idEnfoque <= 0) {
+        throw new Error('El ID del enfoque debe ser un entero positivo.');
+    }
+    const perfilExistente = await db.get<{ Id_perfil: number; Id_enfoque: number | null }>(
+        'SELECT Id_perfil, Id_enfoque FROM Perfil WHERE Id_perfil = 1'
+    );
 
     if (perfilExistente) {
-        // 2A. SI YA EXISTE: Actualizamos SIN borrar. 
-        // Esto salva la vida de la tabla Perfil_Recompensa
-        const queryUpdate = `
-            UPDATE Perfil 
-            SET nickname = ?, 
-                rango_edad = ?, 
-                Id_enfoque = ?, 
-                genero = ?, 
-                Id_icono = ?
-            WHERE Id_perfil = 1
-        `;
-        await db.run(queryUpdate, [
-            datos.nickname,
-            datos.age_rank,
-            datos.id_focus,
-            datos.genero,
-            idIcono,
-        ]);
-        console.log("👤 Perfil actualizado con éxito (Recompensas a salvo)");
+        await ejecutarTransaccion(async (dbTransaccion) => {
+            const enfoqueAnterior = perfilExistente.Id_enfoque === null
+                ? null
+                : Number(perfilExistente.Id_enfoque);
+            await dbTransaccion.run(`
+                UPDATE Perfil
+                SET nickname = ?, rango_edad = ?, Id_enfoque = ?, genero = ?, Id_icono = ?
+                WHERE Id_perfil = 1
+            `, [datos.nickname, datos.age_rank, idEnfoque, datos.genero, idIcono]);
+
+            if (enfoqueAnterior !== idEnfoque) {
+                if (enfoqueAnterior !== null) {
+                    await registrarEnfoqueProbado(dbTransaccion, 1, enfoqueAnterior);
+                    await registrarCambioEnfoque(dbTransaccion, 1);
+                }
+                await registrarEnfoqueProbado(dbTransaccion, 1, idEnfoque);
+            }
+        });
+        console.log("👤 Perfil actualizado con éxito (Recompensas a salvo)")
+
+        // Retornamos el objeto XP por la edición del perfil
+        return await xpManager.procesarObtencionXP(1, 20, "Edición de perfil");
     } else {
-        // 2B. SI NO EXISTE: Es la primera vez que entran a la app, insertamos normal.
         const queryInsert = `
             INSERT INTO Perfil (Id_perfil, nickname, rango_edad, Id_enfoque, genero, Id_icono)
             VALUES (1, ?, ?, ?, ?, ?)
         `;
-        await db.run(queryInsert, [
-            datos.nickname,
-            datos.age_rank,
-            datos.id_focus,
-            datos.genero,
-            idIcono,
-        ]);
-        console.log("👤 Perfil nuevo guardado con éxito en la tabla SQLite");
+        await ejecutarTransaccion(async (dbTransaccion) => {
+            await dbTransaccion.run(queryInsert, [
+                datos.nickname,
+                datos.age_rank,
+                idEnfoque,
+                datos.genero,
+                idIcono,
+            ]);
+            await registrarEnfoqueProbado(dbTransaccion, 1, idEnfoque);
+        });
+        console.log("👤 Perfil nuevo guardado con éxito en la tabla SQLite")
+
+        // Creación inicial no otorga XP de "edición"
+        return { xpOtorgada: 0, subioNivel: false };
     }
 };
 
-// GET: Recuperar el perfil activo para el Dashboard
 export const obtenerPerfil = async (): Promise<PerfilRow | null> => {
     const db = getDB();
     const query = `SELECT * FROM Perfil LIMIT 1`;
@@ -144,32 +282,58 @@ export const obtenerPerfil = async (): Promise<PerfilRow | null> => {
 };
 
 export const reiniciarPerfilYDatos = async (): Promise<void> => {
-    const db = getDB();
-    
-    // Iniciamos una transacción segura
-    await db.run('BEGIN TRANSACTION');
-    try {
-        // Borramos las tablas del usuario dependientes primero (por las llaves foráneas)
-        await db.run('DELETE FROM Perfil_Recompensa');
-        await db.run('DELETE FROM Reporte_semanal');
-        await db.run('DELETE FROM Actividad');
-        
-        // Finalmente borramos el perfil
-        await db.run('DELETE FROM Perfil');
-
-        // Opcional: Reiniciamos los contadores de los IDs automáticos para que vuelvan a empezar en 1
-        await db.run('DELETE FROM sqlite_sequence WHERE name IN ("Actividad", "Reporte_semanal")');
-
-        await db.run('COMMIT');
+    await ejecutarTransaccion(async (dbTransaccion) => {
+        await dbTransaccion.run('DELETE FROM Perfil_Recompensa');
+        await dbTransaccion.run('DELETE FROM Reporte_semanal');
+        await dbTransaccion.run('DELETE FROM Actividad');
+        await dbTransaccion.run('DELETE FROM Perfil');
+        await dbTransaccion.run('DELETE FROM sqlite_sequence WHERE name IN ("Actividad", "Reporte_semanal")');
         console.log("🧹 Base de datos reiniciada con éxito. Lista para un nuevo perfil.");
-    } catch (error) {
-        await db.run('ROLLBACK');
+    }).catch((error) => {
         console.error("Error al reiniciar la base de datos:", error);
         throw error;
-    }
+    });
 };
 
-export const actualizarEnfoque = async (idEnfoque: number): Promise<void> => {
+export const actualizarEnfoque = async (idEnfoque: number) => {
     const db = getDB();
-    await db.run("UPDATE Perfil SET Id_enfoque = ? WHERE Id_perfil = 1", [idEnfoque]);
+
+    const cambioRealizado = await ejecutarTransaccion(async (dbTransaccion) => {
+        const perfil = await dbTransaccion.get<{ Id_enfoque: number | null }>(
+            'SELECT Id_enfoque FROM Perfil WHERE Id_perfil = 1'
+        );
+        if (!perfil) throw new Error('No se encontró el perfil para cambiar el enfoque.');
+
+        const enfoqueActual = perfil.Id_enfoque === null ? null : Number(perfil.Id_enfoque);
+        if (enfoqueActual !== null) {
+            await registrarEnfoqueProbado(dbTransaccion, 1, enfoqueActual);
+        }
+
+        if (enfoqueActual === idEnfoque) return false;
+
+        await registrarCambioEnfoque(dbTransaccion, 1);
+        await registrarEnfoqueProbado(dbTransaccion, 1, idEnfoque);
+        await dbTransaccion.run(
+            'UPDATE Perfil SET Id_enfoque = ? WHERE Id_perfil = 1',
+            [idEnfoque]
+        );
+        return true;
+    });
+
+    // Verificamos en el historial de reportes semanales cuántos enfoques distintos ha usado
+    const historialEnfoques = await db.get("SELECT COUNT(DISTINCT Id_enfoque) as total FROM Reporte_semanal");
+    const esPrimerCambio = historialEnfoques.total <= 1;
+    const xpAOtorgar = cambioRealizado ? (esPrimerCambio ? 2000 : 100) : 0;
+
+    const resultadoXP = await xpManager.procesarObtencionXP(
+        1,
+        xpAOtorgar,
+        cambioRealizado ? "Cambio de Enfoque" : "Enfoque sin cambios"
+    );
+    const resultadoLogros = await evaluarNuevosLogros(1);
+
+    return {
+        resultadoXP: combinarResultadoXP(resultadoXP, resultadoLogros.resultadoXP),
+        logrosDesbloqueados: resultadoLogros.logrosDesbloqueados
+    };
 };

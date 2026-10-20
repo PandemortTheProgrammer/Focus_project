@@ -4,6 +4,7 @@ import {
     obtenerPlantillasManager, 
     eliminarPlantillaManager 
 } from '../services/PlantillasManager'; // Ajusta la ruta a la ubicación real de tu manager
+import { evaluarNuevosLogros } from '../services/RecompensasManager';
 
 export const getPlantillas = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -15,9 +16,21 @@ export const getPlantillas = async (req: Request, res: Response): Promise<void> 
     }
 };
 
+export const postVisitaPlantillas = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const resultado = await evaluarNuevosLogros(1, 'VISITA_PLANTILLAS');
+        res.json(resultado);
+    } catch (error) {
+        console.error('Error al registrar la visita al catálogo de plantillas:', error);
+        res.status(500).json({
+            error: error instanceof Error ? error.message : 'No se pudo registrar la visita al catálogo de plantillas.'
+        });
+    }
+};
+
 export const crearPlantilla = async (req: Request, res: Response): Promise<Response | void> => {
     try {
-        const { id_tipo, titulo_plantilla, desc_activ_default, durac_min_default } = req.body;
+        const { id_tipo, titulo_plantilla, desc_activ_default, durac_min_default, id_actividad_origen } = req.body;
 
         // Validaciones obligatorias
         if (!id_tipo || isNaN(parseInt(id_tipo))) {
@@ -40,11 +53,15 @@ export const crearPlantilla = async (req: Request, res: Response): Promise<Respo
                 : null
         };
 
-        const nuevaPlantillaId = await crearPlantillaManager(datosParaGuardar);
+        const origenId = Number(id_actividad_origen);
+        const resultado = await crearPlantillaManager(
+            datosParaGuardar,
+            Number.isSafeInteger(origenId) && origenId > 0 ? origenId : undefined
+        );
         
         res.status(201).json({ 
             mensaje: "Plantilla creada exitosamente.", 
-            id_plantilla: nuevaPlantillaId 
+            ...resultado
         });
     } catch (error) {
         console.error("Error al guardar la plantilla:", error);

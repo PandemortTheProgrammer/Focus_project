@@ -20,7 +20,7 @@ const formatearFecha = (fecha?: string | Date | null) => {
 
 export default function ActivitiesHistory() {
   const navigate = useNavigate()
-  const { mostrarToast } = useToast() // 2. Extraemos la función global
+  const { mostrarToast, notificarGamificacion } = useToast() // 2. Extraemos la función global
 
   const [historial, setHistorial] = useState<Actividad[]>([])
   const [tipos, setTipos] = useState<Tipo_actividad[]>([])
@@ -57,14 +57,7 @@ export default function ActivitiesHistory() {
 
         if (res.ok) {
           const data = await res.json()
-          if (data.logrosDesbloqueados && data.logrosDesbloqueados.length > 0) {
-            data.logrosDesbloqueados.forEach((logro: any, index: number) => {
-              setTimeout(() => {
-                // Se utilizan los 5 parámetros para que el ícono se procese correctamente
-                mostrarToast('logro', logro.nombre_recompensa, logro.descripcion, '', logro)
-              }, index * 1500)
-            })
-          }
+          notificarGamificacion(data.logrosDesbloqueados ?? [], data.resultadoXP)
         }
       } catch (error) {
         console.error('Error evaluando el logro por visita al historial:', error)
@@ -73,7 +66,7 @@ export default function ActivitiesHistory() {
 
     cargarDatos()
     evaluarVisitaHistorial() // Ejecutamos la evaluación en segundo plano
-  }, [mostrarToast]) // Añadimos mostrarToast como dependencia
+  }, [mostrarToast, notificarGamificacion])
 
   return (
     <div className="relative w-full flex flex-col">

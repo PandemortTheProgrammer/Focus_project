@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
-import { ToastProvider } from './Components/essentials/ToastContext'
 
 import Layout from './Components/essentials/Layout'
+import ToastNotification from './Components/essentials/ToastNotification'
+import { ToastProvider, useToast } from './Components/essentials/ToastContext'
 import Mainpage from './Components/profile/Mainpage'
 import CreateProfile from './Components/profile/Create_profile'
 import EditProfile from './Components/profile/Edit_profile'
@@ -24,15 +25,31 @@ import DiaIdeal from './Components/gamification/Ideal_day'
 
 import Perfil from './models/Perfil'
 import ActivitiesTemplates from './Components/activities/Activities_templates'
+import MiProgreso from './Components/gamification/Your_progress'
+import ProfileLevel from './Components/gamification/Profile_level'
+import ChangeLog from './Components/essentials/ChangeLog'
 
 
 export default function App() {
+  return (
+    <ToastProvider>
+      <AppRoutes />
+    </ToastProvider>
+  )
+}
+
+function AppRoutes() {
   // Estado global para el perfil
   const perfilInicial: Perfil = new Perfil(1, '', '', 0, '', 1)
   const [perfilGlobal, setPerfilGlobal] = useState<Perfil>(perfilInicial);
+  const { toasts, notificarGamificacion, siguienteToast } = useToast();
+  const sincronizacionIniciada = useRef(false);
 
   // Si el usuario recarga la página, intentamos recuperar el perfil de Express
   useEffect(() => {
+    if (sincronizacionIniciada.current) return;
+    sincronizacionIniciada.current = true;
+
     const recuperarPerfil = async () => {
       try {
         const res = await fetch('http://localhost:3000/api/perfil');
@@ -48,16 +65,34 @@ export default function App() {
               Number(datos.id_icono ?? 1)
             )
           );
+
+          if (datos.nickname) {
+            const resXP = await fetch('http://localhost:3000/api/xp/sincronizar-logros', {
+              method: 'POST'
+            });
+            if (!resXP.ok) {
+              throw new Error('No se pudo sincronizar la XP de logros previos.');
+            }
+
+            const sincronizacion = await resXP.json();
+            if (sincronizacion.resultadoXP || sincronizacion.logrosDesbloqueados?.length) {
+              notificarGamificacion(
+                sincronizacion.logrosDesbloqueados ?? [],
+                sincronizacion.resultadoXP
+              );
+            }
+          }
         }
       } catch (error) {
         console.log("No se pudo recuperar el perfil al inicio.", error);
       }
     };
     recuperarPerfil();
-  }, []);
+  }, [notificarGamificacion]);
 
+  const toastActual = toasts[0];
   return (
-    <ToastProvider>
+    <>
       <Layout perfilGlobal={perfilGlobal}>
         <Routes>
           <Route path="/" element={<Mainpage />} />
@@ -101,8 +136,24 @@ export default function App() {
           <Route path="/configurar-pin" element={<Set_pin/>} />
           <Route path="/seleccionar-enfoque" element={<SeleccionarEnfoque />} />
           <Route path="/dia-ideal" element={<DiaIdeal />} />
+          <Route path="/mi-progreso" element={<MiProgreso />} />
+          <Route path="/nivel-perfil" element={<ProfileLevel />} />
+          <Route path="/novedades" element={<ChangeLog />} />
         </Routes>
       </Layout>
-    </ToastProvider>
+      {toastActual && (
+        <ToastNotification
+          key={toastActual.id}
+          tipo={toastActual.tipo}
+          titulo={toastActual.titulo}
+          mensaje={toastActual.mensaje}
+          urlIcono={toastActual.urlIcono}
+          datosLogro={toastActual.datosLogro}
+          posicion={toastActual.posicion}
+          toastsPendientes={toasts.length - 1}
+          onClose={siguienteToast}
+        />
+      )}
+    </>
   )
 }

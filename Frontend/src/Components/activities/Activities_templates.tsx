@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../essentials/ToastContext';
 import PageHeader from '../essentials/Page-head';
@@ -18,10 +18,11 @@ export interface Plantilla {
 
 export default function ActivitiesTemplates() {
     const navigate = useNavigate();
-    const { mostrarToast } = useToast();
+    const { mostrarToast, notificarGamificacion } = useToast();
 
     const [plantillas, setPlantillas] = useState<Plantilla[]>([]);
     const [cargando, setCargando] = useState(true);
+    const visitaIniciada = useRef(false);
 
     // ESTADO PARA EL MODAL DE CONFIRMACIÓN
     const [modalEliminar, setModalEliminar] = useState<{ visible: boolean; id_plantilla: number | null }>({
@@ -31,23 +32,45 @@ export default function ActivitiesTemplates() {
 
     // Traer el catálogo de plantillas al cargar la pantalla
     useEffect(() => {
+        if (visitaIniciada.current) return;
+        visitaIniciada.current = true;
+
         const cargarPlantillas = async () => {
             try {
                 const res = await fetch('http://localhost:3000/api/plantillas');
-                if (res.ok) {
-                    setPlantillas(await res.json());
-                } else {
+                if (!res.ok) {
                     mostrarToast('error', 'Error', 'No se pudieron cargar las plantillas.');
+                    return;
                 }
+                setPlantillas(await res.json());
+
+                const resVisita = await fetch('http://localhost:3000/api/plantillas/visita', {
+                    method: 'POST'
+                });
+                if (!resVisita.ok) {
+                    const respuestaError = await resVisita.json().catch(() => ({}));
+                    throw new Error(
+                        respuestaError.error || `El servidor respondió HTTP ${resVisita.status}.`
+                    );
+                }
+                const resultadoVisita = await resVisita.json();
+                notificarGamificacion(
+                    resultadoVisita.logrosDesbloqueados ?? [],
+                    resultadoVisita.resultadoXP
+                );
             } catch (error) {
                 console.error("Error al conectar con Express:", error);
-                mostrarToast('error', 'Error de conexión', 'No se pudo conectar con el servidor.');
+                mostrarToast(
+                    'error',
+                    error instanceof TypeError ? 'Error de conexión' : 'No se pudo registrar la visita',
+                    error instanceof Error ? error.message : 'Error desconocido.'
+                );
             } finally {
                 setCargando(false);
             }
         };
         cargarPlantillas();
-    }, [mostrarToast]);
+    }, [mostrarToast, notificarGamificacion]);
 
     const solicitarEliminacion = (id_plantilla: number) => {
         setModalEliminar({ visible: true, id_plantilla });

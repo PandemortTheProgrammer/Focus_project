@@ -46,14 +46,21 @@ export const createActividad = async (req: Request, res: Response): Promise<void
             return;
         }
 
-        // 2. Registrar actividad
-        const resultado: any = await registrarActividad(req.body); 
-        
-        // 3. Respuesta estructurada para los Toasts de Éxito, Logro y Reporte
+        // 2. Registrar actividad (El Manager ahora nos devolverá un objeto con todo)
+        const resultado: any = await registrarActividad(
+            req.body,
+            req.body.eventoEspecial === 'DIEZ_ACTIVIDADES_EN_FORMULARIO'
+                ? 'DIEZ_ACTIVIDADES_EN_FORMULARIO'
+                : undefined
+        ); 
+
+        // 3. Respuesta de gamificación para que el frontend la notifique globalmente
         res.status(201).json({ 
             mensaje: "La actividad se registró con éxito.",
-            logroDesbloqueado: resultado?.logroDesbloqueado || null,
-            reporteGenerado: resultado?.reporteGenerado || false
+            logrosDesbloqueados: resultado?.logrosDesbloqueados || [],
+            reporteGenerado: resultado?.reporteGenerado || false,
+            resultadoXP: resultado?.resultadoXP || null,
+            errorXP: resultado?.errorXP || null
         });
     } catch (error: unknown) {
         const mensaje = error instanceof Error ? error.message : "Error desconocido";

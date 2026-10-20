@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '../essentials/Page-head'
+import { useToast } from '../essentials/ToastContext'
 
 type SemanaResumen = {
   numero_semana: number
@@ -21,6 +22,7 @@ export default function WeeklySummaries() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
+  const { notificarGamificacion } = useToast()
 
   useEffect(() => {
     const cargarResumenes = async () => {
@@ -31,7 +33,8 @@ export default function WeeklySummaries() {
           throw new Error('No se pudo cargar el histórico semanal')
         }
         const data = await res.json()
-        setSemanas(data)
+        setSemanas(Array.isArray(data) ? data : data.reportes ?? [])
+        notificarGamificacion(data.logrosDesbloqueados ?? [], data.resultadoXP)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error desconocido')
       } finally {
@@ -40,7 +43,7 @@ export default function WeeklySummaries() {
     }
 
     cargarResumenes()
-  }, [])
+  }, [notificarGamificacion])
 
   return (
     <div className="relative min-h-screen overflow-auto flex flex-col px-6 py-6">
