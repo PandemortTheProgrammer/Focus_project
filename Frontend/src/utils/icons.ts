@@ -9,7 +9,7 @@
 
 const PREFIJOS = ['icon_', 'icono_'];
 
-const modulos = import.meta.glob('../assets/images/Icons/*.{png,jpg,jpeg,svg,webp}', {
+const modulos = import.meta.glob('../assets/Images/Icons/*.{png,jpg,jpeg,svg,webp}', {
   eager: true,
   import: 'default',
 }) as Record<string, string>;
