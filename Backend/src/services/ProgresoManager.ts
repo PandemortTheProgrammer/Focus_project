@@ -34,7 +34,7 @@ export const getProgressStats = async () => {
     const db = getDB();
     
     // Al ser local, asumimos el Perfil 1
-    const perfil = await db.get("SELECT nickname, Id_icono, fecha_creacion FROM Perfil WHERE Id_perfil = 1");    
+    const perfil = await db.get("SELECT nickname, Id_icono, Id_tarjeta, fecha_creacion FROM Perfil WHERE Id_perfil = 1");
     // Conteos generales
     const actCount = await db.get("SELECT COUNT(Id_actividad) as total FROM Actividad");
     const repCount = await db.get("SELECT COUNT(Id_reporte) as total FROM Reporte_semanal");
@@ -65,6 +65,7 @@ export const getProgressStats = async () => {
     return {
         nickname: perfil?.nickname || "Usuario",
         idIcono: perfil?.Id_icono || 1,
+        idTarjeta: perfil?.Id_tarjeta || 1,
         fechaCreacion: perfil?.fecha_creacion || new Date().toISOString(),
         totalActividades: actCount?.total || 0,
         totalReportes: repCount?.total || 0,

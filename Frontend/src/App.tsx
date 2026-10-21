@@ -28,13 +28,18 @@ import ActivitiesTemplates from './Components/activities/Activities_templates'
 import MiProgreso from './Components/functionalities/Your_progress'
 import ProfileLevel from './Components/gamification/Profile_level'
 import ChangeLog from './Components/viewables/ChangeLog'
+import Preferences from './Components/functionalities/Preferences'
+import { PreferencesProvider } from './Components/essentials/PreferencesProvider'
+import Details_profile from './Components/profile/Details_profile'
 
 
 export default function App() {
   return (
-    <ToastProvider>
-      <AppRoutes />
-    </ToastProvider>
+    <PreferencesProvider>
+      <ToastProvider>
+        <AppRoutes />
+      </ToastProvider>
+    </PreferencesProvider>
   )
 }
 
@@ -42,7 +47,16 @@ function AppRoutes() {
   // Estado global para el perfil
   const perfilInicial: Perfil = new Perfil(1, '', '', 0, '', 1)
   const [perfilGlobal, setPerfilGlobal] = useState<Perfil>(perfilInicial);
-  const { toasts, notificarGamificacion, siguienteToast } = useToast();
+  const {
+    toastsXP,
+    toastsNotificaciones,
+    toastPin,
+    notificacionesHabilitadas,
+    notificarGamificacion,
+    siguienteToastXP,
+    siguienteToastNotificacion,
+    cerrarToastPin
+  } = useToast();
   const sincronizacionIniciada = useRef(false);
 
   // Si el usuario recarga la página, intentamos recuperar el perfil de Express
@@ -90,7 +104,31 @@ function AppRoutes() {
     recuperarPerfil();
   }, [notificarGamificacion]);
 
-  const toastActual = toasts[0];
+  useEffect(() => {
+    const actualizarPerfilCosmetico = async () => {
+      try {
+        const respuesta = await fetch('http://localhost:3000/api/perfil', { cache: 'no-store' });
+        if (!respuesta.ok) throw new Error('No se pudo actualizar el perfil después de equipar el cosmético.');
+        const datos = await respuesta.json();
+        setPerfilGlobal(new Perfil(
+          1,
+          datos.nickname ?? '',
+          datos.age_rank ?? '',
+          Number(datos.id_focus ?? 0),
+          datos.genero ?? '',
+          Number(datos.id_icono ?? 1)
+        ));
+      } catch (error: unknown) {
+        console.error('Error al sincronizar el perfil equipado:', error);
+      }
+    };
+
+    window.addEventListener('focus-profile-cosmetic-updated', actualizarPerfilCosmetico);
+    return () => window.removeEventListener('focus-profile-cosmetic-updated', actualizarPerfilCosmetico);
+  }, []);
+
+  const toastXPActual = notificacionesHabilitadas ? toastsXP[0] : undefined;
+  const toastNotificacionActual = notificacionesHabilitadas ? toastsNotificaciones[0] : undefined;
   return (
     <>
       <Layout perfilGlobal={perfilGlobal}>
@@ -139,19 +177,45 @@ function AppRoutes() {
           <Route path="/mi-progreso" element={<MiProgreso />} />
           <Route path="/nivel-perfil" element={<ProfileLevel />} />
           <Route path="/novedades" element={<ChangeLog />} />
+          <Route path="/preferencias" element={<Preferences />} />
+          <Route path="/detalles-perfil" element={<Details_profile />} />
         </Routes>
       </Layout>
-      {toastActual && (
+      {toastPin && (
         <ToastNotification
-          key={toastActual.id}
-          tipo={toastActual.tipo}
-          titulo={toastActual.titulo}
-          mensaje={toastActual.mensaje}
-          urlIcono={toastActual.urlIcono}
-          datosLogro={toastActual.datosLogro}
-          posicion={toastActual.posicion}
-          toastsPendientes={toasts.length - 1}
-          onClose={siguienteToast}
+          key={toastPin.id}
+          tipo={toastPin.tipo}
+          titulo={toastPin.titulo}
+          mensaje={toastPin.mensaje}
+          posicion={toastPin.posicion}
+          toastsPendientes={0}
+          onClose={cerrarToastPin}
+        />
+      )}
+      {toastXPActual && (
+        <ToastNotification
+          key={toastXPActual.id}
+          tipo={toastXPActual.tipo}
+          titulo={toastXPActual.titulo}
+          mensaje={toastXPActual.mensaje}
+          urlIcono={toastXPActual.urlIcono}
+          datosLogro={toastXPActual.datosLogro}
+          posicion={toastXPActual.posicion}
+          toastsPendientes={toastsXP.length - 1}
+          onClose={siguienteToastXP}
+        />
+      )}
+      {toastNotificacionActual && (
+        <ToastNotification
+          key={toastNotificacionActual.id}
+          tipo={toastNotificacionActual.tipo}
+          titulo={toastNotificacionActual.titulo}
+          mensaje={toastNotificacionActual.mensaje}
+          urlIcono={toastNotificacionActual.urlIcono}
+          datosLogro={toastNotificacionActual.datosLogro}
+          posicion={toastNotificacionActual.posicion}
+          toastsPendientes={toastsNotificaciones.length - 1}
+          onClose={siguienteToastNotificacion}
         />
       )}
     </>

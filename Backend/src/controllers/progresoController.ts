@@ -31,7 +31,8 @@ export const getGeneralProgress = async (req: Request, res: Response) => {
         res.json({
             usuario: {
                 nombre: stats.nickname,
-                idIcono: stats.idIcono
+                idIcono: stats.idIcono,
+                idTarjeta: stats.idTarjeta
             },
             fechaCreacion: fechaFormateada,
             semanasDesdeCreacion: semanasDesdeCreacion,

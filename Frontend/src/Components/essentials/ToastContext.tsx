@@ -1,4 +1,6 @@
-import { createContext, useState, useContext, useCallback, type ReactNode } from 'react';
+import { createContext, useState, useContext, useCallback, useEffect, type ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
+import { usePreferences } from '../../utils/preferencesContext';
 
 export type ToastType = 'exito' | 'error' | 'advertencia' | 'logro' | 'reporte' | 'xp';
 export type ToastPosition = 'top-center' | 'bottom-left';
@@ -34,7 +36,10 @@ export interface ToastData {
 }
 
 interface ToastContextType {
-  toasts: ToastData[];
+  toastsXP: ToastData[];
+  toastsNotificaciones: ToastData[];
+  toastPin: ToastData | null;
+  notificacionesHabilitadas: boolean;
   mostrarToast: (
     tipo: ToastType,
     titulo: string,
@@ -43,14 +48,36 @@ interface ToastContextType {
     datosLogro?: LogroNotificacion,
     posicion?: ToastPosition
   ) => void;
+  mostrarToastPin: (titulo: string, mensaje: string) => void;
   notificarGamificacion: (logros: LogroNotificacion[], resultadoXP?: ResultadoXPNotificacion | null) => void;
-  siguienteToast: () => void;
+  siguienteToastXP: () => void;
+  siguienteToastNotificacion: () => void;
+  cerrarToastPin: () => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export const ToastProvider = ({ children }: { children: ReactNode }) => {
-  const [toasts, setToasts] = useState<ToastData[]>([]);
+  const [toastsXP, setToastsXP] = useState<ToastData[]>([]);
+  const [toastsNotificaciones, setToastsNotificaciones] = useState<ToastData[]>([]);
+  const [toastPin, setToastPin] = useState<ToastData | null>(null);
+  const location = useLocation();
+  const [dashboardVisitado, setDashboardVisitado] = useState(
+    location.pathname === '/dashboard'
+  );
+  const { valores: preferencias } = usePreferences();
+
+  useEffect(() => {
+    if (location.pathname !== '/dashboard' || dashboardVisitado) return;
+    const timer = window.setTimeout(() => setDashboardVisitado(true), 0);
+    return () => window.clearTimeout(timer);
+  }, [dashboardVisitado, location.pathname]);
+  const notificacionesHabilitadas =
+    location.pathname !== '/' && (location.pathname === '/dashboard' || dashboardVisitado);
+
+  const seMuestraEnModoSimple = useCallback((clave: string) =>
+    localStorage.getItem('focus_modo_simple') !== 'true' || preferencias[clave] !== false,
+  [preferencias]);
 
   const mostrarToast = useCallback((
     tipo: ToastType,
@@ -60,36 +87,60 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
     datosLogro?: LogroNotificacion,
     posicion: ToastPosition = 'top-center'
   ) => {
-    setToasts((actuales) => [
-      ...actuales,
-      {
-        id: Date.now() + Math.random(),
-        tipo,
-        titulo,
-        mensaje,
-        urlIcono,
-        datosLogro,
-        posicion
-      }
-    ]);
-  }, []);
+    const preferencia = tipo === 'reporte'
+      ? 'toast_sys_resumen'
+      : tipo === 'xp'
+        ? 'toast_xp'
+        : tipo === 'logro'
+          ? (datosLogro?.coleccion === 'HITO' ? 'toast_hito' : 'toast_logro')
+          : 'toast_sys_general';
+    if (!seMuestraEnModoSimple(preferencia)) return;
+
+    const posicionToast = tipo === 'xp' ? 'bottom-left' : posicion;
+    const toast: ToastData = {
+      id: Date.now() + Math.random(),
+      tipo,
+      titulo,
+      mensaje,
+      urlIcono,
+      datosLogro,
+      posicion: posicionToast
+    };
+    if (posicionToast === 'bottom-left') {
+      setToastsXP((actuales) => [...actuales, toast]);
+    } else {
+      setToastsNotificaciones((actuales) => [...actuales, toast]);
+    }
+  }, [seMuestraEnModoSimple]);
+
+  const mostrarToastPin = useCallback((titulo: string, mensaje: string) => {
+    if (!seMuestraEnModoSimple('toast_sys_general')) return;
+    setToastPin({
+      id: Date.now() + Math.random(),
+      tipo: 'advertencia',
+      titulo,
+      mensaje,
+      posicion: 'top-center'
+    });
+  }, [seMuestraEnModoSimple]);
 
   const notificarGamificacion = useCallback((
     logros: LogroNotificacion[],
     resultadoXP?: ResultadoXPNotificacion | null
   ) => {
-    const notificaciones: Omit<ToastData, 'id'>[] = [];
+    const toastsXPNuevos: Omit<ToastData, 'id'>[] = [];
+    const notificacionesNuevas: Omit<ToastData, 'id'>[] = [];
 
-    if (resultadoXP && resultadoXP.xpOtorgada > 0) {
-      notificaciones.push({
+    if (resultadoXP && resultadoXP.xpOtorgada > 0 && seMuestraEnModoSimple('toast_xp')) {
+      toastsXPNuevos.push({
         tipo: 'xp',
         titulo: `+${resultadoXP.xpOtorgada} XP`,
         mensaje: 'Experiencia acumulada.',
         posicion: 'bottom-left'
       });
 
-      if (resultadoXP.subioNivel) {
-        notificaciones.push({
+      if (resultadoXP.subioNivel && seMuestraEnModoSimple('toast_subida_nivel')) {
+        notificacionesNuevas.push({
           tipo: 'exito',
           titulo: '¡Subiste de nivel!',
           mensaje: `Has alcanzado el nivel ${resultadoXP.nivelActual} 🎉`,
@@ -105,7 +156,9 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
     }
 
     for (const logro of logrosUnicos.values()) {
-      notificaciones.push({
+      const preferencia = logro.coleccion === 'HITO' ? 'toast_hito' : 'toast_logro';
+      if (!seMuestraEnModoSimple(preferencia)) continue;
+      notificacionesNuevas.push({
         tipo: 'logro',
         titulo: logro.nombre_recompensa ?? '¡Logro desbloqueado!',
         mensaje: logro.descripcion ?? '',
@@ -114,10 +167,19 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
       });
     }
 
-    if (notificaciones.length > 0) {
-      setToasts((actuales) => [
+    if (toastsXPNuevos.length > 0) {
+      setToastsXP((actuales) => [
         ...actuales,
-        ...notificaciones.map((notificacion) => ({
+        ...toastsXPNuevos.map((notificacion) => ({
+          ...notificacion,
+          id: Date.now() + Math.random()
+        }))
+      ]);
+    }
+    if (notificacionesNuevas.length > 0) {
+      setToastsNotificaciones((actuales) => [
+        ...actuales,
+        ...notificacionesNuevas.map((notificacion) => ({
           ...notificacion,
           id: Date.now() + Math.random()
         }))
@@ -127,14 +189,29 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
     if (resultadoXP && resultadoXP.xpOtorgada > 0) {
       window.dispatchEvent(new Event('focus-xp-updated'));
     }
-  }, []);
+  }, [seMuestraEnModoSimple]);
 
-  const siguienteToast = useCallback(() => {
-    setToasts((actuales) => actuales.slice(1));
+  const siguienteToastXP = useCallback(() => {
+    setToastsXP((actuales) => actuales.slice(1));
   }, []);
+  const siguienteToastNotificacion = useCallback(() => {
+    setToastsNotificaciones((actuales) => actuales.slice(1));
+  }, []);
+  const cerrarToastPin = useCallback(() => setToastPin(null), []);
 
   return (
-    <ToastContext.Provider value={{ toasts, mostrarToast, notificarGamificacion, siguienteToast }}>
+    <ToastContext.Provider value={{
+      toastsXP,
+      toastsNotificaciones,
+      toastPin,
+      notificacionesHabilitadas,
+      mostrarToast,
+      mostrarToastPin,
+      notificarGamificacion,
+      siguienteToastXP,
+      siguienteToastNotificacion,
+      cerrarToastPin
+    }}>
       {children}
     </ToastContext.Provider>
   );

@@ -11,6 +11,7 @@ router.delete('/reset', PerfilController.resetearPerfil);
 router.put('/pin', PerfilController.actualizarPinPerfil);
 router.get('/enfoque-detalles/:id', PerfilController.getEnfoqueDetalles);
 router.patch('/enfoque', PerfilController.cambiarEnfoque);
+router.patch('/cosmetico', PerfilController.actualizarCosmeticoPerfil);
 
 // Rutas principales del perfil (CRUD)
 router.get('/', PerfilController.getPerfilActivo);

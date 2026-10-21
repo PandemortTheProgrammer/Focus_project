@@ -4,6 +4,29 @@ import { open, Database } from 'sqlite';
 let dbInstance: Database | null = null;
 let transactionQueue: Promise<void> = Promise.resolve();
 
+const preferenciasIniciales = [
+    { nombre: 'btn_actividades', mostrarSimplificado: true },
+    { nombre: 'btn_progreso_semanal', mostrarSimplificado: true },
+    { nombre: 'btn_reportes', mostrarSimplificado: true },
+    { nombre: 'btn_dia_ideal', mostrarSimplificado: true },
+    { nombre: 'btn_progreso_general', mostrarSimplificado: true },
+    { nombre: 'btn_novedades', mostrarSimplificado: true },
+    { nombre: 'btn_enfoque', mostrarSimplificado: false },
+    { nombre: 'btn_recompensas', mostrarSimplificado: false },
+    { nombre: 'btn_editar_perfil', mostrarSimplificado: false },
+    { nombre: 'btn_descargar_perfil', mostrarSimplificado: false },
+    { nombre: 'btn_configurar_pin', mostrarSimplificado: false },
+    { nombre: 'btn_nivel_perfil', mostrarSimplificado: false },
+    { nombre: 'widget_nivel', mostrarSimplificado: true },
+    { nombre: 'toast_xp', mostrarSimplificado: true },
+    { nombre: 'toast_logro', mostrarSimplificado: true },
+    { nombre: 'toast_subida_nivel', mostrarSimplificado: true },
+    { nombre: 'toast_hito', mostrarSimplificado: true },
+    { nombre: 'toast_sys_resumen', mostrarSimplificado: true },
+    { nombre: 'toast_sys_general', mostrarSimplificado: true },
+    { nombre: 'btn_preferencias', mostrarSimplificado: true }
+] as const;
+
 interface ValidacionRow {
     Id_perfil: number;
     evento: string;
@@ -31,6 +54,137 @@ const existeTabla = async (db: Database, tabla: string): Promise<boolean> => {
         [tabla]
     );
     return Boolean(fila);
+};
+
+const sincronizarCatalogoPreferencias = async (db: Database): Promise<void> => {
+    if (await existeTabla(db, 'Preferencias')) {
+        const preferenciasSeparadas = await db.get<{ existe: number }>(`
+            SELECT 1 AS existe
+            FROM Preferencias
+            WHERE nombre IN ('btn_hitos', 'btn_logros')
+            LIMIT 1
+        `);
+
+        if (preferenciasSeparadas) {
+            await db.exec('DROP TABLE Preferencias');
+        }
+    }
+
+    await db.exec(`
+        CREATE TABLE IF NOT EXISTS Preferencias (
+            Id_preferencia INTEGER PRIMARY KEY,
+            nombre TEXT NOT NULL UNIQUE,
+            mostrar_simplificado BOOLEAN NOT NULL DEFAULT 1
+                CHECK (mostrar_simplificado IN (0, 1))
+        )
+    `);
+
+    for (const preferencia of preferenciasIniciales) {
+        await db.run(`
+            INSERT OR IGNORE INTO Preferencias
+                (nombre, mostrar_simplificado)
+            VALUES (?, ?)
+        `, [
+            preferencia.nombre,
+            Number(preferencia.mostrarSimplificado)
+        ]);
+    }
+
+    const placeholders = preferenciasIniciales.map(() => '?').join(', ');
+    const filas = await db.all<Array<{ nombre: string }>>(`
+        SELECT nombre
+        FROM Preferencias
+        WHERE nombre IN (${placeholders})
+    `, preferenciasIniciales.map((preferencia) => preferencia.nombre));
+    const nombresEncontrados = new Set(filas.map((fila) => fila.nombre));
+    const preferenciasFaltantes = preferenciasIniciales
+        .filter((preferencia) => !nombresEncontrados.has(preferencia.nombre))
+        .map((preferencia) => preferencia.nombre);
+
+    if (preferenciasFaltantes.length > 0) {
+        throw new Error(
+            `No se pudo sincronizar el catálogo de Preferencias: ${preferenciasFaltantes.join(', ')}.`
+        );
+    }
+};
+
+const aplicarDefaultTarjetaPerfil = async (db: Database): Promise<void> => {
+    const columnasPerfil = await db.all<Array<{
+        name: string;
+        type: string;
+        dflt_value: string | null;
+    }>>('PRAGMA table_info(Perfil)');
+    const columnaTarjeta = columnasPerfil.find((columna) => columna.name === 'Id_tarjeta');
+
+    if (!columnaTarjeta) {
+        throw new Error("No se encontró la columna 'Id_tarjeta' en Perfil.");
+    }
+
+    if (columnaTarjeta.dflt_value === '1') {
+        await db.run('UPDATE Perfil SET Id_tarjeta = 1 WHERE Id_tarjeta IS NULL');
+        return;
+    }
+
+    const columnaIconoLegacy = columnasPerfil.find((columna) => columna.name === 'icono');
+    const columnaIconoLegacyDefinicion = columnaIconoLegacy
+        ? `, icono ${columnaIconoLegacy.type || 'TEXT'}`
+        : '';
+    const columnaIconoLegacyCopia = columnaIconoLegacy ? ', icono' : '';
+    const valorIconoLegacyCopia = columnaIconoLegacy ? ', icono' : '';
+
+    await db.exec('PRAGMA foreign_keys = OFF');
+    let transaccionIniciada = false;
+    try {
+        await db.exec('BEGIN IMMEDIATE TRANSACTION');
+        transaccionIniciada = true;
+        await db.exec(`
+            CREATE TABLE Perfil_migracion (
+                Id_perfil INTEGER PRIMARY KEY,
+                nickname VARCHAR(20) NOT NULL,
+                rango_edad VARCHAR(15) NOT NULL,
+                Id_enfoque INTEGER,
+                genero VARCHAR(1) NOT NULL,
+                Id_icono INTEGER NOT NULL DEFAULT 1,
+                pin VARCHAR(4) DEFAULT NULL,
+                fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+                nivel INTEGER DEFAULT 1,
+                xp_acumulada INTEGER DEFAULT 0,
+                Id_tarjeta INTEGER NOT NULL DEFAULT 1,
+                pista_pin VARCHAR(60) DEFAULT NULL
+                ${columnaIconoLegacyDefinicion},
+                FOREIGN KEY (Id_enfoque) REFERENCES Enfoque(Id_enfoque) ON DELETE SET NULL,
+                FOREIGN KEY (Id_icono) REFERENCES Icono(Id_icono) ON DELETE SET NULL,
+                FOREIGN KEY (Id_tarjeta) REFERENCES Tarjeta(Id_tarjeta) ON DELETE SET NULL
+            );
+
+            INSERT INTO Perfil_migracion (
+                Id_perfil, nickname, rango_edad, Id_enfoque, genero, Id_icono,
+                pin, fecha_creacion, nivel, xp_acumulada, Id_tarjeta, pista_pin
+                ${columnaIconoLegacyCopia}
+            )
+            SELECT
+                Id_perfil, nickname, rango_edad, Id_enfoque, genero, Id_icono,
+                pin, fecha_creacion, nivel, xp_acumulada, COALESCE(Id_tarjeta, 1), pista_pin
+                ${valorIconoLegacyCopia}
+            FROM Perfil;
+
+            DROP TABLE Perfil;
+            ALTER TABLE Perfil_migracion RENAME TO Perfil;
+        `);
+        await db.exec('COMMIT');
+        transaccionIniciada = false;
+    } catch (error) {
+        if (transaccionIniciada) {
+            try {
+                await db.exec('ROLLBACK');
+            } catch (rollbackError) {
+                console.error('No se pudo revertir el parche de Id_tarjeta en Perfil:', rollbackError);
+            }
+        }
+        throw error;
+    } finally {
+        await db.exec('PRAGMA foreign_keys = ON');
+    }
 };
 
 const leerObjetoJson = (contenido: string | null | undefined): Record<string, unknown> => {
@@ -289,6 +443,8 @@ export const inicializarBD = async () => {
         await dbInstance.exec('PRAGMA foreign_keys = ON;');
         console.log("Base de Datos SQLite conectada con éxito.");
 
+        await sincronizarCatalogoPreferencias(dbInstance);
+
         // ==========================================
         // 1. CREACIÓN DE TABLAS INDEPENDIENTES
         // ==========================================
@@ -335,7 +491,7 @@ export const inicializarBD = async () => {
                 fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
                 nivel INTEGER DEFAULT 1,
                 xp_acumulada INTEGER DEFAULT 0,
-                Id_tarjeta INTEGER DEFAULT NULL,
+                Id_tarjeta INTEGER NOT NULL DEFAULT 1,
                 FOREIGN KEY (Id_enfoque) REFERENCES Enfoque(Id_enfoque) ON DELETE SET NULL,
                 FOREIGN KEY (Id_icono) REFERENCES Icono(Id_icono) ON DELETE SET NULL,
                 FOREIGN KEY (Id_tarjeta) REFERENCES Tarjeta(Id_tarjeta) ON DELETE SET NULL
@@ -738,6 +894,8 @@ export const inicializarBD = async () => {
             END
             WHERE Id_recompensa BETWEEN 1 AND 29 OR Id_recompensa BETWEEN 1001 AND 1008
         `);
+
+        await aplicarDefaultTarjetaPerfil(dbInstance);
 
         await dbInstance.run(`
             UPDATE Perfil

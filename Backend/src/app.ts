@@ -9,6 +9,7 @@ import databaseRoutes from "./routes/databaseRoutes";
 import plantillasRoutes from "./routes/plantillasRoutes";
 import progresoRoutes from "./routes/progresoRoutes";
 import xpRoutes from "./routes/xpRoutes";
+import preferenciasRoutes from "./routes/preferenciasRoutes";
 
 // Abajo con tus app.use:
 const app = express();
@@ -22,6 +23,7 @@ app.use('/api/database', databaseRoutes);
 app.use('/api/plantillas', plantillasRoutes);
 app.use('/api/progreso', progresoRoutes);
 app.use('/api/xp', xpRoutes);
+app.use('/api/preferencias', preferenciasRoutes);
 app.get("/", (req, res) => { //req y res para solicitar y emitir respuestas desde back
     res.json({
         mensaje: "Backend Focus funcionando"

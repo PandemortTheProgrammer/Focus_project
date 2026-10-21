@@ -95,6 +95,7 @@ export interface PerfilRow {
     Id_enfoque: number | null;
     genero: string;
     Id_icono: number | null;
+    Id_tarjeta: number | null;
     pin: string | null;
     pista_pin?: string | null;
     nivel: number; // <-- Útil si el frontend quiere mostrar el nivel actual aquí
@@ -280,6 +281,43 @@ export const obtenerPerfil = async (): Promise<PerfilRow | null> => {
     const perfil = await db.get<PerfilRow>(query);
     return perfil ?? null;
 };
+
+export const equiparCosmetico = async (
+    tipo: 'icono' | 'tarjeta',
+    idCosmetico: number
+): Promise<'actualizado' | 'perfil_no_encontrado' | 'cosmetico_no_encontrado' | 'bloqueado'> =>
+    ejecutarTransaccion(async (db) => {
+        const perfil = await db.get<{ Id_perfil: number }>(
+            'SELECT Id_perfil FROM Perfil WHERE Id_perfil = 1'
+        );
+        if (!perfil) return 'perfil_no_encontrado';
+
+        const tabla = tipo === 'icono' ? 'Icono' : 'Tarjeta';
+        const columnaId = tipo === 'icono' ? 'Id_icono' : 'Id_tarjeta';
+        const existeCosmetico = await db.get<{ id: number }>(
+            `SELECT ${columnaId} AS id FROM ${tabla} WHERE ${columnaId} = ?`,
+            [idCosmetico]
+        );
+        if (!existeCosmetico) return 'cosmetico_no_encontrado';
+
+        if (idCosmetico !== 1) {
+            const tipoRecompensa = tipo === 'icono' ? 'ICONO' : 'CARD';
+            const desbloqueado = await db.get<{ existe: number }>(`
+                SELECT 1 AS existe
+                FROM Recompensa r
+                JOIN Perfil_Recompensa pr ON pr.Id_recompensa = r.Id_recompensa
+                WHERE pr.Id_perfil = 1
+                    AND r.tipo_recompensa = ?
+                    AND r.Id_desbloqueado = ?
+                LIMIT 1
+            `, [tipoRecompensa, idCosmetico]);
+            if (!desbloqueado) return 'bloqueado';
+        }
+
+        const columnaPerfil = tipo === 'icono' ? 'Id_icono' : 'Id_tarjeta';
+        await db.run(`UPDATE Perfil SET ${columnaPerfil} = ? WHERE Id_perfil = 1`, [idCosmetico]);
+        return 'actualizado';
+    });
 
 export const reiniciarPerfilYDatos = async (): Promise<void> => {
     await ejecutarTransaccion(async (dbTransaccion) => {

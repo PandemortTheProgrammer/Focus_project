@@ -1,7 +1,7 @@
 // backend/src/controllers/perfilController.ts
 import { Request, Response } from 'express';
 import path from 'path';
-import { guardarPerfil, obtenerPerfil, obtenerEnfoques, reiniciarPerfilYDatos, obtenerDetallesEnfoque, actualizarPin, actualizarEnfoque } from '../services/PerfilManager';
+import { guardarPerfil, obtenerPerfil, obtenerEnfoques, reiniciarPerfilYDatos, obtenerDetallesEnfoque, actualizarPin, actualizarEnfoque, equiparCosmetico } from '../services/PerfilManager';
 import { evaluarNuevosLogros } from '../services/RecompensasManager';
 
 export const getEnfoques = async (req: Request, res: Response): Promise<void> => {
@@ -78,6 +78,7 @@ export const getPerfilActivo = async (req: Request, res: Response) => {
             genero: perfil.genero,
             id_focus: perfil.Id_enfoque,
             id_icono: perfil.Id_icono ?? 1,
+            id_tarjeta: perfil.Id_tarjeta ?? 1,
             pin: perfil.pin ?? null,
             pista_pin: perfil.pista_pin ?? null,
             nivel: perfil.nivel, // <-- Útil si el frontend quiere mostrar el nivel actual aquí
@@ -162,5 +163,41 @@ export const cambiarEnfoque = async (req: Request, res: Response) => {
     } catch (error) {
         console.error("Error al cambiar enfoque:", error);
         res.status(500).json({ error: "No se pudo actualizar tu enfoque." });
+    }
+};
+
+export const actualizarCosmeticoPerfil = async (req: Request, res: Response): Promise<void> => {
+    const { tipo, id } = req.body as { tipo?: unknown; id?: unknown };
+    if (tipo !== 'icono' && tipo !== 'tarjeta') {
+        res.status(400).json({ error: "El tipo debe ser 'icono' o 'tarjeta'." });
+        return;
+    }
+
+    const idCosmetico = Number(id);
+    if (!Number.isSafeInteger(idCosmetico) || idCosmetico <= 0) {
+        res.status(400).json({ error: 'El ID del cosmético debe ser un entero positivo.' });
+        return;
+    }
+
+    try {
+        const resultado = await equiparCosmetico(tipo, idCosmetico);
+        if (resultado === 'perfil_no_encontrado') {
+            res.status(404).json({ error: 'No se encontró un perfil activo.' });
+            return;
+        }
+        if (resultado === 'cosmetico_no_encontrado') {
+            res.status(404).json({ error: 'El cosmético no existe en el catálogo.' });
+            return;
+        }
+        if (resultado === 'bloqueado') {
+            res.status(403).json({ error: 'No puedes equipar un cosmético que aún no has desbloqueado.' });
+            return;
+        }
+
+        res.json({ tipo, id: idCosmetico });
+    } catch (error: unknown) {
+        console.error('Error al equipar cosmético del perfil:', error);
+        const mensaje = error instanceof Error ? error.message : 'Error desconocido';
+        res.status(500).json({ error: mensaje });
     }
 };

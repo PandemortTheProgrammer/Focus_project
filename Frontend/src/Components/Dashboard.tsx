@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react' 
-import { useNavigate } from 'react-router-dom'
-import type Perfil from '../models/Perfil'
-import { useToast } from './essentials/ToastContext'
+import { useState, useEffect } from 'react';
+import type Perfil from '../models/Perfil';
+import { useToast } from './essentials/ToastContext';
+import DashboardButton from './essentials/Dashboard_button'; // <-- Importamos el componente
+import { usePreferences } from '../utils/preferencesContext';
 
 import { 
   ClipboardDocumentListIcon, 
@@ -15,40 +16,42 @@ import {
   SparklesIcon,
   ChartPieIcon,
   FireIcon,
-  NewspaperIcon
-} from '@heroicons/react/24/outline'
+  NewspaperIcon,
+  AdjustmentsHorizontalIcon
+} from '@heroicons/react/24/outline';
 
 interface DashboardProps {
   perfilGlobal: Perfil;
 }
 
 export default function Dashboard({ perfilGlobal }: DashboardProps) {
-  const navigate = useNavigate()
-  const { mostrarToast, notificarGamificacion } = useToast()
+  const { mostrarToast, notificarGamificacion } = useToast();
+  const { valores: preferencias } = usePreferences();
 
   const [modoSimple, setModoSimple] = useState(() => {
-    return localStorage.getItem('focus_modo_simple') === 'true'
-  })
+    return localStorage.getItem('focus_modo_simple') === 'true';
+  });
 
   const toggleModoSimple = () => {
-    const nuevoEstado = !modoSimple
-    setModoSimple(nuevoEstado)
-    localStorage.setItem('focus_modo_simple', String(nuevoEstado))
-  }
+    const nuevoEstado = !modoSimple;
+    setModoSimple(nuevoEstado);
+    localStorage.setItem('focus_modo_simple', String(nuevoEstado));
+    window.dispatchEvent(new Event('focus-simple-mode-updated'));
+  };
 
   useEffect(() => {
     const cargarEnfoques = async () => {
       try {
-        const res = await fetch('http://localhost:3000/api/perfil/enfoques')
+        const res = await fetch('http://localhost:3000/api/perfil/enfoques');
         if (res.ok) {
-          await res.json()
+          await res.json();
         }
       } catch (error) {
-        console.error('Error al cargar enfoques:', error)
+        console.error('Error al cargar enfoques:', error);
       }
-    }
-    cargarEnfoques()
-  }, [])
+    };
+    cargarEnfoques();
+  }, []);
 
   const obtenerSaludo = (generoSeleccionado?: string) => {
     if (generoSeleccionado === 'M') return 'Bienvenido';
@@ -59,48 +62,61 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
   useEffect(() => {
     const verificarNuevosReportes = async () => {
       try {
-        const res = await fetch('http://localhost:3000/api/reportes/semanas')
-        if (!res.ok) return
+        const res = await fetch('http://localhost:3000/api/reportes/semanas');
+        if (!res.ok) return;
 
-        const data = await res.json()
+        const data = await res.json();
         
-        const reportes = Array.isArray(data) ? data : (data.reportes || [])
-        const logrosReporte = data.logrosDesbloqueados || []
+        const reportes = Array.isArray(data) ? data : (data.reportes || []);
+        const logrosReporte = data.logrosDesbloqueados || [];
         if (logrosReporte.length > 0 || data.resultadoXP) {
-          notificarGamificacion(logrosReporte, data.resultadoXP)
+          notificarGamificacion(logrosReporte, data.resultadoXP);
         }
         
         if (reportes.length > 0) {
-          const ultimoReporte = reportes[reportes.length - 1]
-          const fechaInicioReciente = String(ultimoReporte.fecha_inicio)
-          const reporteNotificado = localStorage.getItem('ultimo_reporte_visto')
+          const ultimoReporte = reportes[reportes.length - 1];
+          const fechaInicioReciente = String(ultimoReporte.fecha_inicio);
+          const reporteNotificado = localStorage.getItem('ultimo_reporte_visto');
 
           if (fechaInicioReciente !== reporteNotificado) {
-            
             setTimeout(() => {
               mostrarToast(
                 'exito', 
                 '¡Nuevo reporte disponible! 📊', 
                 `El resumen de tu semana del ${fechaInicioReciente} ya está listo para revisarse.`
-              )
-            }, 1000)
-
-            localStorage.setItem('ultimo_reporte_visto', fechaInicioReciente)
+              );
+            }, 1000);
+            localStorage.setItem('ultimo_reporte_visto', fechaInicioReciente);
           }
         }
       } catch (error) {
-        console.error("Error al verificar los reportes semanales:", error)
+        console.error("Error al verificar los reportes semanales:", error);
       }
-    }
+    };
 
     if (perfilGlobal) {
-        verificarNuevosReportes()
+        verificarNuevosReportes();
     }
-  }, [mostrarToast, notificarGamificacion, perfilGlobal])
+  }, [mostrarToast, notificarGamificacion, perfilGlobal]);
+
+  const botones = [
+    { titulo: 'Gestiona tus actividades', Icono: ClipboardDocumentListIcon, ruta: '/actividades', colorHex: '#5ecfb8', prefKeys: ['btn_actividades'] },
+    { titulo: 'Ver tu progreso semanal', Icono: ChartBarIcon, ruta: '/progreso-semanal', colorHex: '#f97316', prefKeys: ['btn_progreso_semanal'] },
+    { titulo: 'Ver tus reportes semanales', Icono: DocumentTextIcon, ruta: '/resumenes-semanales', colorHex: '#3b82f6', prefKeys: ['btn_reportes'] },
+    { titulo: 'Mi día ideal', Icono: SparklesIcon, ruta: '/dia-ideal', colorHex: '#fbbf24', prefKeys: ['btn_dia_ideal'] },
+    { titulo: 'Progreso General', Icono: ChartPieIcon, ruta: '/mi-progreso', colorHex: '#c084fc', prefKeys: ['btn_progreso_general'] },
+    { titulo: 'Novedades', Icono: NewspaperIcon, ruta: '/novedades', colorHex: '#ffb777', prefKeys: ['btn_novedades'] },
+    { titulo: 'Preferencias', Icono: AdjustmentsHorizontalIcon, ruta: '/preferencias', colorHex: '#9ca3af', prefKeys: ['btn_preferencias'] },
+    { titulo: 'Conoce tu enfoque', Icono: FlagIcon, ruta: '/enfoque-detalle', colorHex: '#f59e0b', prefKeys: ['btn_enfoque'] },
+    { titulo: 'Hitos y Logros', Icono: TrophyIcon, ruta: '/recompensas', colorHex: '#fbbf24', prefKeys: ['btn_recompensas'] },
+    { titulo: 'Edita tu perfil', Icono: UserCircleIcon, ruta: '/editar-perfil', colorHex: '#d946ef', prefKeys: ['btn_editar_perfil'] },
+    { titulo: 'Descarga tu perfil', Icono: ArrowDownTrayIcon, ruta: '/descargar', colorHex: '#b8f0a0', prefKeys: ['btn_descargar_perfil'] },
+    { titulo: 'Configurar PIN', Icono: LockClosedIcon, ruta: '/configurar-pin', colorHex: '#6b7280', prefKeys: ['btn_configurar_pin'] },
+    { titulo: 'Nivel de Perfil', Icono: FireIcon, ruta: '/nivel-perfil', colorHex: '#c084fc', prefKeys: ['btn_nivel_perfil'] },
+  ];
 
   return (
     <div className="relative w-full min-h-screen overflow-auto flex flex-col">
-
       <div className="relative z-10 flex flex-col items-center justify-start flex-1 pt-16 px-4 pb-8">
 
         <h1 className="text-4xl font-bold text-center mb-6 mt-2" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>
@@ -126,108 +142,21 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
         </div>
 
         <div className="flex flex-wrap justify-center gap-6 max-w-5xl">
-
-          {/* Tarjeta 1: Actividades */}
-          <div
-            onClick={() => navigate('/actividades')}
-            className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-[#5ecfb8] hover:scale-105 shadow-lg group">
-            <ClipboardDocumentListIcon className="w-12 h-12 text-[#5ecfb8] transition group-hover:text-white" />
-            <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Gestiona tus actividades</p>
-          </div>
-
-          {/* Tarjeta 2: Progreso Semanal */}
-          <div
-            onClick={() => navigate('/progreso-semanal')}
-            className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-[#f97316] hover:scale-105 shadow-lg group">
-            <ChartBarIcon className="w-12 h-12 text-[#f97316] transition group-hover:text-white" />
-            <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Ver tu progreso semanal</p>
-          </div>
-
-          {/* Tarjeta 3: Reportes Semanales */}
-          <div
-            onClick={() => navigate('/resumenes-semanales')}
-            className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-[#3b82f6] hover:scale-105 shadow-lg group">
-            <DocumentTextIcon className="w-12 h-12 text-[#3b82f6] transition group-hover:text-white" />
-            <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Ver tus reportes semanales</p>
-          </div>
-
-          {/* Tarjeta 4: Día Ideal */}
-          <div
-            onClick={() => navigate('/dia-ideal')}
-            className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-[#fbbf24] hover:scale-105 shadow-lg group">
-            <SparklesIcon className="w-12 h-12 text-[#fbbf24] transition group-hover:text-white" />
-            <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Mi día ideal</p>
-          </div>
-
-          {/* Tarjeta 5: Mi Progreso */}
-          <div
-            onClick={() => navigate('/mi-progreso')}
-            className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-[#c084fc] hover:scale-105 shadow-lg group">
-            <ChartPieIcon className="w-12 h-12 text-[#c084fc] transition group-hover:text-white" />
-            <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Progreso General</p>
-          </div>
-
-          <div
-            onClick={() => navigate('/novedades')}
-            className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-[#ffb777] hover:scale-105 shadow-lg group">
-            <NewspaperIcon className="w-12 h-12 text-[#ffb777] transition group-hover:text-white" />
-            <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Novedades</p>
-          </div>
-
-          {!modoSimple && (
-            <>
-              {/* Tarjeta 6: Enfoque Detalle */}
-              <div
-                onClick={() => navigate('/enfoque-detalle')}
-                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-[#f59e0b] hover:scale-105 shadow-lg group">
-                <FlagIcon className="w-12 h-12 text-[#f59e0b] transition group-hover:text-white" />
-                <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Conoce tu enfoque</p>
-              </div>
-              
-              {/* Tarjeta 7: Recompensas */}
-              <div
-                onClick={() => navigate('/recompensas')}
-                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-[#fbbf24] hover:scale-105 shadow-lg group">
-                <TrophyIcon className="w-12 h-12 text-[#fbbf24] transition group-hover:text-white" />
-                <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Hitos y Logros</p>
-              </div>
-
-              {/* Tarjeta 8: Editar Perfil */}
-              <div
-                onClick={() => navigate('/editar-perfil')}
-                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-[#d946ef] hover:scale-105 shadow-lg group">
-                <UserCircleIcon className="w-12 h-12 text-[#d946ef] transition group-hover:text-white" />
-                <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Edita tu perfil</p>
-              </div>
-
-              {/* Tarjeta 9: Descarga */}
-              <div
-                onClick={() => navigate('/descargar')}
-                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-[#b8f0a0] hover:scale-105 shadow-lg group">
-                <ArrowDownTrayIcon className="w-12 h-12 text-[#b8f0a0] transition group-hover:text-white" />
-                <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Descarga tu perfil</p>
-              </div>
-
-              {/* Tarjeta 10: Configurar PIN */}
-              <div
-                onClick={() => navigate('/configurar-pin')}
-                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-[#6b7280] hover:scale-105 shadow-lg group">
-                <LockClosedIcon className="w-12 h-12 text-[#6b7280] transition group-hover:text-white" />
-                <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Configurar PIN</p>
-              </div>
-
-              {/* Tarjeta 11: Nivel de Perfil */}
-              <div
-                onClick={() => navigate('/nivel-perfil')}
-                className="flex flex-col items-center justify-center gap-3 w-48 h-32 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#2a2a2a] hover:bg-purple-400 hover:scale-105 shadow-lg group">
-                <FireIcon className="w-12 h-12 text-purple-400 transition group-hover:text-white" />
-                <p className="text-white text-sm font-semibold text-center transition group-hover:text-white">Nivel de Perfil</p>
-              </div>
-            </>
-          )}
-
+          {botones
+            .filter((btn) => !modoSimple || btn.prefKeys.length === 0
+              || btn.prefKeys.every((key) => preferencias[key] !== false))
+            .map((btn) => (
+            <DashboardButton
+              key={btn.ruta}
+              titulo={btn.titulo}
+              Icono={btn.Icono}
+              ruta={btn.ruta}
+              colorHex={btn.colorHex}
+            />
+          ))}
         </div>
+
       </div>
     </div>
-  )
+  );
 }

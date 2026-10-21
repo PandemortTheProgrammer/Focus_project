@@ -5,11 +5,10 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import FocusLogo from '../../assets/Images/Focus_v2_logo.png';
 import type Perfil from '../../models/Perfil';
 import type Enfoque from '../../models/Enfoque';
+import { usePreferences } from '../../utils/preferencesContext';
 import { obtenerUrlIcono } from '../../utils/icons';
 import {
-  ArrowDownTrayIcon,
   ArrowLeftOnRectangleIcon,
-  LockClosedIcon,
   UserCircleIcon,
   NewspaperIcon
 } from '@heroicons/react/24/outline';
@@ -29,6 +28,7 @@ interface LayoutProps {
 }
 
 export default function Layout({ children, perfilGlobal }: LayoutProps) {
+  const { valores: preferencias } = usePreferences();
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -49,7 +49,18 @@ export default function Layout({ children, perfilGlobal }: LayoutProps) {
   const [enfoques, setEnfoques] = useState<Enfoque[]>([]);
   
   // NUEVO ESTADO: Progreso de Nivel global
-  const [progresoXP, setProgresoXP] = useState<any>(null);
+  const [progresoXP, setProgresoXP] = useState<{ nivel?: number } | null>(null);
+  const [modoSimple, setModoSimple] = useState(
+    () => localStorage.getItem('focus_modo_simple') === 'true'
+  );
+
+  useEffect(() => {
+    const actualizarModoSimple = () => {
+      setModoSimple(localStorage.getItem('focus_modo_simple') === 'true');
+    };
+    window.addEventListener('focus-simple-mode-updated', actualizarModoSimple);
+    return () => window.removeEventListener('focus-simple-mode-updated', actualizarModoSimple);
+  }, []);
 
   const nickname = perfilGlobal?.nickname || 'Desconocido';
   const urlIcono = obtenerUrlIcono(perfilGlobal?.id_icono);
@@ -127,7 +138,7 @@ export default function Layout({ children, perfilGlobal }: LayoutProps) {
           <div className="flex items-center gap-4">
             
             {/* NUEVO: INDICADOR DE NIVEL COMPACTO */}
-            <div 
+            {(!modoSimple || preferencias.widget_nivel !== false) && <div
               className="flex flex-col items-center justify-center bg-black/40 border border-purple-500/30 rounded-xl px-3 py-1 shadow-inner cursor-pointer hover:bg-black/60 hover:border-purple-500/60 transition" 
               onClick={() => navigate('/nivel-perfil')}
               title="Ver detalles de nivel"
@@ -138,7 +149,7 @@ export default function Layout({ children, perfilGlobal }: LayoutProps) {
               <span className="text-xl font-black text-purple-400 leading-none drop-shadow-[0_0_5px_rgba(168,85,247,0.4)]">
                   {progresoXP?.nivel || 1}
               </span>
-            </div>
+            </div>}
 
             {/* Menú Desplegable del Perfil (Intacto) */}
             <div className="relative">
@@ -164,17 +175,11 @@ export default function Layout({ children, perfilGlobal }: LayoutProps) {
 
               {menuAbierto && (
                 <div className="absolute right-0 mt-2 w-48 rounded-2xl shadow-2xl overflow-hidden border border-zinc-700/50" style={{ backgroundColor: '#1a1a1a' }}>
-                  <button onClick={() => { setMenuAbierto(false); navigate('/editar-perfil'); }} className="w-full text-left px-4 py-3 text-white text-sm font-semibold hover:bg-zinc-800 transition flex items-center gap-3">
-                    <UserCircleIcon className="w-5 h-5 text-[#d946ef]" /> Editar Perfil
-                  </button>
-                  <button onClick={() => { setMenuAbierto(false); navigate('/descargar'); }} className="w-full text-left px-4 py-3 text-white text-sm font-semibold hover:bg-zinc-800 transition flex items-center gap-3">
-                    <ArrowDownTrayIcon className="w-5 h-5 text-[#b8f0a0]" /> Descargar Perfil
-                  </button>
-                  <button onClick={() => { setMenuAbierto(false); navigate('/configurar-pin'); }} className="w-full text-left px-4 py-3 text-white text-sm font-semibold hover:bg-zinc-800 transition flex items-center gap-3">
-                    <LockClosedIcon className="w-5 h-5 text-[#6b7280]" /> Configurar PIN
+                  <button onClick={() => { setMenuAbierto(false); navigate('/detalles-perfil'); }} className="w-full text-left px-4 py-3 text-white text-sm font-semibold hover:bg-zinc-800 transition flex items-center gap-3">
+                    <UserCircleIcon className="w-5 h-5 text-[#5ecfb8]" /> Detalles de perfil
                   </button>
                   <button onClick={() => { setMenuAbierto(false); navigate('/novedades'); }} className="w-full text-left px-4 py-3 text-white text-sm font-semibold hover:bg-zinc-800 transition flex items-center gap-3">
-                    <NewspaperIcon className="w-5 h-5 text-[#5ecfb8]" /> Novedades
+                    <NewspaperIcon className="w-5 h-5 text-[#ffb777]" /> Novedades
                   </button>
                   <button onClick={() => { setMenuAbierto(false); navigate('/'); }} className="w-full text-left px-4 py-3 text-white text-sm font-semibold hover:bg-zinc-800 transition flex items-center gap-3">
                     <ArrowLeftOnRectangleIcon className="w-5 h-5 text-zinc-400" /> Salir del Perfil

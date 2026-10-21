@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../essentials/Page-head';
 import { useToast } from '../essentials/ToastContext';
+import { obtenerUrlTarjeta } from '../../utils/tarjetas';
 
 interface ProgresoData {
-    usuario: { nombre: string; idIcono: number; };
+    usuario: { nombre: string; idIcono: number; idTarjeta: number; };
     fechaCreacion: string;
     semanasDesdeCreacion: number;
     totalActividades: number;
@@ -80,6 +81,8 @@ const MiProgreso: React.FC = () => {
         fetchProgreso();
     }, [mostrarToast, notificarGamificacion]);
 
+    const urlTarjeta = data ? obtenerUrlTarjeta(data.usuario.idTarjeta) : undefined;
+
     if (loading) {
         return (
             <div className="relative w-full min-h-screen flex items-center justify-center">
@@ -109,15 +112,21 @@ const MiProgreso: React.FC = () => {
                 Toca cualquiera de tus métricas para explorar los detalles.
             </p>
 
-            <div className="relative z-10 flex flex-col gap-8 w-full max-w-5xl pb-10">
+            <div className="relative z-10 flex flex-col gap-8 w-full max-w-6xl pb-10">
 
                 {/* 1. Tarjeta de Identidad */}
                 <div
-                    onClick={() => navigate('/editar-perfil')}
-                    className="flex flex-col sm:flex-row items-center gap-6 bg-[#2a2a2a] p-6 rounded-2xl shadow-lg border border-zinc-700/50 cursor-pointer transition-all duration-300 hover:border-[#d946ef] group"
-                    title="Editar perfil"
+                    onClick={() => navigate('/detalles-perfil')}
+                    className="relative flex aspect-[6/1] min-h-[160px] flex-col items-center gap-6 overflow-hidden rounded-2xl border border-zinc-700/50 bg-[#2a2a2a] p-8 shadow-lg transition-all duration-300 group cursor-pointer hover:border-[#5ecfb8] sm:flex-row"
+                    title="Ver detalles de perfil"
+                    style={urlTarjeta ? {
+                        backgroundImage: `linear-gradient(to right, rgba(26,26,26,0.95) 0%, rgba(26,26,26,0.4) 100%), url("${urlTarjeta}")`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
+                    } : undefined}
                 >
-                    <div className="w-24 h-24 bg-zinc-800 rounded-full flex items-center justify-center overflow-hidden shadow-inner border-2 border-[#5ecfb8] group-hover:border-[#d946ef] transition-colors flex-shrink-0">
+                    {/* Avatar */}
+                    <div className="relative z-10 w-24 h-24 bg-zinc-800 rounded-full flex items-center justify-center overflow-hidden shadow-2xl border-4 border-[#24343b] group-hover:border-[#5ecfb8] transition-colors flex-shrink-0">
                         <img
                             src={`/src/assets/images/Icons/icon_${data.usuario.idIcono}.png`}
                             alt={`Icono de ${data.usuario.nombre}`}
@@ -130,12 +139,16 @@ const MiProgreso: React.FC = () => {
                             </span>
                         )}
                     </div>
-                    <div className="text-center sm:text-left flex-1">
-                        <h2 className="text-3xl font-bold text-white tracking-wide">{data.usuario.nombre}</h2>
-                        <p className="text-zinc-400 text-sm mt-1">Registrando desde el {data.fechaCreacion}</p>
+
+                    {/* Info */}
+                    <div className="relative z-10 text-center sm:text-left flex-1">
+                        <h2 className="text-3xl font-bold text-white tracking-wide drop-shadow-md">{data.usuario.nombre}</h2>
+                        <p className="text-zinc-300 font-medium text-sm mt-1 drop-shadow-sm">Registrando desde el {data.fechaCreacion}</p>
                     </div>
-                    <div className="hidden sm:block text-zinc-500 group-hover:text-[#d946ef] transition-colors">
-                        <span className="text-sm font-medium">Modificar perfil &rarr;</span>
+
+                    {/* Acción */}
+                    <div className="relative z-10 hidden sm:block text-zinc-400 group-hover:text-[#5ecfb8] transition-colors bg-black/40 px-4 py-2 rounded-full backdrop-blur-sm border border-white/5">
+                        <span className="text-sm font-bold tracking-wide">Ver detalles &rarr;</span>
                     </div>
                 </div>
 
