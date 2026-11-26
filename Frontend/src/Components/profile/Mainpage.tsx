@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import FocusLogo from '../../assets/Images/Focus_logo.png'
 import { useToast } from '../essentials/ToastContext' 
-import { LockClosedIcon, LightBulbIcon } from '@heroicons/react/24/outline'
+import { ExclamationTriangleIcon, LightBulbIcon, LockClosedIcon, UserCircleIcon } from '@heroicons/react/24/outline'
 
 // IMPORTANTE: Ajusta estas rutas según la ubicación de tus helpers
 import { obtenerUrlIcono } from '../../utils/icons' 
@@ -139,7 +139,9 @@ export default function Mainpage() {
                   {urlIcono ? (
                     <img src={urlIcono} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-3xl">👤</div>
+                    <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
+                      <UserCircleIcon className="w-12 h-12 text-zinc-500" />
+                    </div>
                   )}
                 </div>
 
@@ -241,7 +243,7 @@ export default function Mainpage() {
             style={{ backgroundColor: '#1a1a1a' }}
           >
             <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4 border border-red-500/20">
-              <span className="text-3xl">⚠️</span>
+              <ExclamationTriangleIcon className="w-8 h-8" />
             </div>
             
             <h2 className="text-2xl font-bold text-white mb-3">¡Cuidado, {nicknameGuardado}!</h2>
@@ -250,8 +252,9 @@ export default function Mainpage() {
               Ya existe un perfil guardado en este equipo. Si creas uno nuevo ahora, <strong className="text-red-400">todo tu progreso actual, historial y logros desaparecerán para siempre</strong>.
             </p>
 
-            <p className="text-zinc-400 text-xs mb-8 bg-black/40 p-4 rounded-xl border border-zinc-800">
-              💡 <strong>Te recomendamos:</strong> Entra primero al Dashboard y descarga un respaldo de tu perfil actual para que puedas conservarlo.
+            <p className="text-zinc-400 text-xs mb-8 bg-black/40 p-4 rounded-xl border border-zinc-800 flex items-start gap-2">
+              <LightBulbIcon className="w-5 h-5 shrink-0 text-[#5ecfb8]" />
+              <span><strong>Te recomendamos:</strong> Entra primero al Dashboard y descarga un respaldo de tu perfil actual para que puedas conservarlo.</span>
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 w-full">

@@ -389,7 +389,7 @@ export const obtenerResumenesSemanales = async (): Promise<{
             }
 
             if (registro.reporteCreado) {
-                console.log(`✅ Reporte automático generado para la semana del ${semana.fecha_inicio}`);
+                console.log(`Reporte automático generado para la semana del ${semana.fecha_inicio}`);
 
                 let eventoEspecial: string | undefined;
                 if (ultimoEnfoqueReportado !== null && ultimoEnfoqueReportado !== idEnfoque) {

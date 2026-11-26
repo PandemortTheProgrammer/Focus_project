@@ -109,7 +109,7 @@ export const registrarActividad = async (
       datosXP = resultado.resultadoXP;
     }
   } catch (error) {
-    console.error("🔴 Error al evaluar recompensas o XP tras registrar actividad:", error);
+    console.error("Error al evaluar recompensas o XP tras registrar actividad:", error);
     errorXP = error instanceof Error ? error.message : 'No se pudo procesar XP o logros.';
   }
   

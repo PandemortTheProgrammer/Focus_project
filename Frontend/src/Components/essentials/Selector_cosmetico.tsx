@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { XMarkIcon, LockClosedIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, LockClosedIcon, CheckCircleIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 
 export interface Cosmetico {
     id: number;
@@ -87,7 +87,7 @@ export default function ModalSelectorCosmetico({ isOpen, onClose, onSave, tipo, 
                                             <img src={item.url} alt={item.nombre} className={`w-full h-full object-cover ${isIcono ? 'rounded-full' : 'rounded-2xl'}`} />
                                         ) : (
                                             <div className={`w-full h-full flex items-center justify-center ${isIcono ? 'rounded-full bg-[#1a7a6e] text-5xl font-bold text-white' : 'rounded-2xl bg-zinc-800 text-sm font-semibold text-white'}`}>
-                                                {isIcono ? item.fallbackText ?? '👤' : item.nombre}
+                                                {isIcono ? item.fallbackText ?? <UserCircleIcon className="w-12 h-12" /> : item.nombre}
                                             </div>
                                         )}
                                         {isSelected && (
@@ -117,7 +117,7 @@ export default function ModalSelectorCosmetico({ isOpen, onClose, onSave, tipo, 
                                             <img src={item.url} alt={item.nombre} className={`w-full h-full object-cover opacity-40 ${isIcono ? 'rounded-full' : 'rounded-2xl'}`} />
                                         ) : (
                                             <div className={`w-full h-full flex items-center justify-center bg-zinc-800 text-zinc-500 ${isIcono ? 'rounded-full text-3xl' : 'rounded-2xl text-sm font-semibold'}`}>
-                                                {isIcono ? '👤' : item.nombre}
+                                                {isIcono ? <UserCircleIcon className="w-10 h-10" /> : item.nombre}
                                             </div>
                                         )}
                                         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40">

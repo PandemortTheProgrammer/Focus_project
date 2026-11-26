@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Routes, Route, useNavigate } from 'react-router-dom'
+import { HomeIcon, ChartBarIcon } from '@heroicons/react/24/outline'
 
 // Importación de componentes visuales (los mismos de tu compañero)
 import Mainpage from './Components/Mainpage'
@@ -101,13 +102,13 @@ function DashboardLayout({ children, perfilGlobal }: { children: React.ReactNode
       {/* Menú Cápsula Flotante (Navegación Discreta) */}
       <nav className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-zinc-900/90 backdrop-blur-md px-6 py-3 rounded-full flex gap-6 shadow-2xl z-50">
         <button onClick={() => navigate('/app/inicio')} className="text-zinc-300 font-semibold hover:text-white">
-          🏠 Inicio
+          <HomeIcon className="w-5 h-5" /> Inicio
         </button>
         <button onClick={() => navigate('/app/actividades')} className="text-zinc-300 font-semibold hover:text-white">
-          ⏱️ Actividades
+           Actividades
         </button>
         <button onClick={() => navigate('/app/progreso')} className="text-zinc-300 font-semibold hover:text-white">
-          📊 Progreso
+          <ChartBarIcon className="w-5 h-5" /> Progreso
         </button>
       </nav>
 

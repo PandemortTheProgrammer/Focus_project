@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../essentials/ToastContext';
+import { ArrowDownTrayIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 export default function Download() {
   const navigate = useNavigate();
@@ -75,14 +76,16 @@ export default function Download() {
           onClick={handleDescargar}
           className="w-full px-8 py-4 rounded-full text-[#1a1a1a] text-xl font-bold transition hover:opacity-90 hover:scale-105 shadow-lg flex items-center justify-center gap-3"
           style={{ backgroundColor: '#5ecfb8' }}>
-          ⬇️ Descargar Respaldo
+          <ArrowDownTrayIcon className="w-6 h-6" />
+          Descargar Respaldo
         </button>
 
         <button
           onClick={() => navigate('/dashboard')}
-          className="w-full px-8 py-4 rounded-full text-white text-lg font-semibold transition hover:opacity-80 border border-zinc-600"
+          className="w-full px-8 py-4 rounded-full text-white text-lg font-semibold transition hover:opacity-80 border border-zinc-600 flex items-center justify-center gap-3"
           style={{ backgroundColor: '#1a1a1a' }}>
-          ← Volver al Dashboard
+          <ArrowLeftIcon className="w-5 h-5" />
+          Volver al Dashboard
         </button>
       </div>
 

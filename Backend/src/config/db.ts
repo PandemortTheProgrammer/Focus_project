@@ -955,7 +955,7 @@ export const cerrarBD = async (): Promise<void> => {
         try {
             await dbInstance.close();
             dbInstance = null;
-            console.log("🔴 Conexión a SQLite cerrada temporalmente para reemplazo.");
+            console.log("Conexión a SQLite cerrada temporalmente para reemplazo.");
         } catch (error) {
             console.error("Error al intentar cerrar la base de datos:", error);
             throw error;

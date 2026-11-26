@@ -143,7 +143,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
         notificacionesNuevas.push({
           tipo: 'exito',
           titulo: '¡Subiste de nivel!',
-          mensaje: `Has alcanzado el nivel ${resultadoXP.nivelActual} 🎉`,
+          mensaje: `Has alcanzado el nivel ${resultadoXP.nivelActual}.`,
           posicion: 'top-center'
         });
       }

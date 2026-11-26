@@ -5,6 +5,12 @@ import {
   BarChart, Bar, XAxis, YAxis,
   ResponsiveContainer, Cell, PieChart, Pie, Tooltip
 } from 'recharts'
+import {
+  ArrowTrendingDownIcon,
+  ArrowTrendingUpIcon,
+  MinusIcon,
+  SparklesIcon
+} from '@heroicons/react/24/outline'
 
 type TipoResumen = {
   id_tipo: number
@@ -54,11 +60,11 @@ const obtenerNombreDia = (fecha: string): string => {
   return nombres[new Date(fecha + 'T12:00:00').getDay()]
 }
 
-const tendenciaInfo: Record<TipoResumen['tendencia'], { icono: string; texto: string; color: string }> = {
-  subio: { icono: '▲', texto: 'Subió', color: '#f2a65a' },
-  bajo: { icono: '▼', texto: 'Bajó', color: '#5ecfb8' },
-  igual: { icono: '■', texto: 'Estable', color: 'rgba(255,255,255,0.6)' },
-  nuevo: { icono: '★', texto: 'Nuevo', color: '#8fb8f5' }
+const tendenciaInfo: Record<TipoResumen['tendencia'], { icono: typeof ArrowTrendingUpIcon; texto: string; color: string }> = {
+  subio: { icono: ArrowTrendingUpIcon, texto: 'Subió', color: '#f2a65a' },
+  bajo: { icono: ArrowTrendingDownIcon, texto: 'Bajó', color: '#5ecfb8' },
+  igual: { icono: MinusIcon, texto: 'Estable', color: 'rgba(255,255,255,0.6)' },
+  nuevo: { icono: SparklesIcon, texto: 'Nuevo', color: '#8fb8f5' }
 }
 
 // Tooltip personalizado para la gráfica de barras
@@ -324,7 +330,9 @@ export default function WeeklySummaryDetail() {
                 Se muestran únicamente los tipos de actividad que realizaste en esta semana.
               </p>
               <div className="mt-5 grid gap-4">
-                {semanaSeleccionada.tipos.map((tipo) => (
+                {semanaSeleccionada.tipos.map((tipo) => {
+                  const IconoTendencia = tendenciaInfo[tipo.tendencia].icono
+                  return (
                   <div key={tipo.id_tipo} className="rounded-2xl p-5" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
                     <div className="flex flex-wrap items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
@@ -333,10 +341,11 @@ export default function WeeklySummaryDetail() {
                       </div>
                       <div className="flex items-center gap-3">
                         <span
-                          className="text-xs font-semibold px-2 py-1 rounded-full"
+                          className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full"
                           style={{ color: tendenciaInfo[tipo.tendencia].color, backgroundColor: 'rgba(255,255,255,0.08)' }}
                         >
-                          {tendenciaInfo[tipo.tendencia].icono} {tendenciaInfo[tipo.tendencia].texto}
+                          <IconoTendencia className="w-4 h-4" aria-hidden="true" />
+                          {tendenciaInfo[tipo.tendencia].texto}
                         </span>
                         <span className="text-white opacity-70 text-sm">{tipo.horas.toFixed(1)}h</span>
                       </div>
@@ -366,7 +375,8 @@ export default function WeeklySummaryDetail() {
                       <p className="text-sm font-medium text-white opacity-85">{tipo.consejo}</p>
                     </div>
                   </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           </div>

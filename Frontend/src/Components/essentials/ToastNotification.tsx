@@ -10,7 +10,9 @@ import {
     ExclamationTriangleIcon, 
     TrophyIcon, 
     ChartBarIcon, 
-    SparklesIcon 
+    SparklesIcon,
+    ChevronDoubleRightIcon,
+    XMarkIcon
 } from '@heroicons/react/24/solid';
 
 interface ToastProps {
@@ -86,6 +88,7 @@ export default function ToastNotification({
     const BotonAccion = ({ isOscuro }: { isOscuro?: boolean }) => (
         <button 
             onClick={onClose} 
+            aria-label={toastsPendientes > 0 ? `Mostrar siguientes notificaciones (${toastsPendientes})` : 'Cerrar notificación'}
             className={`
                 flex items-center justify-center font-bold text-xs uppercase tracking-wider px-2 py-1 rounded transition-all duration-200 min-w-[32px] min-h-[32px]
                 ${isOscuro 
@@ -93,7 +96,14 @@ export default function ToastNotification({
                     : `${actual.text} opacity-80 hover:opacity-100 bg-black/10 hover:bg-black/20`}
             `}
         >
-            {toastsPendientes > 0 ? `⏭ (${toastsPendientes})` : '✕'}
+            {toastsPendientes > 0 ? (
+                <>
+                    <ChevronDoubleRightIcon className="w-4 h-4" />
+                    <span className="ml-1">{toastsPendientes}</span>
+                </>
+            ) : (
+                <XMarkIcon className="w-4 h-4" />
+            )}
         </button>
     );
 

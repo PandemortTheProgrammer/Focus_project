@@ -5,6 +5,7 @@ import type Actividad from '../../models/Actividad'
 import { useToast } from '../essentials/ToastContext' // Importamos el contexto de notificaciones
 import PageHeader from '../essentials/Page-head'
 import ActivitiesDetails from './Activities_details'
+import { TrashIcon } from '@heroicons/react/24/outline'
 
 // Función auxiliar para calcular si pasaron 24 horas desde la creación
 const esActividadBloqueada = (fechaCreacion?: string | Date | null) => {
@@ -126,7 +127,7 @@ export default function ActivitiesMain() {
           <div className="bg-zinc-900 border border-zinc-700 rounded-3xl p-8 max-w-sm w-full mx-4 shadow-2xl text-center transform transition-all">
 
             <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center bg-red-500/20 text-red-500 text-3xl">
-              🗑️
+              <TrashIcon className="w-8 h-8" />
             </div>
 
             <h3 className="text-2xl font-bold mb-2" style={{ fontFamily: 'cursive', color: '#f5e6c8' }}>

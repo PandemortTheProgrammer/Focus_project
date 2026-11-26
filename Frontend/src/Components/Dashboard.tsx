@@ -82,7 +82,7 @@ export default function Dashboard({ perfilGlobal }: DashboardProps) {
             setTimeout(() => {
               mostrarToast(
                 'exito', 
-                '¡Nuevo reporte disponible! 📊', 
+                '¡Nuevo reporte disponible!',
                 `El resumen de tu semana del ${fechaInicioReciente} ya está listo para revisarse.`
               );
             }, 1000);

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type Actividad from '../../models/Actividad';
 import type Tipo_actividad from '../../models/Tipo_actividad';
 import { useToast } from '../essentials/ToastContext';
+import { BoltIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 interface ActivitiesDetailsProps {
     actividad: Actividad | null;
@@ -88,9 +89,10 @@ export default function ActivitiesDetails({
                     <div className="absolute top-0 left-0 w-full h-1" style={{ backgroundColor: colorTipo }}></div>
                     <button
                         onClick={onClose}
+                        aria-label="Cerrar detalles de actividad"
                         className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 transition"
                     >
-                        ✕
+                        <XMarkIcon className="w-5 h-5" />
                     </button>
                     <h2 className="text-2xl font-bold text-white drop-shadow-md">
                         {nombreTipo}
@@ -126,7 +128,8 @@ export default function ActivitiesDetails({
                             onClick={() => setMostrandoClonacion(true)}
                             className="w-full py-3 rounded-xl flex items-center justify-center gap-2 text-[#5ecfb8] bg-[#5ecfb8]/10 hover:bg-[#5ecfb8]/20 border border-[#5ecfb8]/30 font-semibold transition"
                         >
-                            <span>⚡</span> Clonar como plantilla rápida
+                            <BoltIcon className="w-5 h-5" />
+                            Clonar como plantilla rápida
                         </button>
                     ) : (
                         <div className="bg-black/40 p-4 rounded-2xl border border-[#5ecfb8]/30 flex flex-col gap-3 animate-fade-in-down">

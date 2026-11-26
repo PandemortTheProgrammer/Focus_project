@@ -249,7 +249,7 @@ export const guardarPerfil = async (datos: { nickname: string; age_rank: string;
                 await registrarEnfoqueProbado(dbTransaccion, 1, idEnfoque);
             }
         });
-        console.log("👤 Perfil actualizado con éxito (Recompensas a salvo)")
+        console.log("Perfil actualizado con éxito (Recompensas a salvo)")
 
         // Retornamos el objeto XP por la edición del perfil
         return await xpManager.procesarObtencionXP(1, 20, "Edición de perfil");
@@ -268,7 +268,7 @@ export const guardarPerfil = async (datos: { nickname: string; age_rank: string;
             ]);
             await registrarEnfoqueProbado(dbTransaccion, 1, idEnfoque);
         });
-        console.log("👤 Perfil nuevo guardado con éxito en la tabla SQLite")
+        console.log("Perfil nuevo guardado con éxito en la tabla SQLite")
 
         // Creación inicial no otorga XP de "edición"
         return { xpOtorgada: 0, subioNivel: false };
@@ -326,7 +326,7 @@ export const reiniciarPerfilYDatos = async (): Promise<void> => {
         await dbTransaccion.run('DELETE FROM Actividad');
         await dbTransaccion.run('DELETE FROM Perfil');
         await dbTransaccion.run('DELETE FROM sqlite_sequence WHERE name IN ("Actividad", "Reporte_semanal")');
-        console.log("🧹 Base de datos reiniciada con éxito. Lista para un nuevo perfil.");
+        console.log("Base de datos reiniciada con éxito. Lista para un nuevo perfil.");
     }).catch((error) => {
         console.error("Error al reiniciar la base de datos:", error);
         throw error;

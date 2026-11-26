@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '../essentials/ToastContext' // Importamos el sistema de notificaciones global
+import { DocumentIcon } from '@heroicons/react/24/outline'
 
 export default function UploadProfile() {
   const navigate = useNavigate()
@@ -88,7 +89,12 @@ export default function UploadProfile() {
         {/* Estado del archivo seleccionado */}
         <div className="h-6">
           <p className="text-[#f5e6c8] text-sm text-center font-medium">
-            {selectedFile ? `📁 ${selectedFile.name}` : ''}
+            {selectedFile && (
+              <span className="inline-flex items-center gap-2">
+                <DocumentIcon className="w-4 h-4" />
+                {selectedFile.name}
+              </span>
+            )}
           </p>
         </div>
 

@@ -48,12 +48,12 @@ export const uploadDatabase = async (req: Request, res: Response): Promise<void>
             }
         }
 
-        console.log("✅ Base de datos reemplazada y sistema reconectado con éxito.");
+        console.log("Base de datos reemplazada y sistema reconectado con éxito.");
         res.json({ success: true, message: 'Perfil cargado y conectado correctamente.' });
 
     } catch (error: unknown) {
         const mensaje = error instanceof Error ? error.message : "Error desconocido";
-        console.error('❌ Error crítico al cargar la base de datos:', error);
+        console.error('Error crítico al cargar la base de datos:', error);
         
         try {
             await inicializarBD();
